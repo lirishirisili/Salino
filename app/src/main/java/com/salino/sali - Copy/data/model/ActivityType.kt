@@ -1,0 +1,13 @@
+package com.salino.sali.data.model
+
+enum class ActivityType {
+    ITEM_ADDED,
+    ITEM_UPDATED,
+    ITEM_BOUGHT,
+    ITEM_RESTORED,
+    ITEM_DELETED,
+    RECURRING_CREATED,
+    RECURRING_UPDATED,
+    RECURRING_SUGGESTION_SURFACED,
+    SUGGESTION_ACCEPTED
+}

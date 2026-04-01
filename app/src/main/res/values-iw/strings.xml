@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">חסרלי</string>
+    <string name="brand_tagline">רשימה משותפת, קניות בלי בלגן</string>
+    <string name="shopping_list_live_badge">מתעדכן לכולם בבית</string>
+    <string name="shopping_list_live_badge_full">מתעדכן לכולם בבית בזמן אמת</string>
+    <string name="shopping_list_count">יש %1$d פריטים לקנות</string>
+    <string name="household_create_hint">פותחים רשימה אחת לכל הבית</string>
+    <string name="household_join_hint">נכנסים עם קוד הזמנה ומתחילים</string>
+    <string name="settings_profile_badge">הבית שלך, מסודר יחד</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">ברוכים הבאים לסלינו</string>
+    <string name="auth_welcome_subtitle">רשימת הקניות המשותפת שלכם</string>
+    <string name="auth_sign_in_google">התחברות עם Google</string>
+    <string name="auth_signing_in">מתחבר…</string>
+    <string name="auth_error_generic">משהו השתבש. נסו שוב.</string>
+
+    <!-- Household Setup -->
+    <string name="household_setup_title">הקמת בית</string>
+    <string name="household_setup_subtitle">צרו בית חדש או הצטרפו לקיים</string>
+    <string name="household_create">יצירת בית</string>
+    <string name="household_join">הצטרפות לבית</string>
+    <string name="household_name_label">שם הבית</string>
+    <string name="household_name_hint">למשל: משפחת כהן, דירה 4</string>
+    <string name="household_invite_code_label">קוד הזמנה</string>
+    <string name="household_invite_code_hint">הדביקו את הקוד שקיבלתם</string>
+    <string name="household_create_button">יצירה</string>
+    <string name="household_join_button">הצטרפות</string>
+    <string name="household_creating">יוצר בית…</string>
+    <string name="household_joining">מצטרף…</string>
+    <string name="household_error_empty_name">תנו שם לבית</string>
+    <string name="household_error_empty_code">הזינו קוד הזמנה</string>
+    <string name="household_error_invalid_code">קוד לא תקין. בדקו ונסו שוב.</string>
+    <string name="household_error_generic">משהו השתבש. נסו שוב.</string>
+    <string name="household_invite_code_title">קוד ההזמנה שלכם</string>
+    <string name="household_invite_code_share">שתפו את הקוד עם בני הבית:</string>
+    <string name="household_invite_code_copied">הקוד הועתק!</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_list_title">מה חסר?</string>
+    <string name="shopping_list_search_hint">חיפוש פריטים…</string>
+    <string name="shopping_list_empty_title">אין מה לקנות כרגע</string>
+    <string name="shopping_list_empty_subtitle">הוסיפו משהו שנגמר</string>
+    <string name="shopping_list_active_section">לקנות</string>
+    <string name="shopping_list_bought_section">כבר קנינו</string>
+    <string name="shopping_list_added_by">נוסף ע״י %1$s</string>
+    <string name="shopping_list_bought_by">נקנה ע״י %1$s</string>
+    <string name="shopping_list_mark_bought">סמן כנקנה</string>
+    <string name="shopping_list_undo_bought">החזר לרשימה</string>
+    <string name="shopping_list_delete">מחיקה</string>
+    <string name="shopping_list_delete_confirm">למחוק את הפריט?</string>
+
+    <!-- Add / Edit Item -->
+    <string name="add_item_title">הוספת פריט</string>
+    <string name="edit_item_title">עריכת פריט</string>
+    <string name="item_name_label">מה צריך?</string>
+    <string name="item_name_hint">למשל: חלב, לחם, סבון</string>
+    <string name="item_quantity_label">כמות</string>
+    <string name="item_unit_label">יחידה</string>
+    <string name="item_category_label">קטגוריה</string>
+    <string name="item_note_label">הערה</string>
+    <string name="item_note_hint">פרטים נוספים…</string>
+    <string name="item_save">שמירה</string>
+    <string name="item_add">הוספה</string>
+    <string name="item_error_empty_name">הזינו שם פריט</string>
+    <string name="item_saving">שומר…</string>
+    <string name="duplicate_warning_title">נראה שהפריט כבר קיים ברשימה</string>
+    <string name="duplicate_merge_action">להגדיל את הכמות בפריט הקיים</string>
+    <string name="suggestions_title">הצעות חכמות</string>
+    <string name="suggestions_subtitle_home">מבוסס על מה שהבית שלכם קונה בדרך כלל</string>
+    <string name="suggestions_subtitle_add">לחיצה מהירה תמלא את הטופס</string>
+    <string name="recurring_toggle_title">פריט קבוע</string>
+    <string name="recurring_toggle_subtitle">הפריט יחזור כהצעה אוטומטית כשהוא שוב יהיה צריך להיקנות</string>
+    <string name="recurring_every_days_label">כל כמה ימים לחזור</string>
+    <string name="voice_input_action">הקלדה קולית</string>
+    <string name="voice_input_prompt">אמרו את הפריט שצריך</string>
+    <string name="voice_input_unavailable">זיהוי קולי לא זמין במכשיר הזה</string>
+    <string name="voice_input_permission_denied">נדרשת הרשאת מיקרופון כדי להשתמש בזיהוי קולי</string>
+
+    <!-- Categories -->
+    <string name="category_all">הכל</string>
+    <string name="category_dairy">מוצרי חלב</string>
+    <string name="category_vegetables">ירקות</string>
+    <string name="category_fruits">פירות</string>
+    <string name="category_meat_fish">בשר ודגים</string>
+    <string name="category_bakery">מאפים</string>
+    <string name="category_cleaning">ניקיון</string>
+    <string name="category_pantry">מזווה</string>
+    <string name="category_snacks">חטיפים</string>
+    <string name="category_beverages">משקאות</string>
+    <string name="category_pharmacy">בית מרקחת</string>
+    <string name="category_other">אחר</string>
+    <string name="category_auto_detected">זוהה אוטומטית: %1$s</string>
+
+    <!-- Units -->
+    <string name="unit_pieces">יח׳</string>
+    <string name="unit_kg">ק״ג</string>
+    <string name="unit_grams">גרם</string>
+    <string name="unit_liters">ליטר</string>
+    <string name="unit_packs">חבילות</string>
+    <string name="unit_bottles">בקבוקים</string>
+    <string name="unit_bags">שקיות</string>
+
+    <!-- History -->
+    <string name="history_title">קניות אחרונות</string>
+    <string name="history_empty_title">עוד לא קניתם כלום</string>
+    <string name="history_empty_subtitle">פריטים שתקנו יופיעו כאן</string>
+
+    <!-- Activity Feed -->
+    <string name="activity_feed_title">פעילות הבית</string>
+    <string name="activity_feed_empty_title">עדיין אין פעילות</string>
+    <string name="activity_feed_empty_subtitle">שינויים של כל בני הבית יופיעו כאן</string>
+    <string name="activity_type_item_added">פריט נוסף</string>
+    <string name="activity_type_item_updated">פריט עודכן</string>
+    <string name="activity_type_item_bought">פריט סומן כנקנה</string>
+    <string name="activity_type_item_restored">פריט הוחזר לרשימה</string>
+    <string name="activity_type_item_deleted">פריט נמחק</string>
+    <string name="activity_type_recurring_created">פריט קבוע נוצר</string>
+    <string name="activity_type_recurring_updated">פריט קבוע עודכן</string>
+    <string name="activity_type_suggestion_accepted">הצעה התקבלה</string>
+
+    <!-- Supermarket Mode -->
+    <string name="supermarket_mode_title">אני בסופר</string>
+    <string name="supermarket_mode_short">בסופר</string>
+    <string name="supermarket_mode_empty_title">הכל כבר מסודר</string>
+    <string name="supermarket_mode_empty_subtitle">אין כרגע פריטים פעילים שמחכים לקנייה</string>
+    <string name="supermarket_mode_remaining">נשארו %1$d לקחת</string>
+
+    <!-- Settings -->
+    <string name="settings_title">הגדרות</string>
+    <string name="settings_household_section">הבית</string>
+    <string name="settings_household_name">שם הבית</string>
+    <string name="settings_invite_code">קוד הזמנה</string>
+    <string name="settings_members">חברי בית</string>
+    <string name="settings_account_section">חשבון</string>
+    <string name="settings_sign_out">התנתקות</string>
+    <string name="settings_sign_out_confirm">להתנתק מסלינו?</string>
+    <string name="settings_version">גרסה %1$s</string>
+
+    <!-- General -->
+    <string name="ok">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="retry">נסו שוב</string>
+    <string name="copy">העתקה</string>
+    <string name="share">שיתוף</string>
+    <string name="loading">טוען…</string>
+    <string name="error_no_connection">אין חיבור לאינטרנט</string>
+    <string name="error_generic">משהו השתבש</string>
+</resources>

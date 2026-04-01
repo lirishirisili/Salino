@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background full bleed -->
+    <path android:pathData="M 0,0 L 108,0 L 108,108 L 0,108 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0" android:startY="0"
+                android:endX="108" android:endY="108">
+                <item android:offset="0.0" android:color="#00695C" />
+                <item android:offset="0.5" android:color="#0D9488" />
+                <item android:offset="1.0" android:color="#2DD4A8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Handle Back -->
+    <path
+        android:pathData="M 40,43 V 31 C 40,23.5 46.5,17 54,17 C 61.5,17 68,23.5 68,31 V 43"
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+    <!-- Bag Main Drop Shadow -->
+    <path
+        android:pathData="M 28.5,46 L 79.5,46 C 84,46 87,50 86.5,55 L 81.5,85 C 80.5,90 76,93 71,93 L 37,93 C 32,93 27.5,90 26.5,85 L 21.5,55 C 21,50 24,46 28.5,46 Z"
+        android:fillColor="#33000000" />
+
+    <!-- Bag Main Body -->
+    <path android:pathData="M 28,43 L 80,43 C 85,43 88,47 87,52 L 82,82 C 81,87 76.5,90 71.5,90 L 36.5,90 C 31.5,90 27,87 26,82 L 21,52 C 20,47 23,43 28,43 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54" android:startY="43"
+                android:endX="54" android:endY="90">
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="1.0" android:color="#E4F7F4" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Top inner rim of the bag (to give depth) -->
+    <path
+        android:pathData="M 28,43 L 80,43 C 85,43 88,47 87,52 L 21,52 C 20,47 23,43 28,43 Z"
+        android:fillColor="#F4FFFF" />
+
+    <!-- Handle Front/Overlap -->
+    <path
+        android:pathData="M 40,43 V 47 M 68,43 V 47"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+    <!-- Checklist Line 1 -->
+    <path
+        android:pathData="M 45,61 L 68,61"
+        android:strokeColor="#A0C7C3"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+        
+    <!-- Checklist Line 2 -->
+    <path
+        android:pathData="M 45,72 L 56,72"
+        android:strokeColor="#A0C7C3"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+        
+    <!-- Check circle 1 -->
+    <path
+        android:pathData="M 37.5,61 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 3.5,3.5 0 1,0 -7,0"
+        android:fillColor="#67B656" />
+
+    <!-- Check circle 2 -->
+    <path
+        android:pathData="M 37.5,72 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 3.5,3.5 0 1,0 -7,0"
+        android:fillColor="#67B656" />
+
+    <!-- Badge Shadow -->
+    <path
+        android:pathData="M 83,80 m -18,0 a 18,18 0 1,0 36,0 a 18,18 0 1,0 -36,0"
+        android:fillColor="#4D000000" />
+    
+    <!-- Badge Circle -->
+    <path android:pathData="M 83,77 m -18,0 a 18,18 0 1,0 36,0 a 18,18 0 1,0 -36,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="65" android:startY="59"
+                android:endX="101" android:endY="95">
+                <item android:offset="0.0" android:color="#FFA669" />
+                <item android:offset="1.0" android:color="#E85E22" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- White Checkmark in Badge -->
+    <path
+        android:pathData="M 75,77 L 80,82 L 91,69"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Large Sparkle Top Right -->
+    <path
+        android:pathData="M 85,12 C 86,20 93,21 93,21 C 93,21 86,22 85,30 C 84,22 77,21 77,21 C 77,21 84,20 85,12 Z"
+        android:fillColor="#FFF4D0" />
+        
+    <!-- Small Sparkle Bottom Left -->
+    <path
+        android:pathData="M 20,20 C 20.5,24 24,24.5 24,24.5 C 24,24.5 20.5,25 20,29 C 19.5,25 16,24.5 16,24.5 C 16,24.5 19.5,24 20,20 Z"
+        android:fillColor="#A7F3D0" />
+
+</vector>

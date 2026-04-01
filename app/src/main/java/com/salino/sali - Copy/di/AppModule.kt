@@ -1,0 +1,124 @@
+﻿package com.salino.sali.di
+
+import android.content.Context
+import androidx.room.Room
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.salino.sali.data.local.SalinoDatabase
+import com.salino.sali.data.repository.ActivityRepositoryImpl
+import com.salino.sali.data.repository.AuthRepositoryImpl
+import com.salino.sali.data.repository.HouseholdRepositoryImpl
+import com.salino.sali.data.repository.RecurringRepositoryImpl
+import com.salino.sali.data.repository.ShoppingRepositoryImpl
+import com.salino.sali.data.repository.SuggestionsRepositoryImpl
+import com.salino.sali.data.service.NormalizedDuplicateDetector
+import com.salino.sali.data.service.RuleBasedSuggestionEngine
+import com.salino.sali.data.service.KeywordCategoryAutoDetector
+import com.salino.sali.domain.repository.ActivityRepository
+import com.salino.sali.domain.repository.AuthRepository
+import com.salino.sali.domain.repository.HouseholdRepository
+import com.salino.sali.domain.repository.RecurringRepository
+import com.salino.sali.domain.repository.ShoppingRepository
+import com.salino.sali.domain.repository.SuggestionsRepository
+import com.salino.sali.domain.service.CategoryAutoDetector
+import com.salino.sali.domain.service.DuplicateDetector
+import com.salino.sali.domain.service.SuggestionEngine
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): SalinoDatabase =
+        Room.databaseBuilder(context, SalinoDatabase::class.java, "salino.db")
+            .fallbackToDestructiveMigration()
+            .build()
+
+    @Provides
+    fun provideHouseholdDao(database: SalinoDatabase) = database.householdDao()
+
+    @Provides
+    fun provideHouseholdMemberDao(database: SalinoDatabase) = database.householdMemberDao()
+
+    @Provides
+    fun provideShoppingItemDao(database: SalinoDatabase) = database.shoppingItemDao()
+
+    @Provides
+    fun provideActivityLogDao(database: SalinoDatabase) = database.activityLogDao()
+
+    @Provides
+    fun provideRecurringItemDao(database: SalinoDatabase) = database.recurringItemDao()
+
+    @Provides
+    fun providePendingSyncDao(database: SalinoDatabase) = database.pendingSyncOperationDao()
+
+    @Provides
+    @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        auth: FirebaseAuth,
+        firestore: FirebaseFirestore
+    ): AuthRepository = AuthRepositoryImpl(auth, firestore)
+
+    @Provides
+    @Singleton
+    fun provideHouseholdRepository(
+        impl: HouseholdRepositoryImpl
+    ): HouseholdRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideShoppingRepository(
+        impl: ShoppingRepositoryImpl
+    ): ShoppingRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideActivityRepository(
+        impl: ActivityRepositoryImpl
+    ): ActivityRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideRecurringRepository(
+        impl: RecurringRepositoryImpl
+    ): RecurringRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideSuggestionsRepository(
+        impl: SuggestionsRepositoryImpl
+    ): SuggestionsRepository = impl
+
+    @Provides
+    @Singleton
+    fun provideDuplicateDetector(): DuplicateDetector = NormalizedDuplicateDetector()
+
+    @Provides
+    @Singleton
+    fun provideCategoryAutoDetector(): CategoryAutoDetector = KeywordCategoryAutoDetector()
+
+    @Provides
+    @Singleton
+    fun provideSuggestionEngine(): SuggestionEngine = RuleBasedSuggestionEngine()
+}

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">חסרלי</string>
+    <string name="brand_tagline">Shared list. Smooth errands.</string>
+    <string name="shopping_list_live_badge">Synced for everyone at home</string>
+    <string name="shopping_list_live_badge_full">Synced for everyone at home in real time</string>
+    <string name="shopping_list_count">Need %1$d items</string>
+    <string name="household_create_hint">Start one simple list for everyone at home</string>
+    <string name="household_join_hint">Use an invite code and jump right in</string>
+    <string name="settings_profile_badge">Your home, synced together</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">Welcome to Salino</string>
+    <string name="auth_welcome_subtitle">Your shared shopping list</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_signing_in">Signing in…</string>
+    <string name="auth_error_generic">Something went wrong. Try again.</string>
+
+    <!-- Household Setup -->
+    <string name="household_setup_title">Set up your household</string>
+    <string name="household_setup_subtitle">Create a new household or join one</string>
+    <string name="household_create">Create a household</string>
+    <string name="household_join">Join a household</string>
+    <string name="household_name_label">Household name</string>
+    <string name="household_name_hint">e.g. The Smiths, Apt 4B</string>
+    <string name="household_invite_code_label">Invite code</string>
+    <string name="household_invite_code_hint">Paste the code you received</string>
+    <string name="household_create_button">Create</string>
+    <string name="household_join_button">Join</string>
+    <string name="household_creating">Creating household…</string>
+    <string name="household_joining">Joining household…</string>
+    <string name="household_error_empty_name">Enter a name for your household</string>
+    <string name="household_error_empty_code">Enter an invite code</string>
+    <string name="household_error_invalid_code">Invalid invite code. Check and try again.</string>
+    <string name="household_error_generic">Something went wrong. Try again.</string>
+    <string name="household_invite_code_title">Your invite code</string>
+    <string name="household_invite_code_share">Share this code with your household members:</string>
+    <string name="household_invite_code_copied">Code copied!</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_list_title">What\'s missing?</string>
+    <string name="shopping_list_search_hint">Search items…</string>
+    <string name="shopping_list_empty_title">Nothing to buy right now</string>
+    <string name="shopping_list_empty_subtitle">Add something that ran out</string>
+    <string name="shopping_list_active_section">To buy</string>
+    <string name="shopping_list_bought_section">Already bought</string>
+    <string name="shopping_list_added_by">Added by %1$s</string>
+    <string name="shopping_list_bought_by">Bought by %1$s</string>
+    <string name="shopping_list_mark_bought">Mark as bought</string>
+    <string name="shopping_list_undo_bought">Return to list</string>
+    <string name="shopping_list_delete">Delete</string>
+    <string name="shopping_list_delete_confirm">Delete this item?</string>
+
+    <!-- Add / Edit Item -->
+    <string name="add_item_title">Add item</string>
+    <string name="edit_item_title">Edit item</string>
+    <string name="item_name_label">What do you need?</string>
+    <string name="item_name_hint">e.g. Milk, Bread, Soap</string>
+    <string name="item_quantity_label">Quantity</string>
+    <string name="item_unit_label">Unit</string>
+    <string name="item_category_label">Category</string>
+    <string name="item_note_label">Note</string>
+    <string name="item_note_hint">Any details…</string>
+    <string name="item_save">Save</string>
+    <string name="item_add">Add</string>
+    <string name="item_error_empty_name">Enter an item name</string>
+    <string name="item_saving">Saving…</string>
+    <string name="duplicate_warning_title">This already looks on the list</string>
+    <string name="duplicate_merge_action">Increase existing quantity instead</string>
+    <string name="suggestions_title">Smart suggestions</string>
+    <string name="suggestions_subtitle_home">Based on what your household buys most</string>
+    <string name="suggestions_subtitle_add">Tap one to prefill quickly</string>
+    <string name="recurring_toggle_title">Recurring item</string>
+    <string name="recurring_toggle_subtitle">Bring this back automatically when it is due again</string>
+    <string name="recurring_every_days_label">Repeat every X days</string>
+    <string name="voice_input_action">Voice input</string>
+    <string name="voice_input_prompt">Say the item you need</string>
+    <string name="voice_input_unavailable">Voice recognition is not available on this device</string>
+    <string name="voice_input_permission_denied">Microphone permission is needed for voice input</string>
+
+    <!-- Categories -->
+    <string name="category_all">All</string>
+    <string name="category_dairy">Dairy</string>
+    <string name="category_vegetables">Vegetables</string>
+    <string name="category_fruits">Fruits</string>
+    <string name="category_meat_fish">Meat &amp; Fish</string>
+    <string name="category_bakery">Bakery</string>
+    <string name="category_cleaning">Cleaning</string>
+    <string name="category_pantry">Pantry</string>
+    <string name="category_snacks">Snacks</string>
+    <string name="category_beverages">Beverages</string>
+    <string name="category_pharmacy">Pharmacy</string>
+    <string name="category_other">Other</string>
+    <string name="category_auto_detected">Detected automatically: %1$s</string>
+
+    <!-- Units -->
+    <string name="unit_pieces">pcs</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_grams">g</string>
+    <string name="unit_liters">L</string>
+    <string name="unit_packs">packs</string>
+    <string name="unit_bottles">bottles</string>
+    <string name="unit_bags">bags</string>
+
+    <!-- History -->
+    <string name="history_title">Recent purchases</string>
+    <string name="history_empty_title">No purchases yet</string>
+    <string name="history_empty_subtitle">Items you buy will show up here</string>
+
+    <!-- Activity Feed -->
+    <string name="activity_feed_title">Household activity</string>
+    <string name="activity_feed_empty_title">No activity yet</string>
+    <string name="activity_feed_empty_subtitle">Changes from everyone at home will appear here</string>
+    <string name="activity_type_item_added">Item added</string>
+    <string name="activity_type_item_updated">Item updated</string>
+    <string name="activity_type_item_bought">Item marked as bought</string>
+    <string name="activity_type_item_restored">Item returned to the list</string>
+    <string name="activity_type_item_deleted">Item deleted</string>
+    <string name="activity_type_recurring_created">Recurring item created</string>
+    <string name="activity_type_recurring_updated">Recurring item updated</string>
+    <string name="activity_type_suggestion_accepted">Suggestion accepted</string>
+
+    <!-- Supermarket Mode -->
+    <string name="supermarket_mode_title">I’m at the supermarket</string>
+    <string name="supermarket_mode_short">In store</string>
+    <string name="supermarket_mode_empty_title">Everything is already done</string>
+    <string name="supermarket_mode_empty_subtitle">No active items are waiting for you in store</string>
+    <string name="supermarket_mode_remaining">%1$d left to grab</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_household_section">Household</string>
+    <string name="settings_household_name">Household name</string>
+    <string name="settings_invite_code">Invite code</string>
+    <string name="settings_members">Members</string>
+    <string name="settings_account_section">Account</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_sign_out_confirm">Sign out of Salino?</string>
+    <string name="settings_version">Version %1$s</string>
+
+    <!-- General -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="retry">Retry</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="loading">Loading…</string>
+    <string name="error_no_connection">No internet connection</string>
+    <string name="error_generic">Something went wrong</string>
+</resources>
