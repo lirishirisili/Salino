@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
@@ -84,6 +85,8 @@ fun BrandLogo(
     center: Boolean = false
 ) {
     val horizontalAlignment = if (center) Alignment.CenterHorizontally else Alignment.Start
+    val textModifier = if (center) Modifier.fillMaxWidth() else Modifier
+    val textAlign = if (center) TextAlign.Center else TextAlign.Start
     Column(
         modifier = modifier,
         horizontalAlignment = horizontalAlignment,
@@ -108,7 +111,9 @@ fun BrandLogo(
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = textAlign,
+                modifier = textModifier
             )
         }
         if (showTagline) {
@@ -116,7 +121,9 @@ fun BrandLogo(
             Text(
                 text = stringResource(R.string.brand_tagline),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = textAlign,
+                modifier = textModifier
             )
         }
     }

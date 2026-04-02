@@ -11,4 +11,6 @@ interface HouseholdRepository {
     fun observeHousehold(householdId: String): Flow<Household?>
     fun observeHouseholdMembers(householdId: String): Flow<List<HouseholdMember>>
     suspend fun getInviteCode(householdId: String): Result<String>
+    suspend fun updateHouseholdName(householdId: String, newName: String): Result<Unit>
+    suspend fun leaveHousehold(householdId: String): Result<Unit>
 }

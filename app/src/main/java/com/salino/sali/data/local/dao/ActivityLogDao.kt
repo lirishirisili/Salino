@@ -26,4 +26,7 @@ interface ActivityLogDao {
 
     @Query("DELETE FROM activity_logs WHERE householdId = :householdId AND id IN (:activityIds)")
     suspend fun deleteByIds(householdId: String, activityIds: List<String>)
+
+    @Query("DELETE FROM activity_logs WHERE householdId = :householdId")
+    suspend fun deleteAllForHousehold(householdId: String)
 }

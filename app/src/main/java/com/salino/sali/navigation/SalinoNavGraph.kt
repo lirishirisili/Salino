@@ -134,6 +134,11 @@ fun SalinoNavGraph(navController: NavHostController) {
                     navController.navigate(Screen.Auth.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onHouseholdLeft = {
+                    navController.navigate(Screen.HouseholdSetup.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

@@ -3,6 +3,7 @@
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.salino.sali.data.local.SalinoDatabase
 import com.salino.sali.data.model.User
 import com.salino.sali.domain.repository.AuthRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -15,7 +16,8 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val database: SalinoDatabase
 ) : AuthRepository {
 
     override val currentUserId: String?
@@ -73,6 +75,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun signOut() {
+        database.clearAllTables()
         auth.signOut()
     }
 }

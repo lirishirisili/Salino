@@ -22,7 +22,10 @@ data class SettingsState(
     val members: List<HouseholdMember> = emptyList(),
     val inviteCode: String = "",
     val isLoading: Boolean = true,
-    val isSignedOut: Boolean = false
+    val isSignedOut: Boolean = false,
+    val hasLeftHousehold: Boolean = false,
+    val showEditNameDialog: Boolean = false,
+    val showLeaveDialog: Boolean = false
 )
 
 @HiltViewModel
@@ -71,6 +74,42 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.signOut()
             _uiState.value = _uiState.value.copy(isSignedOut = true)
+        }
+    }
+
+    fun showEditNameDialog() {
+        _uiState.value = _uiState.value.copy(showEditNameDialog = true)
+    }
+
+    fun dismissEditNameDialog() {
+        _uiState.value = _uiState.value.copy(showEditNameDialog = false)
+    }
+
+    fun updateHouseholdName(newName: String) {
+        val householdId = _uiState.value.household?.id ?: return
+        viewModelScope.launch {
+            householdRepository.updateHouseholdName(householdId, newName)
+            _uiState.value = _uiState.value.copy(showEditNameDialog = false)
+        }
+    }
+
+    fun showLeaveDialog() {
+        _uiState.value = _uiState.value.copy(showLeaveDialog = true)
+    }
+
+    fun dismissLeaveDialog() {
+        _uiState.value = _uiState.value.copy(showLeaveDialog = false)
+    }
+
+    fun leaveHousehold() {
+        val householdId = _uiState.value.household?.id ?: return
+        viewModelScope.launch {
+            val result = householdRepository.leaveHousehold(householdId)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(showLeaveDialog = false, hasLeftHousehold = true)
+            } else {
+                _uiState.value = _uiState.value.copy(showLeaveDialog = false)
+            }
         }
     }
 }

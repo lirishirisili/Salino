@@ -79,6 +79,21 @@ class HouseholdRepositoryImpl @Inject constructor(
         getHousehold(householdId).getOrThrow().inviteCode
     }
 
+    override suspend fun updateHouseholdName(householdId: String, newName: String): Result<Unit> = runCatching {
+        remoteDataSource.updateHouseholdName(householdId, newName)
+    }
+
+    override suspend fun leaveHousehold(householdId: String): Result<Unit> = runCatching {
+        val user = authRepository.observeCurrentUser().first()
+            ?: throw IllegalStateException("Not signed in")
+        householdListeners[householdId]?.remove()
+        householdListeners.remove(householdId)
+        memberListeners[householdId]?.remove()
+        memberListeners.remove(householdId)
+        remoteDataSource.leaveHousehold(householdId, user.id)
+        localDataSource.clearHouseholdData(householdId)
+    }
+
     private fun ensureHouseholdSync(householdId: String) {
         if (householdListeners.containsKey(householdId)) return
         householdListeners[householdId] = remoteDataSource.listenToHousehold(householdId) { household ->

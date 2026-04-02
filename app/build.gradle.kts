@@ -9,14 +9,14 @@ plugins {
 
 android {
     namespace = "com.salino.sali"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.salino.sali"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        targetSdk = 35
+        versionCode = 9
+        versionName = "1.0.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

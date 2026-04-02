@@ -77,8 +77,9 @@ object AppModule {
     @Singleton
     fun provideAuthRepository(
         auth: FirebaseAuth,
-        firestore: FirebaseFirestore
-    ): AuthRepository = AuthRepositoryImpl(auth, firestore)
+        firestore: FirebaseFirestore,
+        database: SalinoDatabase
+    ): AuthRepository = AuthRepositoryImpl(auth, firestore, database)
 
     @Provides
     @Singleton

@@ -23,4 +23,7 @@ interface HouseholdDao {
 
     @Query("UPDATE households SET isCurrent = 1 WHERE id = :householdId")
     suspend fun markCurrent(householdId: String)
+
+    @Query("DELETE FROM households WHERE id = :householdId")
+    suspend fun deleteHousehold(householdId: String)
 }

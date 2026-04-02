@@ -18,6 +18,9 @@ interface ShoppingItemDao {
     @Query("SELECT * FROM shopping_items WHERE householdId = :householdId AND id = :itemId LIMIT 1")
     suspend fun getItem(householdId: String, itemId: String): ShoppingItemEntity?
 
+    @Query("DELETE FROM shopping_items WHERE householdId = :householdId")
+    suspend fun deleteAllForHousehold(householdId: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertItems(items: List<ShoppingItemEntity>)
 

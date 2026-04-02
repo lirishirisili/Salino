@@ -44,4 +44,8 @@ class AuthViewModel @Inject constructor(
                 }
         }
     }
+
+    fun onGoogleSignInFailed(message: String) {
+        _uiState.value = AuthUiState(errorMessage = message)
+    }
 }

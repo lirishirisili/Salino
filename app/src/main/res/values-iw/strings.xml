@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">חסרלי</string>
+    <string name="app_name">חסר לי</string>
     <string name="brand_tagline">רשימה משותפת, קניות בלי בלגן</string>
     <string name="shopping_list_live_badge">מתעדכן לכולם בבית</string>
     <string name="shopping_list_live_badge_full">מתעדכן לכולם בבית בזמן אמת</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">הבית שלך, מסודר יחד</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">ברוכים הבאים לסלינו</string>
+    <string name="auth_welcome_title">ברוכים הבאים לחסר לי</string>
     <string name="auth_welcome_subtitle">רשימת הקניות המשותפת שלכם</string>
     <string name="auth_sign_in_google">התחברות עם Google</string>
     <string name="auth_signing_in">מתחבר…</string>
@@ -89,7 +89,7 @@
     <string name="category_pantry">מזווה</string>
     <string name="category_snacks">חטיפים</string>
     <string name="category_beverages">משקאות</string>
-    <string name="category_pharmacy">בית מרקחת</string>
+    <string name="category_pharmacy">פארם וטואלטיקה</string>
     <string name="category_other">אחר</string>
     <string name="category_auto_detected">זוהה אוטומטית: %1$s</string>
 
@@ -106,6 +106,7 @@
     <string name="history_title">קניות אחרונות</string>
     <string name="history_empty_title">עוד לא קניתם כלום</string>
     <string name="history_empty_subtitle">פריטים שתקנו יופיעו כאן</string>
+    <string name="history_items_count">%1$d פריטים</string>
 
     <!-- Activity Feed -->
     <string name="activity_feed_title">פעילות הבית</string>
@@ -125,7 +126,11 @@
     <string name="supermarket_mode_short">בסופר</string>
     <string name="supermarket_mode_empty_title">הכל כבר מסודר</string>
     <string name="supermarket_mode_empty_subtitle">אין כרגע פריטים פעילים שמחכים לקנייה</string>
+    <string name="supermarket_mode_empty_pharmacy">אין פריטי פארם ברשימה כרגע</string>
     <string name="supermarket_mode_remaining">נשארו %1$d לקחת</string>
+    <string name="supermarket_mode_filter_pharmacy">הצג רק פארם וטואלטיקה</string>
+    <string name="supermarket_mode_filter_all">הצג את כל המוצרים</string>
+    <string name="supermarket_mode_filter_active">הסינון פעיל: מוצגים רק מוצרי פארם וטואלטיקה</string>
 
     <!-- Settings -->
     <string name="settings_title">הגדרות</string>
@@ -134,6 +139,10 @@
     <string name="settings_invite_code">קוד הזמנה</string>
     <string name="settings_members">חברי בית</string>
     <string name="settings_account_section">חשבון</string>
+    <string name="settings_edit_household_name">עריכת שם הבית</string>
+    <string name="settings_leave_household">עזיבת הבית</string>
+    <string name="settings_leave_household_confirm">בטוח שאתה רוצה לעזוב את הבית? תמיד תוכל להצטרף שוב עם קוד הזמנה או ליצור בית חדש.</string>
+    <string name="settings_share_invite_message">הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: %1$s</string>
     <string name="settings_sign_out">התנתקות</string>
     <string name="settings_sign_out_confirm">להתנתק מסלינו?</string>
     <string name="settings_version">גרסה %1$s</string>

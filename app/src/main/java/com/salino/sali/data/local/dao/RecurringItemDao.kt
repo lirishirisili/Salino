@@ -35,4 +35,7 @@ interface RecurringItemDao {
 
     @Query("DELETE FROM recurring_items WHERE householdId = :householdId AND id IN (:recurringIds)")
     suspend fun deleteByIds(householdId: String, recurringIds: List<String>)
+
+    @Query("DELETE FROM recurring_items WHERE householdId = :householdId")
+    suspend fun deleteAllForHousehold(householdId: String)
 }

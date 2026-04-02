@@ -19,7 +19,8 @@ data class SupermarketModeState(
     val remainingCount: Int = 0,
     val isLoading: Boolean = true,
     val currentUserId: String = "",
-    val currentUserName: String = ""
+    val currentUserName: String = "",
+    val showOnlyPharm: Boolean = false
 )
 
 @HiltViewModel
@@ -33,6 +34,8 @@ class SupermarketModeViewModel @Inject constructor(
 
     private var householdId: String = ""
 
+    private var allActiveItems: List<ShoppingItem> = emptyList()
+
     init {
         viewModelScope.launch {
             val user = authRepository.observeCurrentUser().first() ?: return@launch
@@ -40,16 +43,31 @@ class SupermarketModeViewModel @Inject constructor(
             householdId = activeHouseholdId
             _uiState.update { it.copy(currentUserId = user.id, currentUserName = user.displayName) }
             shoppingRepository.observeActiveItems(activeHouseholdId).collect { items ->
-                _uiState.value = SupermarketModeState(
-                    groupedItems = items.groupBy { ItemCategory.fromString(it.category) }
-                        .toSortedMap(compareBy { it.ordinal }),
-                    remainingCount = items.size,
-                    isLoading = false,
-                    currentUserId = user.id,
-                    currentUserName = user.displayName
-                )
+                allActiveItems = items
+                updateGroupedItems()
             }
         }
+    }
+
+    fun togglePharmFilter() {
+        _uiState.update { it.copy(showOnlyPharm = !it.showOnlyPharm) }
+        updateGroupedItems()
+    }
+
+    private fun updateGroupedItems() {
+        val state = _uiState.value
+        val itemsToDisplay = if (state.showOnlyPharm) {
+            allActiveItems.filter { ItemCategory.fromString(it.category) == ItemCategory.PHARMACY }
+        } else {
+            allActiveItems
+        }
+
+        _uiState.value = state.copy(
+            groupedItems = itemsToDisplay.groupBy { ItemCategory.fromString(it.category) }
+                .toSortedMap(compareBy { it.ordinal }),
+            remainingCount = itemsToDisplay.size,
+            isLoading = false
+        )
     }
 
     fun markAsBought(itemId: String) {

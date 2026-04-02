@@ -1,0 +1,69 @@
+<svg width="1024" height="500" viewBox="0 0 1024 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7FBFA"/>
+      <stop offset="1" stop-color="#EEF7F5"/>
+    </linearGradient>
+    <linearGradient id="card" x1="134" y1="90" x2="430" y2="390" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00695C"/>
+      <stop offset="0.55" stop-color="#0D9488"/>
+      <stop offset="1" stop-color="#2DD4A8"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="311" y1="263" x2="385" y2="337" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB37C"/>
+      <stop offset="1" stop-color="#E96A2B"/>
+    </linearGradient>
+    <filter id="shadow" x="100" y="64" width="380" height="372" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="20"/>
+      <feGaussianBlur stdDeviation="20"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.04 0 0 0 0 0.28 0 0 0 0 0.25 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="500" fill="url(#bg)"/>
+
+  <circle cx="111" cy="85" r="132" fill="#BFEFE5"/>
+  <circle cx="953" cy="88" r="124" fill="#FBE1D0"/>
+  <circle cx="908" cy="424" r="98" fill="#C8F2E9"/>
+  <circle cx="177" cy="438" r="138" fill="#F9DEC9"/>
+
+  <g filter="url(#shadow)">
+    <rect x="140" y="84" width="300" height="292" rx="42" fill="url(#card)"/>
+
+    <path d="M229 186V159C229 139.67 244.67 124 264 124C283.33 124 299 139.67 299 159V186" stroke="#9BFFFFFF" stroke-width="14" stroke-linecap="round"/>
+    <path d="M187 193H339C353 193 361.39 203.58 358.61 217.3L345.41 282.3C342.91 294.61 332.08 303.5 319.51 303.5H206.49C193.92 303.5 183.09 294.61 180.59 282.3L167.39 217.3C164.61 203.58 173 193 187 193Z" fill="#E5FFFA" fill-opacity="0.2"/>
+    <path d="M185 186H341C355.5 186 364.6 196.83 361.52 211L347.52 275.5C344.88 287.67 334.09 296.33 321.64 296.33H204.36C191.91 296.33 181.12 287.67 178.48 275.5L164.48 211C161.4 196.83 170.5 186 185 186Z" fill="#FFFFFF"/>
+    <path d="M185 186H341C355.5 186 364.6 196.83 361.52 211H164.48C161.4 196.83 170.5 186 185 186Z" fill="#F7FFFF"/>
+    <path d="M229 186V194M299 186V194" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round"/>
+
+    <path d="M244 234H307" stroke="#99BEB9" stroke-width="11" stroke-linecap="round"/>
+    <path d="M244 263H288" stroke="#99BEB9" stroke-width="11" stroke-linecap="round"/>
+    <circle cx="222" cy="234" r="11" fill="#5BB85A"/>
+    <circle cx="222" cy="263" r="11" fill="#5BB85A"/>
+
+    <circle cx="348" cy="291" r="38" fill="#000000" fill-opacity="0.16"/>
+    <circle cx="348" cy="284" r="38" fill="url(#badge)"/>
+    <path d="M331 284L343 296L367 272" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M346 112C347.2 122.4 356 123.6 356 123.6C356 123.6 347.2 124.8 346 135.2C344.8 124.8 336 123.6 336 123.6C336 123.6 344.8 122.4 346 112Z" fill="#FFF4D0"/>
+    <path d="M198 125C198.6 130.5 203 131.2 203 131.2C203 131.2 198.6 131.9 198 137.4C197.4 131.9 193 131.2 193 131.2C193 131.2 197.4 130.5 198 125Z" fill="#A7F3D0"/>
+  </g>
+
+  <g>
+    <text x="950" y="175" font-family="Arial, sans-serif" font-size="60" font-weight="800" fill="#10201D" text-anchor="end">חסרלי</text>
+    <text x="950" y="240" font-family="Arial, sans-serif" font-size="30" font-weight="600" fill="#1B6B63" text-anchor="end">
+      <tspan x="950" dy="0">נגמר משהו בבית?</tspan>
+      <tspan x="950" dy="42">מוסיפים בשנייה</tspan>
+      <tspan x="950" dy="42">וכל הבית מתעדכן מיד</tspan>
+    </text>
+
+    <rect x="652" y="340" width="298" height="64" rx="32" fill="#D6F5ED"/>
+    <text x="801" y="380" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#0E5D55" text-anchor="middle">לבית, לזוג, לשותפים</text>
+
+    <text x="950" y="450" font-family="Arial, sans-serif" font-size="24" font-weight="500" fill="#6A7A77" text-anchor="end">קניות משותפות בלי הודעות, בלי כפילויות ובלי לשכוח</text>
+  </g>
+</svg>

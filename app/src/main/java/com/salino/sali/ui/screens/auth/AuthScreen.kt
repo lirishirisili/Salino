@@ -32,9 +32,7 @@ fun AuthScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    // TODO: Replace with your actual web client ID from Firebase Console
-    val webClientId = "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com"
+    val webClientId = stringResource(R.string.default_web_client_id)
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -43,9 +41,27 @@ fun AuthScreen(
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                account.idToken?.let { viewModel.signInWithGoogle(it) }
-            } catch (_: ApiException) {
-                // Sign-in failed - handled by ViewModel state
+                val idToken = account.idToken
+                if (idToken.isNullOrBlank()) {
+                    viewModel.onGoogleSignInFailed("Missing Google ID token")
+                } else {
+                    viewModel.signInWithGoogle(idToken)
+                }
+            } catch (error: ApiException) {
+                viewModel.onGoogleSignInFailed(
+                    error.localizedMessage ?: "Google sign-in failed (${error.statusCode})"
+                )
+            }
+        } else {
+            // Try to extract the real Google error even when resultCode != OK
+            try {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                task.getResult(ApiException::class.java)
+                viewModel.onGoogleSignInFailed("Sign-in cancelled (code ${result.resultCode})")
+            } catch (error: ApiException) {
+                viewModel.onGoogleSignInFailed(
+                    "Google error ${error.statusCode}: ${error.localizedMessage}"
+                )
             }
         }
     }
@@ -121,7 +137,7 @@ fun AuthScreen(
                 if (uiState.errorMessage != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = stringResource(R.string.auth_error_generic),
+                        text = uiState.errorMessage ?: stringResource(R.string.auth_error_generic),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center,

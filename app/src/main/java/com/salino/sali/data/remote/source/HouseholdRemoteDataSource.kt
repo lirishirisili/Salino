@@ -83,4 +83,23 @@ class HouseholdRemoteDataSource @Inject constructor(
     }
 
     private fun generateInviteCode(): String = UUID.randomUUID().toString().take(8).uppercase()
+
+    suspend fun updateHouseholdName(householdId: String, newName: String) {
+        firestore.collection("households").document(householdId)
+            .update("name", newName.trim())
+            .await()
+    }
+
+    suspend fun leaveHousehold(householdId: String, userId: String) {
+        firestore.runBatch { batch ->
+            batch.delete(
+                firestore.collection("households").document(householdId)
+                    .collection("members").document(userId)
+            )
+            batch.update(
+                firestore.collection("users").document(userId),
+                "activeHouseholdId", null
+            )
+        }.await()
+    }
 }

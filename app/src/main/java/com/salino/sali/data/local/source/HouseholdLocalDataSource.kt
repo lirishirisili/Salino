@@ -40,4 +40,15 @@ class HouseholdLocalDataSource @Inject constructor(
             database.householdMemberDao().upsertMembers(members.map { it.toEntity(householdId) })
         }
     }
+
+    suspend fun clearHouseholdData(householdId: String) {
+        database.withTransaction {
+            database.shoppingItemDao().deleteAllForHousehold(householdId)
+            database.activityLogDao().deleteAllForHousehold(householdId)
+            database.recurringItemDao().deleteAllForHousehold(householdId)
+            database.pendingSyncOperationDao().deleteAllForHousehold(householdId)
+            database.householdMemberDao().deleteMembersForHousehold(householdId)
+            database.householdDao().deleteHousehold(householdId)
+        }
+    }
 }

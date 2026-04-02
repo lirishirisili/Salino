@@ -64,8 +64,12 @@ class ShoppingListViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            val user = authRepository.observeCurrentUser().first()
-            if (user == null || user.activeHouseholdId.isNullOrBlank()) {
+            // filterNotNull: after fresh sign-in the first Firestore emission
+            // can be null until the auth token propagates — skip it.
+            val user = authRepository.observeCurrentUser()
+                .filterNotNull()
+                .first()
+            if (user.activeHouseholdId.isNullOrBlank()) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 return@launch
             }
@@ -95,6 +99,10 @@ class ShoppingListViewModel @Inject constructor(
                     _uiState.update { it.copy(suggestions = suggestions) }
                 }
             }
+
+            // Force fresh Firestore listeners after sign-in to pick up
+            // the latest auth token and avoid stale/empty results.
+            shoppingRepository.forceRefreshSync(householdId)
         }
     }
 

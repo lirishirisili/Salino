@@ -19,4 +19,7 @@ interface PendingSyncOperationDao {
 
     @Query("SELECT targetId FROM pending_sync_operations WHERE householdId = :householdId AND targetType = :targetType")
     suspend fun getPendingTargetIds(householdId: String, targetType: String): List<String>
+
+    @Query("DELETE FROM pending_sync_operations WHERE householdId = :householdId")
+    suspend fun deleteAllForHousehold(householdId: String)
 }
