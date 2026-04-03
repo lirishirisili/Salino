@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HaserLi</string>
+    <string name="app_name">Haserli</string>
     <string name="brand_tagline">Lista compartida, compras sin estrés</string>
     <string name="shopping_list_live_badge">Sincronizada para todos en casa</string>
     <string name="shopping_list_live_badge_full">Sincronizada para todos en casa en tiempo real</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">Tu hogar, organizado juntos</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">Bienvenido a HaserLi</string>
+    <string name="auth_welcome_title">Bienvenido a Haserli</string>
     <string name="auth_welcome_subtitle">Tu lista de compras compartida</string>
     <string name="auth_sign_in_google">Iniciar sesión con Google</string>
     <string name="auth_signing_in">Iniciando sesión…</string>
@@ -142,9 +142,9 @@
     <string name="settings_edit_household_name">Editar nombre del hogar</string>
     <string name="settings_leave_household">Abandonar hogar</string>
     <string name="settings_leave_household_confirm">¿Seguro que quieres abandonar este hogar? Siempre puedes volver con un código de invitación o crear uno nuevo.</string>
-    <string name="settings_share_invite_message">¡Únete a mi hogar en HaserLi! Usa este código de invitación: %1$s</string>
+    <string name="settings_share_invite_message">¡Únete a mi hogar en Haserli! Usa este código de invitación: %1$s</string>
     <string name="settings_sign_out">Cerrar sesión</string>
-    <string name="settings_sign_out_confirm">¿Cerrar sesión en HaserLi?</string>
+    <string name="settings_sign_out_confirm">¿Cerrar sesión en Haserli?</string>
     <string name="settings_version">Versión %1$s</string>
 
     <!-- General -->

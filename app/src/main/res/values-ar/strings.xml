@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HaserLi</string>
+    <string name="app_name">Haserli</string>
     <string name="brand_tagline">قائمة مشتركة، تسوّق بلا فوضى</string>
     <string name="shopping_list_live_badge">متزامنة لكل أفراد البيت</string>
     <string name="shopping_list_live_badge_full">متزامنة لكل أفراد البيت في الوقت الفعلي</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">بيتك، منظّم معاً</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">مرحباً بك في HaserLi</string>
+    <string name="auth_welcome_title">مرحباً بك في Haserli</string>
     <string name="auth_welcome_subtitle">قائمة التسوّق المشتركة</string>
     <string name="auth_sign_in_google">تسجيل الدخول بحساب Google</string>
     <string name="auth_signing_in">جارٍ تسجيل الدخول…</string>
@@ -142,9 +142,9 @@
     <string name="settings_edit_household_name">تعديل اسم البيت</string>
     <string name="settings_leave_household">مغادرة البيت</string>
     <string name="settings_leave_household_confirm">هل أنت متأكد من مغادرة هذا البيت؟ يمكنك العودة في أي وقت برمز دعوة أو إنشاء بيت جديد.</string>
-    <string name="settings_share_invite_message">انضم إلى بيتي في HaserLi! استخدم رمز الدعوة: %1$s</string>
+    <string name="settings_share_invite_message">انضم إلى بيتي في Haserli! استخدم رمز الدعوة: %1$s</string>
     <string name="settings_sign_out">تسجيل الخروج</string>
-    <string name="settings_sign_out_confirm">تسجيل الخروج من HaserLi؟</string>
+    <string name="settings_sign_out_confirm">تسجيل الخروج من Haserli؟</string>
     <string name="settings_version">الإصدار %1$s</string>
 
     <!-- General -->

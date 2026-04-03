@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HaserLi</string>
+    <string name="app_name">Haserli</string>
     <string name="brand_tagline">Liste partagée, courses sans prise de tête</string>
     <string name="shopping_list_live_badge">Synchronisée pour toute la maison</string>
     <string name="shopping_list_live_badge_full">Synchronisée pour toute la maison en temps réel</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">Votre foyer, organisé ensemble</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">Bienvenue sur HaserLi</string>
+    <string name="auth_welcome_title">Bienvenue sur Haserli</string>
     <string name="auth_welcome_subtitle">Votre liste de courses partagée</string>
     <string name="auth_sign_in_google">Se connecter avec Google</string>
     <string name="auth_signing_in">Connexion en cours…</string>
@@ -142,9 +142,9 @@
     <string name="settings_edit_household_name">Modifier le nom du foyer</string>
     <string name="settings_leave_household">Quitter le foyer</string>
     <string name="settings_leave_household_confirm">Voulez-vous vraiment quitter ce foyer ? Vous pourrez toujours revenir avec un code d\'invitation ou en créer un nouveau.</string>
-    <string name="settings_share_invite_message">Rejoignez mon foyer sur HaserLi ! Utilisez le code d\'invitation : %1$s</string>
+    <string name="settings_share_invite_message">Rejoignez mon foyer sur Haserli ! Utilisez le code d\'invitation : %1$s</string>
     <string name="settings_sign_out">Se déconnecter</string>
-    <string name="settings_sign_out_confirm">Se déconnecter de HaserLi ?</string>
+    <string name="settings_sign_out_confirm">Se déconnecter de Haserli ?</string>
     <string name="settings_version">Version %1$s</string>
 
     <!-- General -->

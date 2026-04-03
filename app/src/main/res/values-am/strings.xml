@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HaserLi</string>
+    <string name="app_name">Haserli</string>
     <string name="brand_tagline">የጋራ ዝርዝር፣ ግዢ ያለ ችግር</string>
     <string name="shopping_list_live_badge">ለቤተሰብ ሁሉ ይመሳሰላል</string>
     <string name="shopping_list_live_badge_full">ለቤተሰብ ሁሉ በቀጥታ ይመሳሰላል</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">ቤትዎ፣ በጋራ የተደራጀ</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">ወደ HaserLi እንኳን በደህና መጡ</string>
+    <string name="auth_welcome_title">ወደ Haserli እንኳን በደህና መጡ</string>
     <string name="auth_welcome_subtitle">የጋራ ግዢ ዝርዝርዎ</string>
     <string name="auth_sign_in_google">በ Google ይግቡ</string>
     <string name="auth_signing_in">በመግባት ላይ…</string>
@@ -142,9 +142,9 @@
     <string name="settings_edit_household_name">የቤት ስም ያርትዑ</string>
     <string name="settings_leave_household">ቤቱን ይልቀቁ</string>
     <string name="settings_leave_household_confirm">ይህን ቤት መልቀቅ ይፈልጋሉ? ሁልጊዜ በግብዣ ኮድ መመለስ ወይም አዲስ መፍጠር ይችላሉ።</string>
-    <string name="settings_share_invite_message">በ HaserLi ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ %1$s</string>
+    <string name="settings_share_invite_message">በ Haserli ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ %1$s</string>
     <string name="settings_sign_out">ይውጡ</string>
-    <string name="settings_sign_out_confirm">ከ HaserLi ይውጡ?</string>
+    <string name="settings_sign_out_confirm">ከ Haserli ይውጡ?</string>
     <string name="settings_version">ስሪት %1$s</string>
 
     <!-- General -->

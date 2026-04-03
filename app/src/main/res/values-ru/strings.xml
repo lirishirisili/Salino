@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HaserLi</string>
+    <string name="app_name">Haserli</string>
     <string name="brand_tagline">Общий список, покупки без хаоса</string>
     <string name="shopping_list_live_badge">Синхронизируется для всех дома</string>
     <string name="shopping_list_live_badge_full">Синхронизируется для всех дома в реальном времени</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">Ваш дом, всё организовано вместе</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">Добро пожаловать в HaserLi</string>
+    <string name="auth_welcome_title">Добро пожаловать в Haserli</string>
     <string name="auth_welcome_subtitle">Ваш общий список покупок</string>
     <string name="auth_sign_in_google">Войти через Google</string>
     <string name="auth_signing_in">Вход…</string>
@@ -142,9 +142,9 @@
     <string name="settings_edit_household_name">Изменить название дома</string>
     <string name="settings_leave_household">Покинуть дом</string>
     <string name="settings_leave_household_confirm">Вы уверены, что хотите покинуть этот дом? Вы всегда сможете вернуться по коду приглашения или создать новый дом.</string>
-    <string name="settings_share_invite_message">Присоединяйтесь к моему дому в HaserLi! Используйте код приглашения: %1$s</string>
+    <string name="settings_share_invite_message">Присоединяйтесь к моему дому в Haserli! Используйте код приглашения: %1$s</string>
     <string name="settings_sign_out">Выйти</string>
-    <string name="settings_sign_out_confirm">Выйти из HaserLi?</string>
+    <string name="settings_sign_out_confirm">Выйти из Haserli?</string>
     <string name="settings_version">Версия %1$s</string>
 
     <!-- General -->
