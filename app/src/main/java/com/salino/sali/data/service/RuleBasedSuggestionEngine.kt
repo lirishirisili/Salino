@@ -20,7 +20,7 @@ class RuleBasedSuggestionEngine @Inject constructor() : SuggestionEngine {
         val suggestions = linkedMapOf<String, SuggestionItem>()
 
         recurringItems
-            .filter { it.enabled && (it.nextDueAt == null || it.nextDueAt!!.toDate().time <= nowMillis) }
+            .filter { it.enabled && (it.nextDueAt == null || it.nextDueAt.toDate().time <= nowMillis) }
             .forEach { recurring ->
                 val normalizedName = recurring.normalizedName.ifBlank { normalizeItemName(recurring.name) }
                 if (normalizedName !in activeNames) {

@@ -38,6 +38,13 @@ fun Timestamp?.toEpochMillis(): Long? = this?.toDate()?.time
 fun Long?.toTimestamp(): Timestamp? = this?.let { Timestamp(Date(it)) }
 
 /**
+ * Parse a quantity string that may use either comma or dot as decimal separator.
+ */
+fun parseQuantity(value: String): Double? {
+    return value.replace(',', '.').toDoubleOrNull()
+}
+
+/**
  * Format quantity for display, removing unnecessary decimals.
  */
 fun formatQuantity(quantity: Double): String {

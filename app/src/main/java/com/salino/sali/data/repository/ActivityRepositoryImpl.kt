@@ -41,6 +41,11 @@ class ActivityRepositoryImpl @Inject constructor(
         syncQueueProcessor.flush(householdId)
     }
 
+    override fun clearListeners() {
+        listeners.values.forEach { it.remove() }
+        listeners.clear()
+    }
+
     private fun ensureRemoteSync(householdId: String) {
         if (listeners.containsKey(householdId)) return
         listeners[householdId] = activityRemoteDataSource.listenToActivity(householdId) { logs ->

@@ -72,12 +72,14 @@ class SupermarketModeViewModel @Inject constructor(
 
     fun markAsBought(itemId: String) {
         viewModelScope.launch {
-            shoppingRepository.markAsBought(
-                householdId = householdId,
-                itemId = itemId,
-                userId = _uiState.value.currentUserId,
-                userName = _uiState.value.currentUserName
-            )
+            runCatching {
+                shoppingRepository.markAsBought(
+                    householdId = householdId,
+                    itemId = itemId,
+                    userId = _uiState.value.currentUserId,
+                    userName = _uiState.value.currentUserName
+                )
+            }
         }
     }
 }

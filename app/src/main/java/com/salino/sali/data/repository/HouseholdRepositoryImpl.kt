@@ -94,6 +94,13 @@ class HouseholdRepositoryImpl @Inject constructor(
         localDataSource.clearHouseholdData(householdId)
     }
 
+    override fun clearListeners() {
+        householdListeners.values.forEach { it.remove() }
+        householdListeners.clear()
+        memberListeners.values.forEach { it.remove() }
+        memberListeners.clear()
+    }
+
     private fun ensureHouseholdSync(householdId: String) {
         if (householdListeners.containsKey(householdId)) return
         householdListeners[householdId] = remoteDataSource.listenToHousehold(householdId) { household ->

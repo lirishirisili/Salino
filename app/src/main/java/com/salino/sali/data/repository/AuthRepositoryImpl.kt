@@ -6,10 +6,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.salino.sali.data.local.SalinoDatabase
 import com.salino.sali.data.model.User
 import com.salino.sali.domain.repository.AuthRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -61,7 +63,8 @@ class AuthRepositoryImpl @Inject constructor(
         val snapshot = userDoc.get().await()
 
         if (snapshot.exists()) {
-            snapshot.toObject(User::class.java)!!.copy(id = userId)
+            snapshot.toObject(User::class.java)?.copy(id = userId)
+                ?: throw IllegalStateException("Cannot deserialize user")
         } else {
             val newUser = User(
                 id = userId,
@@ -75,7 +78,9 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun signOut() {
-        database.clearAllTables()
+        withContext(Dispatchers.IO) {
+            database.clearAllTables()
+        }
         auth.signOut()
     }
 }

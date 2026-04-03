@@ -16,6 +16,7 @@ import com.salino.sali.domain.service.DuplicateDetector
 import com.salino.sali.domain.service.DuplicateMatch
 import com.salino.sali.util.Constants
 import com.salino.sali.util.normalizeItemName
+import com.salino.sali.util.parseQuantity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,7 +85,8 @@ class EditItemViewModel @Inject constructor(
     }
 
     fun onQuantityChange(value: String) {
-        _uiState.update { it.copy(quantity = value) }
+        val filtered = value.filter { it.isDigit() || it == '.' || it == ',' }
+        _uiState.update { it.copy(quantity = filtered) }
     }
 
     fun onUnitChange(value: ItemUnit?) {
@@ -114,12 +116,14 @@ class EditItemViewModel @Inject constructor(
         val current = originalItem ?: return
 
         viewModelScope.launch {
-            shoppingRepository.updateItem(
-                householdId,
-                duplicate.item.copy(quantity = duplicate.item.quantity + (state.quantity.toDoubleOrNull() ?: 1.0))
-            )
-            shoppingRepository.deleteItem(householdId, current.id)
-            saveRecurringPreference(current.name)
+            runCatching {
+                shoppingRepository.updateItem(
+                    householdId,
+                    duplicate.item.copy(quantity = duplicate.item.quantity + (parseQuantity(state.quantity) ?: 1.0))
+                )
+                shoppingRepository.deleteItem(householdId, current.id)
+                saveRecurringPreference(current.name)
+            }
             _uiState.update { it.copy(isDeleted = true) }
         }
     }
@@ -137,7 +141,7 @@ class EditItemViewModel @Inject constructor(
             val updatedItem = originalItem?.copy(
                 name = state.name.trim(),
                 normalizedName = normalizeItemName(state.name),
-                quantity = state.quantity.toDoubleOrNull() ?: 1.0,
+                quantity = parseQuantity(state.quantity) ?: 1.0,
                 unit = state.unit?.name,
                 category = state.category.name,
                 note = state.note.trim()
@@ -226,7 +230,7 @@ class EditItemViewModel @Inject constructor(
                         householdId = householdId,
                         name = name.trim(),
                         normalizedName = normalizeItemName(name),
-                        quantity = state.quantity.toDoubleOrNull() ?: 1.0,
+                        quantity = parseQuantity(state.quantity) ?: 1.0,
                         unit = state.unit?.name,
                         category = state.category.name,
                         note = state.note.trim(),

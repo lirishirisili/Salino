@@ -15,4 +15,5 @@ interface ShoppingRepository {
     suspend fun getItem(householdId: String, itemId: String): Result<ShoppingItem>
     suspend fun flushPendingSync(householdId: String): Result<Unit>
     fun forceRefreshSync(householdId: String)
+    fun clearListeners()
 }

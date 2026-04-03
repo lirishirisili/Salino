@@ -5,13 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.salino.sali.data.model.Household
 import com.salino.sali.data.model.HouseholdMember
 import com.salino.sali.data.model.User
+import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.domain.repository.HouseholdRepository
+import com.salino.sali.domain.repository.RecurringRepository
+import com.salino.sali.domain.repository.ShoppingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,7 +33,10 @@ data class SettingsState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val householdRepository: HouseholdRepository
+    private val householdRepository: HouseholdRepository,
+    private val shoppingRepository: ShoppingRepository,
+    private val recurringRepository: RecurringRepository,
+    private val activityRepository: ActivityRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -43,7 +48,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            val user = authRepository.observeCurrentUser().filterNotNull().first()
+            val user = authRepository.observeCurrentUser().first() ?: return@launch
             val householdId = user.activeHouseholdId
 
             _uiState.value = _uiState.value.copy(user = user)
@@ -72,6 +77,10 @@ class SettingsViewModel @Inject constructor(
 
     fun signOut() {
         viewModelScope.launch {
+            shoppingRepository.clearListeners()
+            recurringRepository.clearListeners()
+            activityRepository.clearListeners()
+            householdRepository.clearListeners()
             authRepository.signOut()
             _uiState.value = _uiState.value.copy(isSignedOut = true)
         }

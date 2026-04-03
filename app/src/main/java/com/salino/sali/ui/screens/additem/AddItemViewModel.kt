@@ -16,6 +16,7 @@ import com.salino.sali.domain.service.CategoryAutoDetector
 import com.salino.sali.domain.service.DuplicateDetector
 import com.salino.sali.domain.service.DuplicateMatch
 import com.salino.sali.util.normalizeItemName
+import com.salino.sali.util.parseQuantity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,7 +83,8 @@ class AddItemViewModel @Inject constructor(
     }
 
     fun onQuantityChange(value: String) {
-        _uiState.update { it.copy(quantity = value) }
+        val filtered = value.filter { it.isDigit() || it == '.' || it == ',' }
+        _uiState.update { it.copy(quantity = filtered) }
     }
 
     fun onUnitChange(value: ItemUnit?) {
@@ -104,11 +106,6 @@ class AddItemViewModel @Inject constructor(
 
     fun onRecurrenceDaysChange(value: String) {
         _uiState.update { it.copy(recurrenceDays = value.filter(Char::isDigit)) }
-    }
-
-    fun applyVoiceText(value: String) {
-        _uiState.update { it.copy(name = value) }
-        recomputeDuplicate()
     }
 
     fun applySuggestion(suggestion: SuggestionItem) {
@@ -135,12 +132,14 @@ class AddItemViewModel @Inject constructor(
         val duplicate = state.duplicateMatch ?: return
 
         viewModelScope.launch {
-            val mergedItem = duplicate.item.copy(
-                quantity = duplicate.item.quantity + (state.quantity.toDoubleOrNull() ?: 1.0),
-                note = duplicate.item.note.ifBlank { state.note.trim() }
-            )
-            shoppingRepository.updateItem(householdId, mergedItem)
-            saveRecurringTemplateIfNeeded(state, mergedItem)
+            runCatching {
+                val mergedItem = duplicate.item.copy(
+                    quantity = duplicate.item.quantity + (parseQuantity(state.quantity) ?: 1.0),
+                    note = duplicate.item.note.ifBlank { state.note.trim() }
+                )
+                shoppingRepository.updateItem(householdId, mergedItem)
+                saveRecurringTemplateIfNeeded(state, mergedItem)
+            }
             _uiState.update { it.copy(isSaved = true, isLoading = false) }
         }
     }
@@ -163,7 +162,7 @@ class AddItemViewModel @Inject constructor(
             val item = ShoppingItem(
                 name = state.name.trim(),
                 normalizedName = normalizeItemName(state.name),
-                quantity = state.quantity.toDoubleOrNull() ?: 1.0,
+                quantity = parseQuantity(state.quantity) ?: 1.0,
                 unit = state.unit?.name,
                 category = state.category.name,
                 note = state.note.trim(),

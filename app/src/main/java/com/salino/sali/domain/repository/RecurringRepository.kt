@@ -11,4 +11,5 @@ interface RecurringRepository {
     suspend fun findByNormalizedName(householdId: String, normalizedName: String): Result<RecurringItem?>
     suspend fun updateNextDueDate(householdId: String, normalizedName: String, completedAtMillis: Long): Result<Unit>
     suspend fun flushPendingSync(householdId: String): Result<Unit>
+    fun clearListeners()
 }

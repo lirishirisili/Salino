@@ -13,4 +13,5 @@ interface HouseholdRepository {
     suspend fun getInviteCode(householdId: String): Result<String>
     suspend fun updateHouseholdName(householdId: String, newName: String): Result<Unit>
     suspend fun leaveHousehold(householdId: String): Result<Unit>
+    fun clearListeners()
 }

@@ -64,11 +64,7 @@ class ShoppingListViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            // filterNotNull: after fresh sign-in the first Firestore emission
-            // can be null until the auth token propagates — skip it.
-            val user = authRepository.observeCurrentUser()
-                .filterNotNull()
-                .first()
+            val user = authRepository.observeCurrentUser().first() ?: return@launch
             if (user.activeHouseholdId.isNullOrBlank()) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 return@launch
@@ -119,55 +115,59 @@ class ShoppingListViewModel @Inject constructor(
     fun markAsBought(itemId: String) {
         viewModelScope.launch {
             val state = _uiState.value
-            shoppingRepository.markAsBought(
-                householdId = householdId,
-                itemId = itemId,
-                userId = state.currentUserId,
-                userName = state.currentUserName
-            )
+            runCatching {
+                shoppingRepository.markAsBought(
+                    householdId = householdId,
+                    itemId = itemId,
+                    userId = state.currentUserId,
+                    userName = state.currentUserName
+                )
+            }
         }
     }
 
     fun markAsActive(itemId: String) {
         viewModelScope.launch {
-            shoppingRepository.markAsActive(householdId, itemId)
+            runCatching { shoppingRepository.markAsActive(householdId, itemId) }
         }
     }
 
     fun deleteItem(itemId: String) {
         viewModelScope.launch {
-            shoppingRepository.deleteItem(householdId, itemId)
+            runCatching { shoppingRepository.deleteItem(householdId, itemId) }
         }
     }
 
     fun addSuggestion(suggestion: SuggestionItem) {
         val state = _uiState.value
         viewModelScope.launch {
-            shoppingRepository.addItem(
-                householdId = householdId,
-                item = ShoppingItem(
-                    name = suggestion.name,
-                    normalizedName = suggestion.normalizedName,
-                    quantity = suggestion.quantity,
-                    unit = suggestion.unit,
-                    category = suggestion.category,
-                    note = suggestion.note,
-                    addedBy = state.currentUserId,
-                    addedByName = state.currentUserName
-                )
-            )
-
-            activityRepository.logActivity(
-                ActivityLog(
-                    id = UUID.randomUUID().toString(),
+            runCatching {
+                shoppingRepository.addItem(
                     householdId = householdId,
-                    type = ActivityType.SUGGESTION_ACCEPTED.name,
-                    itemName = suggestion.name,
-                    actorUserId = state.currentUserId,
-                    actorDisplayName = state.currentUserName,
-                    createdAt = Timestamp.now()
+                    item = ShoppingItem(
+                        name = suggestion.name,
+                        normalizedName = suggestion.normalizedName,
+                        quantity = suggestion.quantity,
+                        unit = suggestion.unit,
+                        category = suggestion.category,
+                        note = suggestion.note,
+                        addedBy = state.currentUserId,
+                        addedByName = state.currentUserName
+                    )
                 )
-            )
+
+                activityRepository.logActivity(
+                    ActivityLog(
+                        id = UUID.randomUUID().toString(),
+                        householdId = householdId,
+                        type = ActivityType.SUGGESTION_ACCEPTED.name,
+                        itemName = suggestion.name,
+                        actorUserId = state.currentUserId,
+                        actorDisplayName = state.currentUserName,
+                        createdAt = Timestamp.now()
+                    )
+                )
+            }
         }
     }
 

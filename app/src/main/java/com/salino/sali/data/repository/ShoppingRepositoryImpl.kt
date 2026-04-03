@@ -209,6 +209,11 @@ class ShoppingRepositoryImpl @Inject constructor(
         registerListener(householdId)
     }
 
+    override fun clearListeners() {
+        itemListeners.values.forEach { it.remove() }
+        itemListeners.clear()
+    }
+
     private fun registerListener(householdId: String) {
         itemListeners[householdId] = shoppingRemoteDataSource.listenToItems(householdId) { items ->
             scope.launch {

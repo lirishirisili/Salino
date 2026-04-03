@@ -82,9 +82,9 @@ class HistoryViewModel @Inject constructor(
 
     fun returnToList(itemId: String) {
         viewModelScope.launch {
-            val user = authRepository.observeCurrentUser().filterNotNull().first()
+            val user = authRepository.observeCurrentUser().first() ?: return@launch
             val householdId = user.activeHouseholdId ?: return@launch
-            shoppingRepository.markAsActive(householdId, itemId)
+            runCatching { shoppingRepository.markAsActive(householdId, itemId) }
         }
     }
 }
