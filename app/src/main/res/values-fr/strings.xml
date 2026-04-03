@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HaserLi</string>
+    <string name="brand_tagline">Liste partagée, courses sans prise de tête</string>
+    <string name="shopping_list_live_badge">Synchronisée pour toute la maison</string>
+    <string name="shopping_list_live_badge_full">Synchronisée pour toute la maison en temps réel</string>
+    <string name="shopping_list_count">%1$d articles à acheter</string>
+    <string name="household_create_hint">Créez une seule liste pour toute la maison</string>
+    <string name="household_join_hint">Utilisez un code d\'invitation et rejoignez</string>
+    <string name="settings_profile_badge">Votre foyer, organisé ensemble</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">Bienvenue sur HaserLi</string>
+    <string name="auth_welcome_subtitle">Votre liste de courses partagée</string>
+    <string name="auth_sign_in_google">Se connecter avec Google</string>
+    <string name="auth_signing_in">Connexion en cours…</string>
+    <string name="auth_error_generic">Une erreur est survenue. Réessayez.</string>
+
+    <!-- Household Setup -->
+    <string name="household_setup_title">Configurer votre foyer</string>
+    <string name="household_setup_subtitle">Créez un nouveau foyer ou rejoignez-en un</string>
+    <string name="household_create">Créer un foyer</string>
+    <string name="household_join">Rejoindre un foyer</string>
+    <string name="household_name_label">Nom du foyer</string>
+    <string name="household_name_hint">Ex : Famille Dupont, Appt 4B</string>
+    <string name="household_invite_code_label">Code d\'invitation</string>
+    <string name="household_invite_code_hint">Collez le code reçu</string>
+    <string name="household_create_button">Créer</string>
+    <string name="household_join_button">Rejoindre</string>
+    <string name="household_creating">Création du foyer…</string>
+    <string name="household_joining">Connexion au foyer…</string>
+    <string name="household_error_empty_name">Entrez un nom pour votre foyer</string>
+    <string name="household_error_empty_code">Entrez un code d\'invitation</string>
+    <string name="household_error_invalid_code">Code invalide. Vérifiez et réessayez.</string>
+    <string name="household_error_generic">Une erreur est survenue. Réessayez.</string>
+    <string name="household_invite_code_title">Votre code d\'invitation</string>
+    <string name="household_invite_code_share">Partagez ce code avec les membres de votre foyer :</string>
+    <string name="household_invite_code_copied">Code copié !</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_list_title">Qu\'est-ce qui manque ?</string>
+    <string name="shopping_list_search_hint">Rechercher des articles…</string>
+    <string name="shopping_list_empty_title">Rien à acheter pour le moment</string>
+    <string name="shopping_list_empty_subtitle">Ajoutez quelque chose qui manque</string>
+    <string name="shopping_list_active_section">À acheter</string>
+    <string name="shopping_list_bought_section">Déjà acheté</string>
+    <string name="shopping_list_added_by">Ajouté par %1$s</string>
+    <string name="shopping_list_bought_by">Acheté par %1$s</string>
+    <string name="shopping_list_mark_bought">Marquer comme acheté</string>
+    <string name="shopping_list_undo_bought">Remettre dans la liste</string>
+    <string name="shopping_list_delete">Supprimer</string>
+    <string name="shopping_list_delete_confirm">Supprimer cet article ?</string>
+
+    <!-- Add / Edit Item -->
+    <string name="add_item_title">Ajouter un article</string>
+    <string name="edit_item_title">Modifier l\'article</string>
+    <string name="item_name_label">De quoi avez-vous besoin ?</string>
+    <string name="item_name_hint">Ex : Lait, Pain, Savon</string>
+    <string name="item_quantity_label">Quantité</string>
+    <string name="item_unit_label">Unité</string>
+    <string name="item_category_label">Catégorie</string>
+    <string name="item_note_label">Note</string>
+    <string name="item_note_hint">Détails supplémentaires…</string>
+    <string name="item_save">Enregistrer</string>
+    <string name="item_add">Ajouter</string>
+    <string name="item_error_empty_name">Entrez un nom d\'article</string>
+    <string name="item_saving">Enregistrement…</string>
+    <string name="duplicate_warning_title">Cet article semble déjà dans la liste</string>
+    <string name="duplicate_merge_action">Augmenter la quantité existante</string>
+    <string name="suggestions_title">Suggestions intelligentes</string>
+    <string name="suggestions_subtitle_home">Basées sur les achats fréquents de votre foyer</string>
+    <string name="suggestions_subtitle_add">Appuyez pour remplir rapidement</string>
+    <string name="recurring_toggle_title">Article récurrent</string>
+    <string name="recurring_toggle_subtitle">Réapparaîtra automatiquement quand ce sera le moment</string>
+    <string name="recurring_every_days_label">Répéter tous les X jours</string>
+    <string name="voice_input_action">Saisie vocale</string>
+    <string name="voice_input_prompt">Dites ce dont vous avez besoin</string>
+    <string name="voice_input_unavailable">La reconnaissance vocale n\'est pas disponible sur cet appareil</string>
+    <string name="voice_input_permission_denied">L\'accès au microphone est nécessaire pour la saisie vocale</string>
+
+    <!-- Categories -->
+    <string name="category_all">Tout</string>
+    <string name="category_dairy">Produits laitiers</string>
+    <string name="category_vegetables">Légumes</string>
+    <string name="category_fruits">Fruits</string>
+    <string name="category_meat_fish">Viande et poisson</string>
+    <string name="category_bakery">Boulangerie</string>
+    <string name="category_cleaning">Nettoyage</string>
+    <string name="category_pantry">Épicerie</string>
+    <string name="category_snacks">Snacks</string>
+    <string name="category_beverages">Boissons</string>
+    <string name="category_pharmacy">Pharmacie et hygiène</string>
+    <string name="category_other">Autre</string>
+    <string name="category_auto_detected">Détecté automatiquement : %1$s</string>
+
+    <!-- Units -->
+    <string name="unit_pieces">pcs</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_grams">g</string>
+    <string name="unit_liters">L</string>
+    <string name="unit_packs">paquets</string>
+    <string name="unit_bottles">bouteilles</string>
+    <string name="unit_bags">sachets</string>
+
+    <!-- History -->
+    <string name="history_title">Achats récents</string>
+    <string name="history_empty_title">Aucun achat pour l\'instant</string>
+    <string name="history_empty_subtitle">Les articles achetés apparaîtront ici</string>
+    <string name="history_items_count">%1$d articles</string>
+
+    <!-- Activity Feed -->
+    <string name="activity_feed_title">Activité du foyer</string>
+    <string name="activity_feed_empty_title">Aucune activité pour l\'instant</string>
+    <string name="activity_feed_empty_subtitle">Les changements de tous les membres apparaîtront ici</string>
+    <string name="activity_type_item_added">Article ajouté</string>
+    <string name="activity_type_item_updated">Article mis à jour</string>
+    <string name="activity_type_item_bought">Article marqué comme acheté</string>
+    <string name="activity_type_item_restored">Article remis dans la liste</string>
+    <string name="activity_type_item_deleted">Article supprimé</string>
+    <string name="activity_type_recurring_created">Article récurrent créé</string>
+    <string name="activity_type_recurring_updated">Article récurrent mis à jour</string>
+    <string name="activity_type_suggestion_accepted">Suggestion acceptée</string>
+
+    <!-- Supermarket Mode -->
+    <string name="supermarket_mode_title">Je suis au supermarché</string>
+    <string name="supermarket_mode_short">En magasin</string>
+    <string name="supermarket_mode_empty_title">Tout est déjà fait</string>
+    <string name="supermarket_mode_empty_subtitle">Aucun article en attente d\'achat</string>
+    <string name="supermarket_mode_empty_pharmacy">Aucun article de pharmacie dans votre liste</string>
+    <string name="supermarket_mode_remaining">%1$d restant(s) à prendre</string>
+    <string name="supermarket_mode_filter_pharmacy">Afficher uniquement pharmacie et hygiène</string>
+    <string name="supermarket_mode_filter_all">Afficher tous les articles</string>
+    <string name="supermarket_mode_filter_active">Filtre actif : pharmacie et hygiène uniquement</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_household_section">Foyer</string>
+    <string name="settings_household_name">Nom du foyer</string>
+    <string name="settings_invite_code">Code d\'invitation</string>
+    <string name="settings_members">Membres</string>
+    <string name="settings_account_section">Compte</string>
+    <string name="settings_edit_household_name">Modifier le nom du foyer</string>
+    <string name="settings_leave_household">Quitter le foyer</string>
+    <string name="settings_leave_household_confirm">Voulez-vous vraiment quitter ce foyer ? Vous pourrez toujours revenir avec un code d\'invitation ou en créer un nouveau.</string>
+    <string name="settings_share_invite_message">Rejoignez mon foyer sur HaserLi ! Utilisez le code d\'invitation : %1$s</string>
+    <string name="settings_sign_out">Se déconnecter</string>
+    <string name="settings_sign_out_confirm">Se déconnecter de HaserLi ?</string>
+    <string name="settings_version">Version %1$s</string>
+
+    <!-- General -->
+    <string name="ok">OK</string>
+    <string name="cancel">Annuler</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="retry">Réessayer</string>
+    <string name="copy">Copier</string>
+    <string name="share">Partager</string>
+    <string name="loading">Chargement…</string>
+    <string name="error_no_connection">Pas de connexion Internet</string>
+    <string name="error_generic">Une erreur est survenue</string>
+</resources>

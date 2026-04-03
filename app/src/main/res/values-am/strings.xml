@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HaserLi</string>
+    <string name="brand_tagline">የጋራ ዝርዝር፣ ግዢ ያለ ችግር</string>
+    <string name="shopping_list_live_badge">ለቤተሰብ ሁሉ ይመሳሰላል</string>
+    <string name="shopping_list_live_badge_full">ለቤተሰብ ሁሉ በቀጥታ ይመሳሰላል</string>
+    <string name="shopping_list_count">%1$d ዕቃዎች ያስፈልጋሉ</string>
+    <string name="household_create_hint">ለመላው ቤት አንድ ዝርዝር ይፍጠሩ</string>
+    <string name="household_join_hint">የግብዣ ኮድ ተጠቀሙ እና ይቀላቀሉ</string>
+    <string name="settings_profile_badge">ቤትዎ፣ በጋራ የተደራጀ</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">ወደ HaserLi እንኳን በደህና መጡ</string>
+    <string name="auth_welcome_subtitle">የጋራ ግዢ ዝርዝርዎ</string>
+    <string name="auth_sign_in_google">በ Google ይግቡ</string>
+    <string name="auth_signing_in">በመግባት ላይ…</string>
+    <string name="auth_error_generic">ችግር ተፈጥሯል። እንደገና ይሞክሩ።</string>
+
+    <!-- Household Setup -->
+    <string name="household_setup_title">ቤትዎን ያዋቅሩ</string>
+    <string name="household_setup_subtitle">አዲስ ቤት ይፍጠሩ ወይም ያለውን ይቀላቀሉ</string>
+    <string name="household_create">ቤት ይፍጠሩ</string>
+    <string name="household_join">ቤት ይቀላቀሉ</string>
+    <string name="household_name_label">የቤት ስም</string>
+    <string name="household_name_hint">ለምሳሌ፡ የአህመድ ቤተሰብ፣ ክፍል 4</string>
+    <string name="household_invite_code_label">የግብዣ ኮድ</string>
+    <string name="household_invite_code_hint">የተቀበሉትን ኮድ ይለጥፉ</string>
+    <string name="household_create_button">ይፍጠሩ</string>
+    <string name="household_join_button">ይቀላቀሉ</string>
+    <string name="household_creating">ቤት በመፍጠር ላይ…</string>
+    <string name="household_joining">በመቀላቀል ላይ…</string>
+    <string name="household_error_empty_name">ለቤትዎ ስም ያስገቡ</string>
+    <string name="household_error_empty_code">የግብዣ ኮድ ያስገቡ</string>
+    <string name="household_error_invalid_code">ልክ ያልሆነ ኮድ። ይፈትሹ እና እንደገና ይሞክሩ።</string>
+    <string name="household_error_generic">ችግር ተፈጥሯል። እንደገና ይሞክሩ።</string>
+    <string name="household_invite_code_title">የግብዣ ኮድዎ</string>
+    <string name="household_invite_code_share">ይህን ኮድ ከቤተሰብ አባላት ጋር ያጋሩ፡</string>
+    <string name="household_invite_code_copied">ኮድ ተቀድቷል!</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_list_title">ምን ይጎድላል?</string>
+    <string name="shopping_list_search_hint">ዕቃዎችን ይፈልጉ…</string>
+    <string name="shopping_list_empty_title">አሁን የሚገዛ ነገር የለም</string>
+    <string name="shopping_list_empty_subtitle">ያለቀ ነገር ያክሉ</string>
+    <string name="shopping_list_active_section">ለመግዛት</string>
+    <string name="shopping_list_bought_section">ተገዝቷል</string>
+    <string name="shopping_list_added_by">በ%1$s ተጨምሯል</string>
+    <string name="shopping_list_bought_by">በ%1$s ተገዝቷል</string>
+    <string name="shopping_list_mark_bought">እንደ ተገዛ ምልክት ያድርጉ</string>
+    <string name="shopping_list_undo_bought">ወደ ዝርዝር ይመልሱ</string>
+    <string name="shopping_list_delete">ይሰርዙ</string>
+    <string name="shopping_list_delete_confirm">ይህን ዕቃ ይሰርዙ?</string>
+
+    <!-- Add / Edit Item -->
+    <string name="add_item_title">ዕቃ ያክሉ</string>
+    <string name="edit_item_title">ዕቃ ያርትዑ</string>
+    <string name="item_name_label">ምን ያስፈልግዎታል?</string>
+    <string name="item_name_hint">ለምሳሌ፡ ወተት፣ ዳቦ፣ ሳሙና</string>
+    <string name="item_quantity_label">ብዛት</string>
+    <string name="item_unit_label">ክፍል</string>
+    <string name="item_category_label">ምድብ</string>
+    <string name="item_note_label">ማስታወሻ</string>
+    <string name="item_note_hint">ተጨማሪ ዝርዝሮች…</string>
+    <string name="item_save">ያስቀምጡ</string>
+    <string name="item_add">ያክሉ</string>
+    <string name="item_error_empty_name">የዕቃ ስም ያስገቡ</string>
+    <string name="item_saving">በማስቀመጥ ላይ…</string>
+    <string name="duplicate_warning_title">ይህ ዕቃ ቀድሞ በዝርዝሩ ውስጥ ያለ ይመስላል</string>
+    <string name="duplicate_merge_action">ያለውን ብዛት ይጨምሩ</string>
+    <string name="suggestions_title">ብልጥ ጥቆማዎች</string>
+    <string name="suggestions_subtitle_home">ቤትዎ ብዙ ጊዜ በሚገዛው ላይ የተመሠረተ</string>
+    <string name="suggestions_subtitle_add">በፍጥነት ለመሙላት ይጫኑ</string>
+    <string name="recurring_toggle_title">ተደጋጋሚ ዕቃ</string>
+    <string name="recurring_toggle_subtitle">ጊዜው ሲደርስ በራስ-ሰር እንደ ጥቆማ ይመለሳል</string>
+    <string name="recurring_every_days_label">በየ X ቀናት ይድገሙ</string>
+    <string name="voice_input_action">የድምጽ ግቤት</string>
+    <string name="voice_input_prompt">የሚያስፈልግዎትን ይናገሩ</string>
+    <string name="voice_input_unavailable">የድምጽ ማወቂያ በዚህ መሣሪያ ላይ አይገኝም</string>
+    <string name="voice_input_permission_denied">ለድምጽ ግቤት የማይክሮፎን ፍቃድ ያስፈልጋል</string>
+
+    <!-- Categories -->
+    <string name="category_all">ሁሉም</string>
+    <string name="category_dairy">የወተት ተዋጽኦ</string>
+    <string name="category_vegetables">አትክልት</string>
+    <string name="category_fruits">ፍራፍሬ</string>
+    <string name="category_meat_fish">ሥጋ እና ዓሣ</string>
+    <string name="category_bakery">ዳቦ ቤት</string>
+    <string name="category_cleaning">ማጽጃ</string>
+    <string name="category_pantry">የምግብ ማከማቻ</string>
+    <string name="category_snacks">መክሰስ</string>
+    <string name="category_beverages">መጠጦች</string>
+    <string name="category_pharmacy">ፋርማሲ እና ንጽህና</string>
+    <string name="category_other">ሌላ</string>
+    <string name="category_auto_detected">ራስ-ሰር ተለይቷል፡ %1$s</string>
+
+    <!-- Units -->
+    <string name="unit_pieces">ቁ</string>
+    <string name="unit_kg">ኪግ</string>
+    <string name="unit_grams">ግ</string>
+    <string name="unit_liters">ሊ</string>
+    <string name="unit_packs">ጥቅል</string>
+    <string name="unit_bottles">ጠርሙስ</string>
+    <string name="unit_bags">ከረጢት</string>
+
+    <!-- History -->
+    <string name="history_title">የቅርብ ግዢዎች</string>
+    <string name="history_empty_title">ገና ግዢ የለም</string>
+    <string name="history_empty_subtitle">የገዙት ዕቃዎች እዚህ ይታያሉ</string>
+    <string name="history_items_count">%1$d ዕቃዎች</string>
+
+    <!-- Activity Feed -->
+    <string name="activity_feed_title">የቤት እንቅስቃሴ</string>
+    <string name="activity_feed_empty_title">ገና እንቅስቃሴ የለም</string>
+    <string name="activity_feed_empty_subtitle">ከሁሉም የቤተሰብ አባላት ለውጦች እዚህ ይታያሉ</string>
+    <string name="activity_type_item_added">ዕቃ ተጨምሯል</string>
+    <string name="activity_type_item_updated">ዕቃ ተዘምኗል</string>
+    <string name="activity_type_item_bought">ዕቃ እንደ ተገዛ ተምልክቷል</string>
+    <string name="activity_type_item_restored">ዕቃ ወደ ዝርዝር ተመልሷል</string>
+    <string name="activity_type_item_deleted">ዕቃ ተሰርዟል</string>
+    <string name="activity_type_recurring_created">ተደጋጋሚ ዕቃ ተፈጥሯል</string>
+    <string name="activity_type_recurring_updated">ተደጋጋሚ ዕቃ ተዘምኗል</string>
+    <string name="activity_type_suggestion_accepted">ጥቆማ ተቀብሏል</string>
+
+    <!-- Supermarket Mode -->
+    <string name="supermarket_mode_title">ሱቅ ውስጥ ነኝ</string>
+    <string name="supermarket_mode_short">በሱቅ</string>
+    <string name="supermarket_mode_empty_title">ሁሉም ተጠናቋል</string>
+    <string name="supermarket_mode_empty_subtitle">የሚጠብቅ ንቁ ዕቃ የለም</string>
+    <string name="supermarket_mode_empty_pharmacy">በዝርዝርዎ ውስጥ የፋርማሲ ዕቃ የለም</string>
+    <string name="supermarket_mode_remaining">%1$d ይቀራሉ</string>
+    <string name="supermarket_mode_filter_pharmacy">ፋርማሲ እና ንጽህና ብቻ ያሳዩ</string>
+    <string name="supermarket_mode_filter_all">ሁሉንም ዕቃዎች ያሳዩ</string>
+    <string name="supermarket_mode_filter_active">ማጣሪያ ንቁ ነው፡ ፋርማሲ እና ንጽህና ብቻ</string>
+
+    <!-- Settings -->
+    <string name="settings_title">ቅንብሮች</string>
+    <string name="settings_household_section">ቤት</string>
+    <string name="settings_household_name">የቤት ስም</string>
+    <string name="settings_invite_code">የግብዣ ኮድ</string>
+    <string name="settings_members">አባላት</string>
+    <string name="settings_account_section">መለያ</string>
+    <string name="settings_edit_household_name">የቤት ስም ያርትዑ</string>
+    <string name="settings_leave_household">ቤቱን ይልቀቁ</string>
+    <string name="settings_leave_household_confirm">ይህን ቤት መልቀቅ ይፈልጋሉ? ሁልጊዜ በግብዣ ኮድ መመለስ ወይም አዲስ መፍጠር ይችላሉ።</string>
+    <string name="settings_share_invite_message">በ HaserLi ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ %1$s</string>
+    <string name="settings_sign_out">ይውጡ</string>
+    <string name="settings_sign_out_confirm">ከ HaserLi ይውጡ?</string>
+    <string name="settings_version">ስሪት %1$s</string>
+
+    <!-- General -->
+    <string name="ok">እሺ</string>
+    <string name="cancel">ይቅር</string>
+    <string name="yes">አዎ</string>
+    <string name="no">አይ</string>
+    <string name="retry">እንደገና ይሞክሩ</string>
+    <string name="copy">ይቅዱ</string>
+    <string name="share">ያጋሩ</string>
+    <string name="loading">በመጫን ላይ…</string>
+    <string name="error_no_connection">የበይነመረብ ግንኙነት የለም</string>
+    <string name="error_generic">ችግር ተፈጥሯል</string>
+</resources>

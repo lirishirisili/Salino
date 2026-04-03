@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hasar Li</string>
+    <string name="app_name">HaserLi</string>
     <string name="brand_tagline">Shared list. Smooth errands.</string>
     <string name="shopping_list_live_badge">Synced for everyone at home</string>
     <string name="shopping_list_live_badge_full">Synced for everyone at home in real time</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">Your home, synced together</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">Welcome to Hasar Li</string>
+    <string name="auth_welcome_title">Welcome to HaserLi</string>
     <string name="auth_welcome_subtitle">Your shared shopping list</string>
     <string name="auth_sign_in_google">Sign in with Google</string>
     <string name="auth_signing_in">Signing in…</string>
@@ -142,9 +142,9 @@
     <string name="settings_edit_household_name">Edit household name</string>
     <string name="settings_leave_household">Leave household</string>
     <string name="settings_leave_household_confirm">Are you sure you want to leave this household? You can always join again with an invite code or create a new one.</string>
-    <string name="settings_share_invite_message">Join my household on Salino! Use this invite code: %1$s</string>
+    <string name="settings_share_invite_message">Join my household on HaserLi! Use this invite code: %1$s</string>
     <string name="settings_sign_out">Sign out</string>
-    <string name="settings_sign_out_confirm">Sign out of Salino?</string>
+    <string name="settings_sign_out_confirm">Sign out of HaserLi?</string>
     <string name="settings_version">Version %1$s</string>
 
     <!-- General -->

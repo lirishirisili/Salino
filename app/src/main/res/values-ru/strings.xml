@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HaserLi</string>
+    <string name="brand_tagline">Общий список, покупки без хаоса</string>
+    <string name="shopping_list_live_badge">Синхронизируется для всех дома</string>
+    <string name="shopping_list_live_badge_full">Синхронизируется для всех дома в реальном времени</string>
+    <string name="shopping_list_count">Нужно купить: %1$d</string>
+    <string name="household_create_hint">Создайте один список для всего дома</string>
+    <string name="household_join_hint">Введите код приглашения и начинайте</string>
+    <string name="settings_profile_badge">Ваш дом, всё организовано вместе</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">Добро пожаловать в HaserLi</string>
+    <string name="auth_welcome_subtitle">Ваш общий список покупок</string>
+    <string name="auth_sign_in_google">Войти через Google</string>
+    <string name="auth_signing_in">Вход…</string>
+    <string name="auth_error_generic">Что-то пошло не так. Попробуйте ещё раз.</string>
+
+    <!-- Household Setup -->
+    <string name="household_setup_title">Настройка дома</string>
+    <string name="household_setup_subtitle">Создайте новый дом или присоединитесь к существующему</string>
+    <string name="household_create">Создать дом</string>
+    <string name="household_join">Присоединиться к дому</string>
+    <string name="household_name_label">Название дома</string>
+    <string name="household_name_hint">Например: Семья Ивановых, Кв. 4</string>
+    <string name="household_invite_code_label">Код приглашения</string>
+    <string name="household_invite_code_hint">Вставьте полученный код</string>
+    <string name="household_create_button">Создать</string>
+    <string name="household_join_button">Присоединиться</string>
+    <string name="household_creating">Создаём дом…</string>
+    <string name="household_joining">Присоединяемся…</string>
+    <string name="household_error_empty_name">Введите название дома</string>
+    <string name="household_error_empty_code">Введите код приглашения</string>
+    <string name="household_error_invalid_code">Неверный код. Проверьте и попробуйте снова.</string>
+    <string name="household_error_generic">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="household_invite_code_title">Ваш код приглашения</string>
+    <string name="household_invite_code_share">Поделитесь этим кодом с домочадцами:</string>
+    <string name="household_invite_code_copied">Код скопирован!</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_list_title">Чего не хватает?</string>
+    <string name="shopping_list_search_hint">Поиск товаров…</string>
+    <string name="shopping_list_empty_title">Сейчас нечего покупать</string>
+    <string name="shopping_list_empty_subtitle">Добавьте то, что закончилось</string>
+    <string name="shopping_list_active_section">Купить</string>
+    <string name="shopping_list_bought_section">Уже куплено</string>
+    <string name="shopping_list_added_by">Добавил(а) %1$s</string>
+    <string name="shopping_list_bought_by">Купил(а) %1$s</string>
+    <string name="shopping_list_mark_bought">Отметить как купленное</string>
+    <string name="shopping_list_undo_bought">Вернуть в список</string>
+    <string name="shopping_list_delete">Удалить</string>
+    <string name="shopping_list_delete_confirm">Удалить этот товар?</string>
+
+    <!-- Add / Edit Item -->
+    <string name="add_item_title">Добавить товар</string>
+    <string name="edit_item_title">Редактировать товар</string>
+    <string name="item_name_label">Что нужно?</string>
+    <string name="item_name_hint">Например: Молоко, Хлеб, Мыло</string>
+    <string name="item_quantity_label">Количество</string>
+    <string name="item_unit_label">Единица</string>
+    <string name="item_category_label">Категория</string>
+    <string name="item_note_label">Заметка</string>
+    <string name="item_note_hint">Подробности…</string>
+    <string name="item_save">Сохранить</string>
+    <string name="item_add">Добавить</string>
+    <string name="item_error_empty_name">Введите название товара</string>
+    <string name="item_saving">Сохраняем…</string>
+    <string name="duplicate_warning_title">Похоже, этот товар уже в списке</string>
+    <string name="duplicate_merge_action">Увеличить количество существующего</string>
+    <string name="suggestions_title">Умные подсказки</string>
+    <string name="suggestions_subtitle_home">На основе частых покупок вашего дома</string>
+    <string name="suggestions_subtitle_add">Нажмите, чтобы быстро заполнить</string>
+    <string name="recurring_toggle_title">Повторяющийся товар</string>
+    <string name="recurring_toggle_subtitle">Товар появится снова как подсказка, когда придёт время</string>
+    <string name="recurring_every_days_label">Повторять каждые X дней</string>
+    <string name="voice_input_action">Голосовой ввод</string>
+    <string name="voice_input_prompt">Скажите, что вам нужно</string>
+    <string name="voice_input_unavailable">Распознавание голоса недоступно на этом устройстве</string>
+    <string name="voice_input_permission_denied">Для голосового ввода нужен доступ к микрофону</string>
+
+    <!-- Categories -->
+    <string name="category_all">Все</string>
+    <string name="category_dairy">Молочное</string>
+    <string name="category_vegetables">Овощи</string>
+    <string name="category_fruits">Фрукты</string>
+    <string name="category_meat_fish">Мясо и рыба</string>
+    <string name="category_bakery">Выпечка</string>
+    <string name="category_cleaning">Чистящие</string>
+    <string name="category_pantry">Бакалея</string>
+    <string name="category_snacks">Снэки</string>
+    <string name="category_beverages">Напитки</string>
+    <string name="category_pharmacy">Аптека и гигиена</string>
+    <string name="category_other">Другое</string>
+    <string name="category_auto_detected">Определено автоматически: %1$s</string>
+
+    <!-- Units -->
+    <string name="unit_pieces">шт</string>
+    <string name="unit_kg">кг</string>
+    <string name="unit_grams">г</string>
+    <string name="unit_liters">л</string>
+    <string name="unit_packs">уп</string>
+    <string name="unit_bottles">бут</string>
+    <string name="unit_bags">пак</string>
+
+    <!-- History -->
+    <string name="history_title">Последние покупки</string>
+    <string name="history_empty_title">Покупок пока нет</string>
+    <string name="history_empty_subtitle">Купленные товары появятся здесь</string>
+    <string name="history_items_count">%1$d товаров</string>
+
+    <!-- Activity Feed -->
+    <string name="activity_feed_title">Активность дома</string>
+    <string name="activity_feed_empty_title">Пока нет активности</string>
+    <string name="activity_feed_empty_subtitle">Изменения от всех домочадцев появятся здесь</string>
+    <string name="activity_type_item_added">Товар добавлен</string>
+    <string name="activity_type_item_updated">Товар обновлён</string>
+    <string name="activity_type_item_bought">Товар отмечен как купленный</string>
+    <string name="activity_type_item_restored">Товар возвращён в список</string>
+    <string name="activity_type_item_deleted">Товар удалён</string>
+    <string name="activity_type_recurring_created">Повторяющийся товар создан</string>
+    <string name="activity_type_recurring_updated">Повторяющийся товар обновлён</string>
+    <string name="activity_type_suggestion_accepted">Подсказка принята</string>
+
+    <!-- Supermarket Mode -->
+    <string name="supermarket_mode_title">Я в магазине</string>
+    <string name="supermarket_mode_short">В магазине</string>
+    <string name="supermarket_mode_empty_title">Всё уже готово</string>
+    <string name="supermarket_mode_empty_subtitle">Нет активных товаров для покупки</string>
+    <string name="supermarket_mode_empty_pharmacy">Нет товаров из аптеки в списке</string>
+    <string name="supermarket_mode_remaining">Осталось взять: %1$d</string>
+    <string name="supermarket_mode_filter_pharmacy">Показать только аптеку и гигиену</string>
+    <string name="supermarket_mode_filter_all">Показать все товары</string>
+    <string name="supermarket_mode_filter_active">Фильтр включён: только аптека и гигиена</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_household_section">Дом</string>
+    <string name="settings_household_name">Название дома</string>
+    <string name="settings_invite_code">Код приглашения</string>
+    <string name="settings_members">Участники</string>
+    <string name="settings_account_section">Аккаунт</string>
+    <string name="settings_edit_household_name">Изменить название дома</string>
+    <string name="settings_leave_household">Покинуть дом</string>
+    <string name="settings_leave_household_confirm">Вы уверены, что хотите покинуть этот дом? Вы всегда сможете вернуться по коду приглашения или создать новый дом.</string>
+    <string name="settings_share_invite_message">Присоединяйтесь к моему дому в HaserLi! Используйте код приглашения: %1$s</string>
+    <string name="settings_sign_out">Выйти</string>
+    <string name="settings_sign_out_confirm">Выйти из HaserLi?</string>
+    <string name="settings_version">Версия %1$s</string>
+
+    <!-- General -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="retry">Повторить</string>
+    <string name="copy">Копировать</string>
+    <string name="share">Поделиться</string>
+    <string name="loading">Загрузка…</string>
+    <string name="error_no_connection">Нет подключения к интернету</string>
+    <string name="error_generic">Что-то пошло не так</string>
+</resources>

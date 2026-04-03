@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HaserLi</string>
+    <string name="brand_tagline">قائمة مشتركة، تسوّق بلا فوضى</string>
+    <string name="shopping_list_live_badge">متزامنة لكل أفراد البيت</string>
+    <string name="shopping_list_live_badge_full">متزامنة لكل أفراد البيت في الوقت الفعلي</string>
+    <string name="shopping_list_count">يجب شراء %1$d منتجات</string>
+    <string name="household_create_hint">أنشئ قائمة واحدة لكل البيت</string>
+    <string name="household_join_hint">استخدم رمز الدعوة وابدأ فوراً</string>
+    <string name="settings_profile_badge">بيتك، منظّم معاً</string>
+
+    <!-- Auth -->
+    <string name="auth_welcome_title">مرحباً بك في HaserLi</string>
+    <string name="auth_welcome_subtitle">قائمة التسوّق المشتركة</string>
+    <string name="auth_sign_in_google">تسجيل الدخول بحساب Google</string>
+    <string name="auth_signing_in">جارٍ تسجيل الدخول…</string>
+    <string name="auth_error_generic">حدث خطأ ما. حاول مرة أخرى.</string>
+
+    <!-- Household Setup -->
+    <string name="household_setup_title">إعداد البيت</string>
+    <string name="household_setup_subtitle">أنشئ بيتاً جديداً أو انضم إلى بيت قائم</string>
+    <string name="household_create">إنشاء بيت</string>
+    <string name="household_join">الانضمام إلى بيت</string>
+    <string name="household_name_label">اسم البيت</string>
+    <string name="household_name_hint">مثلاً: عائلة أحمد، شقة 4</string>
+    <string name="household_invite_code_label">رمز الدعوة</string>
+    <string name="household_invite_code_hint">الصق الرمز الذي تلقّيته</string>
+    <string name="household_create_button">إنشاء</string>
+    <string name="household_join_button">انضمام</string>
+    <string name="household_creating">جارٍ إنشاء البيت…</string>
+    <string name="household_joining">جارٍ الانضمام…</string>
+    <string name="household_error_empty_name">أدخل اسماً للبيت</string>
+    <string name="household_error_empty_code">أدخل رمز الدعوة</string>
+    <string name="household_error_invalid_code">رمز غير صالح. تحقّق وحاول مرة أخرى.</string>
+    <string name="household_error_generic">حدث خطأ ما. حاول مرة أخرى.</string>
+    <string name="household_invite_code_title">رمز الدعوة الخاص بك</string>
+    <string name="household_invite_code_share">شارك هذا الرمز مع أفراد البيت:</string>
+    <string name="household_invite_code_copied">تم نسخ الرمز!</string>
+
+    <!-- Shopping List -->
+    <string name="shopping_list_title">ماذا ينقص؟</string>
+    <string name="shopping_list_search_hint">البحث عن منتجات…</string>
+    <string name="shopping_list_empty_title">لا شيء لشرائه الآن</string>
+    <string name="shopping_list_empty_subtitle">أضف شيئاً نفد من البيت</string>
+    <string name="shopping_list_active_section">للشراء</string>
+    <string name="shopping_list_bought_section">تم الشراء</string>
+    <string name="shopping_list_added_by">أضافه %1$s</string>
+    <string name="shopping_list_bought_by">اشتراه %1$s</string>
+    <string name="shopping_list_mark_bought">تم الشراء</string>
+    <string name="shopping_list_undo_bought">إرجاع إلى القائمة</string>
+    <string name="shopping_list_delete">حذف</string>
+    <string name="shopping_list_delete_confirm">هل تريد حذف هذا المنتج؟</string>
+
+    <!-- Add / Edit Item -->
+    <string name="add_item_title">إضافة منتج</string>
+    <string name="edit_item_title">تعديل منتج</string>
+    <string name="item_name_label">ماذا تحتاج؟</string>
+    <string name="item_name_hint">مثلاً: حليب، خبز، صابون</string>
+    <string name="item_quantity_label">الكمية</string>
+    <string name="item_unit_label">الوحدة</string>
+    <string name="item_category_label">الفئة</string>
+    <string name="item_note_label">ملاحظة</string>
+    <string name="item_note_hint">تفاصيل إضافية…</string>
+    <string name="item_save">حفظ</string>
+    <string name="item_add">إضافة</string>
+    <string name="item_error_empty_name">أدخل اسم المنتج</string>
+    <string name="item_saving">جارٍ الحفظ…</string>
+    <string name="duplicate_warning_title">يبدو أن هذا المنتج موجود بالفعل</string>
+    <string name="duplicate_merge_action">زيادة الكمية الحالية بدلاً من ذلك</string>
+    <string name="suggestions_title">اقتراحات ذكية</string>
+    <string name="suggestions_subtitle_home">بناءً على ما يشتريه بيتك عادةً</string>
+    <string name="suggestions_subtitle_add">اضغط لملء النموذج بسرعة</string>
+    <string name="recurring_toggle_title">منتج متكرر</string>
+    <string name="recurring_toggle_subtitle">سيظهر تلقائياً كاقتراح عندما يحين موعده</string>
+    <string name="recurring_every_days_label">يتكرر كل X يوم</string>
+    <string name="voice_input_action">إدخال صوتي</string>
+    <string name="voice_input_prompt">قل ما تحتاجه</string>
+    <string name="voice_input_unavailable">التعرّف الصوتي غير متوفر على هذا الجهاز</string>
+    <string name="voice_input_permission_denied">يلزم إذن الميكروفون للإدخال الصوتي</string>
+
+    <!-- Categories -->
+    <string name="category_all">الكل</string>
+    <string name="category_dairy">ألبان</string>
+    <string name="category_vegetables">خضروات</string>
+    <string name="category_fruits">فواكه</string>
+    <string name="category_meat_fish">لحوم وأسماك</string>
+    <string name="category_bakery">مخبوزات</string>
+    <string name="category_cleaning">تنظيف</string>
+    <string name="category_pantry">مؤن</string>
+    <string name="category_snacks">وجبات خفيفة</string>
+    <string name="category_beverages">مشروبات</string>
+    <string name="category_pharmacy">صيدلية ونظافة</string>
+    <string name="category_other">أخرى</string>
+    <string name="category_auto_detected">تم الاكتشاف تلقائياً: %1$s</string>
+
+    <!-- Units -->
+    <string name="unit_pieces">قطعة</string>
+    <string name="unit_kg">كغ</string>
+    <string name="unit_grams">غ</string>
+    <string name="unit_liters">ل</string>
+    <string name="unit_packs">عبوة</string>
+    <string name="unit_bottles">زجاجة</string>
+    <string name="unit_bags">كيس</string>
+
+    <!-- History -->
+    <string name="history_title">المشتريات الأخيرة</string>
+    <string name="history_empty_title">لا مشتريات بعد</string>
+    <string name="history_empty_subtitle">المنتجات المشتراة ستظهر هنا</string>
+    <string name="history_items_count">%1$d منتجات</string>
+
+    <!-- Activity Feed -->
+    <string name="activity_feed_title">نشاط البيت</string>
+    <string name="activity_feed_empty_title">لا يوجد نشاط بعد</string>
+    <string name="activity_feed_empty_subtitle">التغييرات من جميع أفراد البيت ستظهر هنا</string>
+    <string name="activity_type_item_added">تمت إضافة منتج</string>
+    <string name="activity_type_item_updated">تم تحديث منتج</string>
+    <string name="activity_type_item_bought">تم شراء منتج</string>
+    <string name="activity_type_item_restored">تم إرجاع منتج إلى القائمة</string>
+    <string name="activity_type_item_deleted">تم حذف منتج</string>
+    <string name="activity_type_recurring_created">تم إنشاء منتج متكرر</string>
+    <string name="activity_type_recurring_updated">تم تحديث منتج متكرر</string>
+    <string name="activity_type_suggestion_accepted">تم قبول الاقتراح</string>
+
+    <!-- Supermarket Mode -->
+    <string name="supermarket_mode_title">أنا في المتجر</string>
+    <string name="supermarket_mode_short">في المتجر</string>
+    <string name="supermarket_mode_empty_title">كل شيء جاهز</string>
+    <string name="supermarket_mode_empty_subtitle">لا توجد منتجات نشطة تنتظرك</string>
+    <string name="supermarket_mode_empty_pharmacy">لا توجد منتجات صيدلية في قائمتك</string>
+    <string name="supermarket_mode_remaining">بقي %1$d للشراء</string>
+    <string name="supermarket_mode_filter_pharmacy">عرض الصيدلية والنظافة فقط</string>
+    <string name="supermarket_mode_filter_all">عرض جميع المنتجات</string>
+    <string name="supermarket_mode_filter_active">الفلتر مفعّل: صيدلية ونظافة فقط</string>
+
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_household_section">البيت</string>
+    <string name="settings_household_name">اسم البيت</string>
+    <string name="settings_invite_code">رمز الدعوة</string>
+    <string name="settings_members">الأعضاء</string>
+    <string name="settings_account_section">الحساب</string>
+    <string name="settings_edit_household_name">تعديل اسم البيت</string>
+    <string name="settings_leave_household">مغادرة البيت</string>
+    <string name="settings_leave_household_confirm">هل أنت متأكد من مغادرة هذا البيت؟ يمكنك العودة في أي وقت برمز دعوة أو إنشاء بيت جديد.</string>
+    <string name="settings_share_invite_message">انضم إلى بيتي في HaserLi! استخدم رمز الدعوة: %1$s</string>
+    <string name="settings_sign_out">تسجيل الخروج</string>
+    <string name="settings_sign_out_confirm">تسجيل الخروج من HaserLi؟</string>
+    <string name="settings_version">الإصدار %1$s</string>
+
+    <!-- General -->
+    <string name="ok">حسناً</string>
+    <string name="cancel">إلغاء</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="copy">نسخ</string>
+    <string name="share">مشاركة</string>
+    <string name="loading">جارٍ التحميل…</string>
+    <string name="error_no_connection">لا يوجد اتصال بالإنترنت</string>
+    <string name="error_generic">حدث خطأ ما</string>
+</resources>
