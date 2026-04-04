@@ -246,6 +246,7 @@ fun ShoppingListScreen(
                             item = item,
                             onToggleBought = { viewModel.markAsBought(item.id) },
                             onClick = { onNavigateToEditItem(item.id) },
+                            onToggleFavorite = { isFav -> viewModel.toggleFavorite(item.id, isFav) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)
                         )
                     }

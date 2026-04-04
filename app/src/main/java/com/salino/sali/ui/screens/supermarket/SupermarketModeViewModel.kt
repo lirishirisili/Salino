@@ -17,10 +17,15 @@ import javax.inject.Inject
 data class SupermarketModeState(
     val groupedItems: Map<ItemCategory, List<ShoppingItem>> = emptyMap(),
     val remainingCount: Int = 0,
+    val totalCount: Int = 0,
+    val boughtInSessionCount: Int = 0,
     val isLoading: Boolean = true,
     val currentUserId: String = "",
     val currentUserName: String = "",
-    val showOnlyPharm: Boolean = false
+    val showOnlyPharm: Boolean = false,
+    val lastBoughtItem: ShoppingItem? = null,
+    val allDone: Boolean = false,
+    val collapsedCategories: Set<ItemCategory> = emptySet()
 )
 
 @HiltViewModel
@@ -35,6 +40,8 @@ class SupermarketModeViewModel @Inject constructor(
     private var householdId: String = ""
 
     private var allActiveItems: List<ShoppingItem> = emptyList()
+    private var sessionStartItemCount: Int = 0
+    private var sessionStarted: Boolean = false
 
     init {
         viewModelScope.launch {
@@ -44,6 +51,10 @@ class SupermarketModeViewModel @Inject constructor(
             _uiState.update { it.copy(currentUserId = user.id, currentUserName = user.displayName) }
             shoppingRepository.observeActiveItems(activeHouseholdId).collect { items ->
                 allActiveItems = items
+                if (!sessionStarted) {
+                    sessionStartItemCount = items.size
+                    sessionStarted = true
+                }
                 updateGroupedItems()
             }
         }
@@ -54,6 +65,17 @@ class SupermarketModeViewModel @Inject constructor(
         updateGroupedItems()
     }
 
+    fun toggleCategoryCollapse(category: ItemCategory) {
+        _uiState.update { state ->
+            val newCollapsed = if (category in state.collapsedCategories) {
+                state.collapsedCategories - category
+            } else {
+                state.collapsedCategories + category
+            }
+            state.copy(collapsedCategories = newCollapsed)
+        }
+    }
+
     private fun updateGroupedItems() {
         val state = _uiState.value
         val itemsToDisplay = if (state.showOnlyPharm) {
@@ -62,24 +84,47 @@ class SupermarketModeViewModel @Inject constructor(
             allActiveItems
         }
 
+        val boughtInSession = (sessionStartItemCount - allActiveItems.size).coerceAtLeast(0)
+        val allDone = sessionStarted && allActiveItems.isEmpty() && sessionStartItemCount > 0
+
         _uiState.value = state.copy(
-            groupedItems = itemsToDisplay.groupBy { ItemCategory.fromString(it.category) }
+            groupedItems = itemsToDisplay
+                .sortedByDescending { it.isFavorite }
+                .groupBy { ItemCategory.fromString(it.category) }
                 .toSortedMap(compareBy { it.ordinal }),
             remainingCount = itemsToDisplay.size,
-            isLoading = false
+            totalCount = sessionStartItemCount,
+            boughtInSessionCount = boughtInSession,
+            isLoading = false,
+            allDone = allDone
         )
     }
 
-    fun markAsBought(itemId: String) {
+    fun markAsBought(item: ShoppingItem) {
+        _uiState.update { it.copy(lastBoughtItem = item) }
         viewModelScope.launch {
             runCatching {
                 shoppingRepository.markAsBought(
                     householdId = householdId,
-                    itemId = itemId,
+                    itemId = item.id,
                     userId = _uiState.value.currentUserId,
                     userName = _uiState.value.currentUserName
                 )
             }
         }
+    }
+
+    fun undoLastBought() {
+        val lastBought = _uiState.value.lastBoughtItem ?: return
+        _uiState.update { it.copy(lastBoughtItem = null) }
+        viewModelScope.launch {
+            runCatching {
+                shoppingRepository.markAsActive(householdId, lastBought.id)
+            }
+        }
+    }
+
+    fun clearLastBought() {
+        _uiState.update { it.copy(lastBoughtItem = null) }
     }
 }

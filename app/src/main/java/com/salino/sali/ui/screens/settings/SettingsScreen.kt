@@ -267,7 +267,7 @@ fun SettingsScreen(
                 }
 
                 Text(
-                    text = stringResource(R.string.settings_version, "1.0.0"),
+                    text = stringResource(R.string.settings_version, "1.1.3"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.align(Alignment.CenterHorizontally)

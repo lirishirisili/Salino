@@ -25,6 +25,7 @@ data class ShoppingItemEntity(
     val addedByName: String,
     val boughtBy: String?,
     val boughtByName: String?,
+    val isFavorite: Boolean = false,
     val createdAtMillis: Long?,
     val updatedAtMillis: Long?
 )

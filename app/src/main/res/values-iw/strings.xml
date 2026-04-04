@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">חסר לי</string>
+    <string name="app_name">חסרלי</string>
     <string name="brand_tagline">רשימה משותפת, קניות בלי בלגן</string>
     <string name="shopping_list_live_badge">מתעדכן לכולם בבית</string>
     <string name="shopping_list_live_badge_full">מתעדכן לכולם בבית בזמן אמת</string>
@@ -10,7 +10,7 @@
     <string name="settings_profile_badge">הבית שלך, מסודר יחד</string>
 
     <!-- Auth -->
-    <string name="auth_welcome_title">ברוכים הבאים לחסר לי</string>
+    <string name="auth_welcome_title">ברוכים הבאים לחסרלי</string>
     <string name="auth_welcome_subtitle">רשימת הקניות המשותפת שלכם</string>
     <string name="auth_sign_in_google">התחברות עם Google</string>
     <string name="auth_signing_in">מתחבר…</string>
@@ -66,7 +66,11 @@
     <string name="item_error_empty_name">הזינו שם פריט</string>
     <string name="item_saving">שומר…</string>
     <string name="duplicate_warning_title">נראה שהפריט כבר קיים ברשימה</string>
+    <string name="duplicate_warning_fuzzy">אולי התכוונת לפריט הזה?</string>
+    <string name="duplicate_warning_similar">זה נראה דומה לפריט שכבר ברשימה</string>
+    <string name="duplicate_warning_bought">הפריט הזה כבר נקנה</string>
     <string name="duplicate_merge_action">להגדיל את הכמות בפריט הקיים</string>
+    <string name="duplicate_add_anyway">להוסיף בכל זאת</string>
     <string name="suggestions_title">הצעות חכמות</string>
     <string name="suggestions_subtitle_home">מבוסס על מה שהבית שלכם קונה בדרך כלל</string>
     <string name="suggestions_subtitle_add">לחיצה מהירה תמלא את הטופס</string>
@@ -131,6 +135,11 @@
     <string name="supermarket_mode_filter_pharmacy">הצג רק פארם וטואלטיקה</string>
     <string name="supermarket_mode_filter_all">הצג את כל המוצרים</string>
     <string name="supermarket_mode_filter_active">הסינון פעיל: מוצגים רק מוצרי פארם וטואלטיקה</string>
+    <string name="supermarket_mode_progress">%1$d מתוך %2$d הושלמו</string>
+    <string name="supermarket_mode_undo">ביטול</string>
+    <string name="supermarket_mode_item_bought">סומן כנקנה</string>
+    <string name="supermarket_mode_all_done">הכל נקנה! 🎉</string>
+    <string name="supermarket_mode_all_done_subtitle">קנית את הכל מהרשימה. כל הכבוד!</string>
 
     <!-- Settings -->
     <string name="settings_title">הגדרות</string>
@@ -144,7 +153,7 @@
     <string name="settings_leave_household_confirm">בטוח שאתה רוצה לעזוב את הבית? תמיד תוכל להצטרף שוב עם קוד הזמנה או ליצור בית חדש.</string>
     <string name="settings_share_invite_message">הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: %1$s</string>
     <string name="settings_sign_out">התנתקות</string>
-    <string name="settings_sign_out_confirm">להתנתק מסלינו?</string>
+    <string name="settings_sign_out_confirm">להתנתק מחסרלי?</string>
     <string name="settings_version">גרסה %1$s</string>
 
     <!-- General -->

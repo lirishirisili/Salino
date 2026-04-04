@@ -66,7 +66,11 @@
     <string name="item_error_empty_name">أدخل اسم المنتج</string>
     <string name="item_saving">جارٍ الحفظ…</string>
     <string name="duplicate_warning_title">يبدو أن هذا المنتج موجود بالفعل</string>
+    <string name="duplicate_warning_fuzzy">هل قصدت هذا المنتج؟</string>
+    <string name="duplicate_warning_similar">هذا يشبه منتجاً في القائمة</string>
+    <string name="duplicate_warning_bought">هذا المنتج تم شراؤه بالفعل</string>
     <string name="duplicate_merge_action">زيادة الكمية الحالية بدلاً من ذلك</string>
+    <string name="duplicate_add_anyway">أضف على أي حال</string>
     <string name="suggestions_title">اقتراحات ذكية</string>
     <string name="suggestions_subtitle_home">بناءً على ما يشتريه بيتك عادةً</string>
     <string name="suggestions_subtitle_add">اضغط لملء النموذج بسرعة</string>
@@ -131,6 +135,11 @@
     <string name="supermarket_mode_filter_pharmacy">عرض الصيدلية والنظافة فقط</string>
     <string name="supermarket_mode_filter_all">عرض جميع المنتجات</string>
     <string name="supermarket_mode_filter_active">الفلتر مفعّل: صيدلية ونظافة فقط</string>
+    <string name="supermarket_mode_progress">%1$d من %2$d تم</string>
+    <string name="supermarket_mode_undo">تراجع</string>
+    <string name="supermarket_mode_item_bought">تم شراؤه</string>
+    <string name="supermarket_mode_all_done">تم الكل! 🎉</string>
+    <string name="supermarket_mode_all_done_subtitle">اشتريت كل شيء من القائمة. أحسنت!</string>
 
     <!-- Settings -->
     <string name="settings_title">الإعدادات</string>

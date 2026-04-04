@@ -14,6 +14,10 @@ import com.salino.sali.data.repository.SuggestionsRepositoryImpl
 import com.salino.sali.data.service.NormalizedDuplicateDetector
 import com.salino.sali.data.service.RuleBasedSuggestionEngine
 import com.salino.sali.data.service.KeywordCategoryAutoDetector
+import com.salino.sali.data.service.duplicate.ItemTextNormalizer
+import com.salino.sali.data.service.duplicate.ProductSignatureExtractor
+import com.salino.sali.data.service.duplicate.ProtectedPhraseMatcher
+import com.salino.sali.data.service.duplicate.SignatureComparisonEngine
 import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.domain.repository.HouseholdRepository
@@ -113,7 +117,32 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDuplicateDetector(): DuplicateDetector = NormalizedDuplicateDetector()
+    fun provideItemTextNormalizer(): ItemTextNormalizer = ItemTextNormalizer()
+
+    @Provides
+    @Singleton
+    fun provideProtectedPhraseMatcher(): ProtectedPhraseMatcher = ProtectedPhraseMatcher()
+
+    @Provides
+    @Singleton
+    fun provideProductSignatureExtractor(
+        normalizer: ItemTextNormalizer,
+        phraseMatcher: ProtectedPhraseMatcher
+    ): ProductSignatureExtractor = ProductSignatureExtractor(normalizer, phraseMatcher)
+
+    @Provides
+    @Singleton
+    fun provideSignatureComparisonEngine(
+        normalizer: ItemTextNormalizer
+    ): SignatureComparisonEngine = SignatureComparisonEngine(normalizer)
+
+    @Provides
+    @Singleton
+    fun provideDuplicateDetector(
+        normalizer: ItemTextNormalizer,
+        extractor: ProductSignatureExtractor,
+        comparisonEngine: SignatureComparisonEngine
+    ): DuplicateDetector = NormalizedDuplicateDetector(normalizer, extractor, comparisonEngine)
 
     @Provides
     @Singleton

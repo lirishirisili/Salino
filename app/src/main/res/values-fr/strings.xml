@@ -66,7 +66,11 @@
     <string name="item_error_empty_name">Entrez un nom d\'article</string>
     <string name="item_saving">Enregistrement…</string>
     <string name="duplicate_warning_title">Cet article semble déjà dans la liste</string>
+    <string name="duplicate_warning_fuzzy">Vouliez-vous dire cet article ?</string>
+    <string name="duplicate_warning_similar">Ceci ressemble à un article de la liste</string>
+    <string name="duplicate_warning_bought">Cet article a déjà été acheté</string>
     <string name="duplicate_merge_action">Augmenter la quantité existante</string>
+    <string name="duplicate_add_anyway">Ajouter quand même</string>
     <string name="suggestions_title">Suggestions intelligentes</string>
     <string name="suggestions_subtitle_home">Basées sur les achats fréquents de votre foyer</string>
     <string name="suggestions_subtitle_add">Appuyez pour remplir rapidement</string>
@@ -131,6 +135,11 @@
     <string name="supermarket_mode_filter_pharmacy">Afficher uniquement pharmacie et hygiène</string>
     <string name="supermarket_mode_filter_all">Afficher tous les articles</string>
     <string name="supermarket_mode_filter_active">Filtre actif : pharmacie et hygiène uniquement</string>
+    <string name="supermarket_mode_progress">%1$d sur %2$d terminés</string>
+    <string name="supermarket_mode_undo">Annuler</string>
+    <string name="supermarket_mode_item_bought">marqué comme acheté</string>
+    <string name="supermarket_mode_all_done">Tout est fait ! 🎉</string>
+    <string name="supermarket_mode_all_done_subtitle">Vous avez tout acheté. Bravo !</string>
 
     <!-- Settings -->
     <string name="settings_title">Paramètres</string>

@@ -58,6 +58,7 @@ fun ShoppingItemEntity.toModel(): ShoppingItem = ShoppingItem(
     addedByName = addedByName,
     boughtBy = boughtBy,
     boughtByName = boughtByName,
+    isFavorite = isFavorite,
     createdAt = createdAtMillis.toTimestamp(),
     updatedAt = updatedAtMillis.toTimestamp()
 )
@@ -76,6 +77,7 @@ fun ShoppingItem.toEntity(householdId: String): ShoppingItemEntity = ShoppingIte
     addedByName = addedByName,
     boughtBy = boughtBy,
     boughtByName = boughtByName,
+    isFavorite = isFavorite,
     createdAtMillis = createdAt.toEpochMillis(),
     updatedAtMillis = updatedAt.toEpochMillis()
 )

@@ -66,7 +66,11 @@
     <string name="item_error_empty_name">የዕቃ ስም ያስገቡ</string>
     <string name="item_saving">በማስቀመጥ ላይ…</string>
     <string name="duplicate_warning_title">ይህ ዕቃ ቀድሞ በዝርዝሩ ውስጥ ያለ ይመስላል</string>
+    <string name="duplicate_warning_fuzzy">ይህንን ዕቃ ማለትዎ ነበር?</string>
+    <string name="duplicate_warning_similar">ይህ በዝርዝርስ ውስጥ ካለ ዕቃ ጋር ይመስላል</string>
+    <string name="duplicate_warning_bought">ይህ ዕቃ ቀድሞ ተገዝቷል</string>
     <string name="duplicate_merge_action">ያለውን ብዛት ይጨምሩ</string>
+    <string name="duplicate_add_anyway">ለማንም ይጨምሩ</string>
     <string name="suggestions_title">ብልጥ ጥቆማዎች</string>
     <string name="suggestions_subtitle_home">ቤትዎ ብዙ ጊዜ በሚገዛው ላይ የተመሠረተ</string>
     <string name="suggestions_subtitle_add">በፍጥነት ለመሙላት ይጫኑ</string>
@@ -130,8 +134,11 @@
     <string name="supermarket_mode_remaining">%1$d ይቀራሉ</string>
     <string name="supermarket_mode_filter_pharmacy">ፋርማሲ እና ንጽህና ብቻ ያሳዩ</string>
     <string name="supermarket_mode_filter_all">ሁሉንም ዕቃዎች ያሳዩ</string>
-    <string name="supermarket_mode_filter_active">ማጣሪያ ንቁ ነው፡ ፋርማሲ እና ንጽህና ብቻ</string>
-
+    <string name="supermarket_mode_filter_active">ማጣሪያ ንቁ ነው፡ ፋርማሲ እና ንጽህና ብቻ</string>    <string name="supermarket_mode_progress">%1$d ከ %2$d ተጠናቀቀ</string>
+    <string name="supermarket_mode_undo">ይመለሱ</string>
+    <string name="supermarket_mode_item_bought">እንደተገዛ ተምርጧል</string>
+    <string name="supermarket_mode_all_done">ሁሉም ተጠናቀቀ! 🎉</string>
+    <string name="supermarket_mode_all_done_subtitle">ሁሉንም ከዝርዝርስ ገዝተዋል። በጥም ጥሩ!</string>
     <!-- Settings -->
     <string name="settings_title">ቅንብሮች</string>
     <string name="settings_household_section">ቤት</string>

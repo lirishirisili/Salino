@@ -13,6 +13,7 @@ interface ShoppingRepository {
     suspend fun markAsActive(householdId: String, itemId: String): Result<Unit>
     suspend fun deleteItem(householdId: String, itemId: String): Result<Unit>
     suspend fun getItem(householdId: String, itemId: String): Result<ShoppingItem>
+    suspend fun toggleFavorite(householdId: String, itemId: String, isFavorite: Boolean): Result<Unit>
     suspend fun flushPendingSync(householdId: String): Result<Unit>
     fun forceRefreshSync(householdId: String)
     fun clearListeners()

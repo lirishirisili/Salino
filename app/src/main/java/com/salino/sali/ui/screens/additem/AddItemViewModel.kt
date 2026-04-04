@@ -205,7 +205,10 @@ class AddItemViewModel @Inject constructor(
     }
 
     private fun recomputeDuplicate() {
-        val duplicate = duplicateDetector.findDuplicate(_uiState.value.name, activeItems)
+        val duplicate = duplicateDetector.findDuplicate(
+            draftName = _uiState.value.name,
+            existingItems = activeItems
+        )
         _uiState.update { it.copy(duplicateMatch = duplicate) }
     }
 

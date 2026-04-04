@@ -138,6 +138,12 @@ class ShoppingListViewModel @Inject constructor(
         }
     }
 
+    fun toggleFavorite(itemId: String, isFavorite: Boolean) {
+        viewModelScope.launch {
+            runCatching { shoppingRepository.toggleFavorite(householdId, itemId, isFavorite) }
+        }
+    }
+
     fun addSuggestion(suggestion: SuggestionItem) {
         val state = _uiState.value
         viewModelScope.launch {
@@ -187,6 +193,6 @@ class ShoppingListViewModel @Inject constructor(
                 ItemCategory.fromString(it.category) == category
             }
         }
-        filtered
+        filtered.sortedByDescending { it.isFavorite }
     }.distinctUntilChanged()
 }

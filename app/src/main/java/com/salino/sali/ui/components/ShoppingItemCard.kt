@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ fun ShoppingItemCard(
     item: ShoppingItem,
     onToggleBought: () -> Unit,
     onClick: () -> Unit,
+    onToggleFavorite: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isBought = item.isBought
@@ -155,11 +158,28 @@ fun ShoppingItemCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Category + chevron
+            // Favorite star + Category + chevron
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (onToggleFavorite != null) {
+                    IconButton(
+                        onClick = { onToggleFavorite(!item.isFavorite) },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (item.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                            contentDescription = null,
+                            tint = if (item.isFavorite) {
+                                MaterialTheme.colorScheme.tertiary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            },
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
                 CategoryChip(category = category)
                 Icon(
                     imageVector = Icons.Default.ChevronRight,

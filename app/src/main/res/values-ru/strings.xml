@@ -66,7 +66,11 @@
     <string name="item_error_empty_name">Введите название товара</string>
     <string name="item_saving">Сохраняем…</string>
     <string name="duplicate_warning_title">Похоже, этот товар уже в списке</string>
+    <string name="duplicate_warning_fuzzy">Вы имели в виду этот товар?</string>
+    <string name="duplicate_warning_similar">Это похоже на товар из списка</string>
+    <string name="duplicate_warning_bought">Этот товар уже куплен</string>
     <string name="duplicate_merge_action">Увеличить количество существующего</string>
+    <string name="duplicate_add_anyway">Добавить всё равно</string>
     <string name="suggestions_title">Умные подсказки</string>
     <string name="suggestions_subtitle_home">На основе частых покупок вашего дома</string>
     <string name="suggestions_subtitle_add">Нажмите, чтобы быстро заполнить</string>
@@ -131,6 +135,11 @@
     <string name="supermarket_mode_filter_pharmacy">Показать только аптеку и гигиену</string>
     <string name="supermarket_mode_filter_all">Показать все товары</string>
     <string name="supermarket_mode_filter_active">Фильтр включён: только аптека и гигиена</string>
+    <string name="supermarket_mode_progress">%1$d из %2$d готово</string>
+    <string name="supermarket_mode_undo">Отменить</string>
+    <string name="supermarket_mode_item_bought">отмечено как купленное</string>
+    <string name="supermarket_mode_all_done">Всё куплено! 🎉</string>
+    <string name="supermarket_mode_all_done_subtitle">Вы купили всё из списка. Отличная работа!</string>
 
     <!-- Settings -->
     <string name="settings_title">Настройки</string>

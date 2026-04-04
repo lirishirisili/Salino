@@ -66,7 +66,11 @@
     <string name="item_error_empty_name">Enter an item name</string>
     <string name="item_saving">Saving…</string>
     <string name="duplicate_warning_title">This already looks on the list</string>
+    <string name="duplicate_warning_fuzzy">Did you mean this item?</string>
+    <string name="duplicate_warning_similar">This looks similar to an item on the list</string>
+    <string name="duplicate_warning_bought">This was already bought</string>
     <string name="duplicate_merge_action">Increase existing quantity instead</string>
+    <string name="duplicate_add_anyway">Add anyway</string>
     <string name="suggestions_title">Smart suggestions</string>
     <string name="suggestions_subtitle_home">Based on what your household buys most</string>
     <string name="suggestions_subtitle_add">Tap one to prefill quickly</string>
@@ -131,6 +135,11 @@
     <string name="supermarket_mode_filter_pharmacy">Show only pharmacy and toiletries</string>
     <string name="supermarket_mode_filter_all">Show all items</string>
     <string name="supermarket_mode_filter_active">Filter is on: showing only pharmacy and toiletries</string>
+    <string name="supermarket_mode_progress">%1$d of %2$d done</string>
+    <string name="supermarket_mode_undo">Undo</string>
+    <string name="supermarket_mode_item_bought">marked as bought</string>
+    <string name="supermarket_mode_all_done">All done! 🎉</string>
+    <string name="supermarket_mode_all_done_subtitle">You got everything on your list. Great job!</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

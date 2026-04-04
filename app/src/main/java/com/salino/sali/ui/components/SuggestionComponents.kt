@@ -95,8 +95,8 @@ fun SuggestionSection(
 fun DuplicateWarningCard(
     duplicateMatch: DuplicateMatch,
     title: String,
-    actionLabel: String,
-    onMerge: () -> Unit,
+    actionLabel: String? = null,
+    onMerge: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     SalinoSurfaceCard(modifier = modifier.fillMaxWidth()) {
@@ -123,11 +123,13 @@ fun DuplicateWarningCard(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        SalinoPrimaryButton(
-            text = actionLabel,
-            onClick = onMerge,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (actionLabel != null && onMerge != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            SalinoPrimaryButton(
+                text = actionLabel,
+                onClick = onMerge,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

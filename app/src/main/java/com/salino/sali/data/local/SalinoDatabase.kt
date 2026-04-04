@@ -24,7 +24,7 @@ import com.salino.sali.data.local.entity.ShoppingItemEntity
         RecurringItemEntity::class,
         PendingSyncOperationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class SalinoDatabase : RoomDatabase() {

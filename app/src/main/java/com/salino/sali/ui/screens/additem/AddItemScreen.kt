@@ -58,6 +58,7 @@ import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
 import com.salino.sali.ui.components.SuggestionSection
+import com.salino.sali.domain.service.DuplicateReason
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,11 +121,17 @@ fun AddItemScreen(
                 )
 
                 uiState.duplicateMatch?.let { duplicate ->
+                    val dupTitle = when (duplicate.reason) {
+                        DuplicateReason.EXACT_DUPLICATE -> stringResource(R.string.duplicate_warning_title)
+                        DuplicateReason.POSSIBLE_DUPLICATE -> stringResource(R.string.duplicate_warning_fuzzy)
+                        DuplicateReason.SIMILAR_ITEM -> stringResource(R.string.duplicate_warning_similar)
+                    }
+                    val isSimilarOnly = duplicate.reason == DuplicateReason.SIMILAR_ITEM
                     DuplicateWarningCard(
                         duplicateMatch = duplicate,
-                        title = stringResource(R.string.duplicate_warning_title),
-                        actionLabel = stringResource(R.string.duplicate_merge_action),
-                        onMerge = viewModel::mergeWithDuplicate
+                        title = dupTitle,
+                        actionLabel = if (isSimilarOnly) null else stringResource(R.string.duplicate_merge_action),
+                        onMerge = if (isSimilarOnly) null else viewModel::mergeWithDuplicate
                     )
                 }
 

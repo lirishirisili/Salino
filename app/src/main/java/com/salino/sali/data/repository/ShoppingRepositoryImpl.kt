@@ -194,6 +194,14 @@ class ShoppingRepositoryImpl @Inject constructor(
             }
     }
 
+    override suspend fun toggleFavorite(householdId: String, itemId: String, isFavorite: Boolean): Result<Unit> = runCatching {
+        val currentItem = getItem(householdId, itemId).getOrThrow()
+        val updatedItem = currentItem.copy(isFavorite = isFavorite, updatedAt = Timestamp.now())
+        shoppingLocalDataSource.upsertItem(householdId, updatedItem)
+        syncQueueProcessor.enqueueUpsert(householdId, SyncTargetType.ITEM, updatedItem.id)
+        syncQueueProcessor.flush(householdId)
+    }
+
     override suspend fun flushPendingSync(householdId: String): Result<Unit> = runCatching {
         syncQueueProcessor.flush(householdId)
     }
