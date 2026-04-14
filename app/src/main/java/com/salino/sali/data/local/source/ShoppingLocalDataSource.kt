@@ -42,7 +42,8 @@ class ShoppingLocalDataSource @Inject constructor(
             val protectedIds = database.pendingSyncOperationDao()
                 .getPendingTargetIds(householdId, SyncTargetType.ITEM)
                 .toSet()
-            database.shoppingItemDao().upsertItems(items.map { it.toEntity(householdId) })
+            val safeItems = items.filter { it.id !in protectedIds }
+            database.shoppingItemDao().upsertItems(safeItems.map { it.toEntity(householdId) })
             val remoteIds = items.map { it.id }.toSet()
             val staleIds = database.shoppingItemDao().getItemIds(householdId)
                 .filter { id -> id !in remoteIds && id !in protectedIds }

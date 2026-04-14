@@ -77,6 +77,8 @@
     <string name="recurring_toggle_title">Artículo recurrente</string>
     <string name="recurring_toggle_subtitle">Volverá a aparecer automáticamente cuando sea necesario</string>
     <string name="recurring_every_days_label">Repetir cada X días</string>
+    <string name="urgent_toggle_title">Urgente</string>
+    <string name="urgent_toggle_subtitle">Este artículo se resaltará en el modo supermercado</string>
     <string name="voice_input_action">Entrada por voz</string>
     <string name="voice_input_prompt">Di lo que necesitas</string>
     <string name="voice_input_unavailable">El reconocimiento de voz no está disponible en este dispositivo</string>
@@ -140,6 +142,21 @@
     <string name="supermarket_mode_item_bought">marcado como comprado</string>
     <string name="supermarket_mode_all_done">¡Todo listo! 🎉</string>
     <string name="supermarket_mode_all_done_subtitle">Compraste todo de la lista. ¡Buen trabajo!</string>
+    <string name="supermarket_mode_filter_all_label">Todo</string>
+    <string name="supermarket_mode_filter_urgent">Urgente</string>
+    <string name="supermarket_mode_filter_mine">Míos</string>
+    <string name="supermarket_mode_filter_pharmacy_label">Farmacia</string>
+    <string name="supermarket_mode_filter_not_found">No encontrado</string>
+    <string name="supermarket_mode_not_found">No encontrado</string>
+    <string name="supermarket_mode_swipe_not_found">No encontrado</string>
+    <string name="supermarket_mode_add_item">Agregar</string>
+    <string name="supermarket_mode_finish">Terminar</string>
+    <string name="supermarket_mode_hide_bought">Ocultar comprados</string>
+    <string name="supermarket_mode_show_bought">Mostrar comprados (%1$d)</string>
+    <string name="supermarket_mode_item_not_found">marcado como no encontrado</string>
+    <string name="supermarket_mode_finish_title">¿Terminar compras?</string>
+    <string name="supermarket_mode_finish_message">Aún te quedan %1$d artículos. ¿Terminar?</string>
+    <string name="supermarket_mode_finish_confirm">Terminar</string>
 
     <!-- Settings -->
     <string name="settings_title">Ajustes</string>

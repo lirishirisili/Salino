@@ -123,7 +123,8 @@ fun SalinoNavGraph(navController: NavHostController) {
 
         composable(Screen.SupermarketMode.route) {
             SupermarketModeScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddItem = { navController.navigate(Screen.AddItem.route) }
             )
         }
 

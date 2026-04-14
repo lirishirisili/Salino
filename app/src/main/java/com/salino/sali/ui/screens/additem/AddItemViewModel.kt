@@ -36,6 +36,7 @@ data class AddItemState(
     val suggestions: List<SuggestionItem> = emptyList(),
     val isRecurring: Boolean = false,
     val recurrenceDays: String = "7",
+    val isUrgent: Boolean = false,
     val isCategoryAutoDetected: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -108,6 +109,10 @@ class AddItemViewModel @Inject constructor(
         _uiState.update { it.copy(recurrenceDays = value.filter(Char::isDigit)) }
     }
 
+    fun onUrgentToggle(enabled: Boolean) {
+        _uiState.update { it.copy(isUrgent = enabled) }
+    }
+
     fun applySuggestion(suggestion: SuggestionItem) {
         _uiState.update {
             it.copy(
@@ -167,7 +172,8 @@ class AddItemViewModel @Inject constructor(
                 category = state.category.name,
                 note = state.note.trim(),
                 addedBy = currentUserId,
-                addedByName = currentUserName
+                addedByName = currentUserName,
+                isUrgent = state.isUrgent
             )
 
             shoppingRepository.addItem(householdId, item)

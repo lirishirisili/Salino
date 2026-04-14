@@ -77,6 +77,8 @@
     <string name="recurring_toggle_title">פריט קבוע</string>
     <string name="recurring_toggle_subtitle">הפריט יחזור כהצעה אוטומטית כשהוא שוב יהיה צריך להיקנות</string>
     <string name="recurring_every_days_label">כל כמה ימים לחזור</string>
+    <string name="urgent_toggle_title">דחוף</string>
+    <string name="urgent_toggle_subtitle">הפריט יודגש במצב סופר</string>
     <string name="voice_input_action">הקלדה קולית</string>
     <string name="voice_input_prompt">אמרו את הפריט שצריך</string>
     <string name="voice_input_unavailable">זיהוי קולי לא זמין במכשיר הזה</string>
@@ -140,6 +142,21 @@
     <string name="supermarket_mode_item_bought">סומן כנקנה</string>
     <string name="supermarket_mode_all_done">הכל נקנה! 🎉</string>
     <string name="supermarket_mode_all_done_subtitle">קנית את הכל מהרשימה. כל הכבוד!</string>
+    <string name="supermarket_mode_filter_all_label">הכל</string>
+    <string name="supermarket_mode_filter_urgent">דחוף</string>
+    <string name="supermarket_mode_filter_mine">שלי</string>
+    <string name="supermarket_mode_filter_pharmacy_label">פארם</string>
+    <string name="supermarket_mode_filter_not_found">לא נמצא</string>
+    <string name="supermarket_mode_not_found">לא נמצא</string>
+    <string name="supermarket_mode_swipe_not_found">לא נמצא</string>
+    <string name="supermarket_mode_add_item">הוסף מוצר</string>
+    <string name="supermarket_mode_finish">סיום קנייה</string>
+    <string name="supermarket_mode_hide_bought">הסתר שנקנו</string>
+    <string name="supermarket_mode_show_bought">הצג שנקנו (%1$d)</string>
+    <string name="supermarket_mode_item_not_found">סומן כלא נמצא</string>
+    <string name="supermarket_mode_finish_title">לסיים קנייה?</string>
+    <string name="supermarket_mode_finish_message">נשארו עוד %1$d מוצרים. לסיים?</string>
+    <string name="supermarket_mode_finish_confirm">סיום</string>
 
     <!-- Settings -->
     <string name="settings_title">הגדרות</string>

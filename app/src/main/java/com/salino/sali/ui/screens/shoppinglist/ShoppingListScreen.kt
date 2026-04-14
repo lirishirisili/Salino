@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -86,18 +87,24 @@ fun ShoppingListScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             BrandLogo(iconSize = 38.dp)
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     stringResource(R.string.shopping_list_title),
                                     style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = if (isCompactWidth) 18.sp else 22.sp,
+                                        lineHeight = if (isCompactWidth) 22.sp else 28.sp
                                     ),
-                                    color = if (isDark) Color.White else MaterialTheme.colorScheme.primary
+                                    color = if (isDark) Color.White else MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = stringResource(R.string.shopping_list_live_badge),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (isDark) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)
+                                    color = if (isDark) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -246,7 +253,6 @@ fun ShoppingListScreen(
                             item = item,
                             onToggleBought = { viewModel.markAsBought(item.id) },
                             onClick = { onNavigateToEditItem(item.id) },
-                            onToggleFavorite = { isFav -> viewModel.toggleFavorite(item.id, isFav) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)
                         )
                     }

@@ -14,6 +14,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class SupermarketFilter {
+    ALL, URGENT, MINE, PHARMACY, NOT_FOUND
+}
+
 data class SupermarketModeState(
     val groupedItems: Map<ItemCategory, List<ShoppingItem>> = emptyMap(),
     val remainingCount: Int = 0,
@@ -22,10 +26,14 @@ data class SupermarketModeState(
     val isLoading: Boolean = true,
     val currentUserId: String = "",
     val currentUserName: String = "",
-    val showOnlyPharm: Boolean = false,
+    val activeFilter: SupermarketFilter = SupermarketFilter.ALL,
     val lastBoughtItem: ShoppingItem? = null,
     val allDone: Boolean = false,
-    val collapsedCategories: Set<ItemCategory> = emptySet()
+    val collapsedCategories: Set<ItemCategory> = emptySet(),
+    val notFoundItems: Set<String> = emptySet(),
+    val hideBought: Boolean = true,
+    val boughtItems: List<ShoppingItem> = emptyList(),
+    val notFoundCount: Int = 0
 )
 
 @HiltViewModel
@@ -40,6 +48,7 @@ class SupermarketModeViewModel @Inject constructor(
     private var householdId: String = ""
 
     private var allActiveItems: List<ShoppingItem> = emptyList()
+    private var sessionBoughtItems: MutableList<ShoppingItem> = mutableListOf()
     private var sessionStartItemCount: Int = 0
     private var sessionStarted: Boolean = false
 
@@ -60,8 +69,8 @@ class SupermarketModeViewModel @Inject constructor(
         }
     }
 
-    fun togglePharmFilter() {
-        _uiState.update { it.copy(showOnlyPharm = !it.showOnlyPharm) }
+    fun setFilter(filter: SupermarketFilter) {
+        _uiState.update { it.copy(activeFilter = filter) }
         updateGroupedItems()
     }
 
@@ -76,31 +85,47 @@ class SupermarketModeViewModel @Inject constructor(
         }
     }
 
+    fun toggleHideBought() {
+        _uiState.update { it.copy(hideBought = !it.hideBought) }
+    }
+
     private fun updateGroupedItems() {
         val state = _uiState.value
-        val itemsToDisplay = if (state.showOnlyPharm) {
-            allActiveItems.filter { ItemCategory.fromString(it.category) == ItemCategory.PHARMACY }
-        } else {
-            allActiveItems
+        val notFoundIds = state.notFoundItems
+
+        val activeNonNotFound = allActiveItems.filter { it.id !in notFoundIds }
+        val notFoundList = allActiveItems.filter { it.id in notFoundIds }
+
+        val itemsToDisplay = when (state.activeFilter) {
+            SupermarketFilter.ALL -> activeNonNotFound
+            SupermarketFilter.URGENT -> activeNonNotFound.filter { it.isUrgent }
+            SupermarketFilter.MINE -> activeNonNotFound.filter { it.addedBy == state.currentUserId }
+            SupermarketFilter.PHARMACY -> activeNonNotFound.filter {
+                ItemCategory.fromString(it.category) == ItemCategory.PHARMACY
+            }
+            SupermarketFilter.NOT_FOUND -> notFoundList
         }
 
         val boughtInSession = (sessionStartItemCount - allActiveItems.size).coerceAtLeast(0)
-        val allDone = sessionStarted && allActiveItems.isEmpty() && sessionStartItemCount > 0
+        val allDone = sessionStarted && activeNonNotFound.isEmpty() && sessionStartItemCount > 0
 
         _uiState.value = state.copy(
             groupedItems = itemsToDisplay
-                .sortedByDescending { it.isFavorite }
+                .sortedByDescending { it.isUrgent }
                 .groupBy { ItemCategory.fromString(it.category) }
                 .toSortedMap(compareBy { it.ordinal }),
-            remainingCount = itemsToDisplay.size,
+            remainingCount = activeNonNotFound.size,
             totalCount = sessionStartItemCount,
             boughtInSessionCount = boughtInSession,
             isLoading = false,
-            allDone = allDone
+            allDone = allDone,
+            boughtItems = sessionBoughtItems.toList(),
+            notFoundCount = notFoundIds.size
         )
     }
 
     fun markAsBought(item: ShoppingItem) {
+        sessionBoughtItems.add(item)
         _uiState.update { it.copy(lastBoughtItem = item) }
         viewModelScope.launch {
             runCatching {
@@ -114,8 +139,19 @@ class SupermarketModeViewModel @Inject constructor(
         }
     }
 
+    fun markNotFound(item: ShoppingItem) {
+        _uiState.update { it.copy(notFoundItems = it.notFoundItems + item.id) }
+        updateGroupedItems()
+    }
+
+    fun undoNotFound(item: ShoppingItem) {
+        _uiState.update { it.copy(notFoundItems = it.notFoundItems - item.id) }
+        updateGroupedItems()
+    }
+
     fun undoLastBought() {
         val lastBought = _uiState.value.lastBoughtItem ?: return
+        sessionBoughtItems.removeAll { it.id == lastBought.id }
         _uiState.update { it.copy(lastBoughtItem = null) }
         viewModelScope.launch {
             runCatching {

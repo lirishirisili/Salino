@@ -127,7 +127,27 @@ fun SettingsScreen(
             topBar = {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    title = { Text(stringResource(R.string.settings_title)) },
+                    title = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            BrandLogo(iconSize = 38.dp)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.settings_title),
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    )
+                                )
+                                Text(
+                                    text = stringResource(R.string.settings_profile_badge),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
@@ -154,20 +174,6 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        BrandLogo(iconSize = 58.dp)
-                        Column {
-                            Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
-                            Text(
-                                text = stringResource(R.string.settings_profile_badge),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-
                 uiState.household?.let { household ->
                     SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
                         Text(
@@ -267,11 +273,12 @@ fun SettingsScreen(
                 }
 
                 Text(
-                    text = stringResource(R.string.settings_version, "1.1.3"),
+                    text = stringResource(R.string.settings_version, "1.1.5"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

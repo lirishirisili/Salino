@@ -77,6 +77,8 @@
     <string name="recurring_toggle_title">Article récurrent</string>
     <string name="recurring_toggle_subtitle">Réapparaîtra automatiquement quand ce sera le moment</string>
     <string name="recurring_every_days_label">Répéter tous les X jours</string>
+    <string name="urgent_toggle_title">Urgent</string>
+    <string name="urgent_toggle_subtitle">Cet article sera mis en évidence en mode supermarché</string>
     <string name="voice_input_action">Saisie vocale</string>
     <string name="voice_input_prompt">Dites ce dont vous avez besoin</string>
     <string name="voice_input_unavailable">La reconnaissance vocale n\'est pas disponible sur cet appareil</string>
@@ -140,6 +142,21 @@
     <string name="supermarket_mode_item_bought">marqué comme acheté</string>
     <string name="supermarket_mode_all_done">Tout est fait ! 🎉</string>
     <string name="supermarket_mode_all_done_subtitle">Vous avez tout acheté. Bravo !</string>
+    <string name="supermarket_mode_filter_all_label">Tout</string>
+    <string name="supermarket_mode_filter_urgent">Urgent</string>
+    <string name="supermarket_mode_filter_mine">Les miens</string>
+    <string name="supermarket_mode_filter_pharmacy_label">Pharmacie</string>
+    <string name="supermarket_mode_filter_not_found">Non trouvé</string>
+    <string name="supermarket_mode_not_found">Non trouvé</string>
+    <string name="supermarket_mode_swipe_not_found">Non trouvé</string>
+    <string name="supermarket_mode_add_item">Ajouter</string>
+    <string name="supermarket_mode_finish">Terminer</string>
+    <string name="supermarket_mode_hide_bought">Masquer achetés</string>
+    <string name="supermarket_mode_show_bought">Afficher achetés (%1$d)</string>
+    <string name="supermarket_mode_item_not_found">marqué comme non trouvé</string>
+    <string name="supermarket_mode_finish_title">Terminer les courses ?</string>
+    <string name="supermarket_mode_finish_message">Il reste %1$d articles. Terminer ?</string>
+    <string name="supermarket_mode_finish_confirm">Terminer</string>
 
     <!-- Settings -->
     <string name="settings_title">Paramètres</string>

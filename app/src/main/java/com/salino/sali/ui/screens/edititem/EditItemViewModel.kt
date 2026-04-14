@@ -35,6 +35,7 @@ data class EditItemState(
     val duplicateMatch: DuplicateMatch? = null,
     val isRecurring: Boolean = false,
     val recurrenceDays: String = "7",
+    val isUrgent: Boolean = false,
     val isCategoryAutoDetected: Boolean = false,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -110,6 +111,10 @@ class EditItemViewModel @Inject constructor(
         _uiState.update { it.copy(recurrenceDays = value.filter(Char::isDigit)) }
     }
 
+    fun onUrgentToggle(enabled: Boolean) {
+        _uiState.update { it.copy(isUrgent = enabled) }
+    }
+
     fun mergeWithDuplicate() {
         val state = _uiState.value
         val duplicate = state.duplicateMatch ?: return
@@ -144,7 +149,8 @@ class EditItemViewModel @Inject constructor(
                 quantity = parseQuantity(state.quantity) ?: 1.0,
                 unit = state.unit?.name,
                 category = state.category.name,
-                note = state.note.trim()
+                note = state.note.trim(),
+                isUrgent = state.isUrgent
             ) ?: return@launch
 
             shoppingRepository.updateItem(householdId, updatedItem)
@@ -201,6 +207,7 @@ class EditItemViewModel @Inject constructor(
                             note = item.note,
                             isRecurring = recurring != null,
                             recurrenceDays = recurring?.intervalDays?.toString() ?: "7",
+                            isUrgent = item.isUrgent,
                             isCategoryAutoDetected = false,
                             isLoading = false
                         )

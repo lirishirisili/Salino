@@ -77,6 +77,8 @@
     <string name="recurring_toggle_title">منتج متكرر</string>
     <string name="recurring_toggle_subtitle">سيظهر تلقائياً كاقتراح عندما يحين موعده</string>
     <string name="recurring_every_days_label">يتكرر كل X يوم</string>
+    <string name="urgent_toggle_title">عاجل</string>
+    <string name="urgent_toggle_subtitle">سيتم إبراز هذا المنتج في وضع السوبر ماركت</string>
     <string name="voice_input_action">إدخال صوتي</string>
     <string name="voice_input_prompt">قل ما تحتاجه</string>
     <string name="voice_input_unavailable">التعرّف الصوتي غير متوفر على هذا الجهاز</string>
@@ -140,6 +142,21 @@
     <string name="supermarket_mode_item_bought">تم شراؤه</string>
     <string name="supermarket_mode_all_done">تم الكل! 🎉</string>
     <string name="supermarket_mode_all_done_subtitle">اشتريت كل شيء من القائمة. أحسنت!</string>
+    <string name="supermarket_mode_filter_all_label">الكل</string>
+    <string name="supermarket_mode_filter_urgent">عاجل</string>
+    <string name="supermarket_mode_filter_mine">خاصتي</string>
+    <string name="supermarket_mode_filter_pharmacy_label">صيدلية</string>
+    <string name="supermarket_mode_filter_not_found">غير موجود</string>
+    <string name="supermarket_mode_not_found">غير موجود</string>
+    <string name="supermarket_mode_swipe_not_found">غير موجود</string>
+    <string name="supermarket_mode_add_item">إضافة منتج</string>
+    <string name="supermarket_mode_finish">إنهاء التسوق</string>
+    <string name="supermarket_mode_hide_bought">إخفاء المشتريات</string>
+    <string name="supermarket_mode_show_bought">عرض المشتريات (%1$d)</string>
+    <string name="supermarket_mode_item_not_found">تم تحديده كغير موجود</string>
+    <string name="supermarket_mode_finish_title">إنهاء التسوق؟</string>
+    <string name="supermarket_mode_finish_message">لا يزال لديك %1$d منتجات. هل تريد الإنهاء؟</string>
+    <string name="supermarket_mode_finish_confirm">إنهاء</string>
 
     <!-- Settings -->
     <string name="settings_title">الإعدادات</string>

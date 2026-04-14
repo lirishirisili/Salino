@@ -77,6 +77,8 @@
     <string name="recurring_toggle_title">ተደጋጋሚ ዕቃ</string>
     <string name="recurring_toggle_subtitle">ጊዜው ሲደርስ በራስ-ሰር እንደ ጥቆማ ይመለሳል</string>
     <string name="recurring_every_days_label">በየ X ቀናት ይድገሙ</string>
+    <string name="urgent_toggle_title">አስቸኳይ</string>
+    <string name="urgent_toggle_subtitle">ይህ ዕቃ በሱፐርማርኬት ሁናቴ ውስጥ ይደምቃል</string>
     <string name="voice_input_action">የድምጽ ግቤት</string>
     <string name="voice_input_prompt">የሚያስፈልግዎትን ይናገሩ</string>
     <string name="voice_input_unavailable">የድምጽ ማወቂያ በዚህ መሣሪያ ላይ አይገኝም</string>
@@ -139,6 +141,21 @@
     <string name="supermarket_mode_item_bought">እንደተገዛ ተምርጧል</string>
     <string name="supermarket_mode_all_done">ሁሉም ተጠናቀቀ! 🎉</string>
     <string name="supermarket_mode_all_done_subtitle">ሁሉንም ከዝርዝርስ ገዝተዋል። በጥም ጥሩ!</string>
+    <string name="supermarket_mode_filter_all_label">ሁሉም</string>
+    <string name="supermarket_mode_filter_urgent">አስቸኳይ</string>
+    <string name="supermarket_mode_filter_mine">የእኔ</string>
+    <string name="supermarket_mode_filter_pharmacy_label">ፋርማሲ</string>
+    <string name="supermarket_mode_filter_not_found">አልተገኘም</string>
+    <string name="supermarket_mode_not_found">አልተገኘም</string>
+    <string name="supermarket_mode_swipe_not_found">አልተገኘም</string>
+    <string name="supermarket_mode_add_item">ዕቃ ጨምር</string>
+    <string name="supermarket_mode_finish">ግብይት ጨርስ</string>
+    <string name="supermarket_mode_hide_bought">የተገዙ ደብቅ</string>
+    <string name="supermarket_mode_show_bought">የተገዙ አሳይ (%1$d)</string>
+    <string name="supermarket_mode_item_not_found">እንዳልተገኘ ተምርጧል</string>
+    <string name="supermarket_mode_finish_title">ግብይት ጨርስ?</string>
+    <string name="supermarket_mode_finish_message">ገና %1$d ዕቃዎች ይቀራሉ። ጨርስ?</string>
+    <string name="supermarket_mode_finish_confirm">ጨርስ</string>
     <!-- Settings -->
     <string name="settings_title">ቅንብሮች</string>
     <string name="settings_household_section">ቤት</string>

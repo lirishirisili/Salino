@@ -77,6 +77,8 @@
     <string name="recurring_toggle_title">Recurring item</string>
     <string name="recurring_toggle_subtitle">Bring this back automatically when it is due again</string>
     <string name="recurring_every_days_label">Repeat every X days</string>
+    <string name="urgent_toggle_title">Urgent</string>
+    <string name="urgent_toggle_subtitle">This item will be highlighted in supermarket mode</string>
     <string name="voice_input_action">Voice input</string>
     <string name="voice_input_prompt">Say the item you need</string>
     <string name="voice_input_unavailable">Voice recognition is not available on this device</string>
@@ -140,6 +142,21 @@
     <string name="supermarket_mode_item_bought">marked as bought</string>
     <string name="supermarket_mode_all_done">All done! 🎉</string>
     <string name="supermarket_mode_all_done_subtitle">You got everything on your list. Great job!</string>
+    <string name="supermarket_mode_filter_all_label">All</string>
+    <string name="supermarket_mode_filter_urgent">Urgent</string>
+    <string name="supermarket_mode_filter_mine">Mine</string>
+    <string name="supermarket_mode_filter_pharmacy_label">Pharmacy</string>
+    <string name="supermarket_mode_filter_not_found">Not found</string>
+    <string name="supermarket_mode_not_found">Not found</string>
+    <string name="supermarket_mode_swipe_not_found">Not found</string>
+    <string name="supermarket_mode_add_item">Add item</string>
+    <string name="supermarket_mode_finish">Finish shopping</string>
+    <string name="supermarket_mode_hide_bought">Hide bought</string>
+    <string name="supermarket_mode_show_bought">Show bought (%1$d)</string>
+    <string name="supermarket_mode_item_not_found">marked as not found</string>
+    <string name="supermarket_mode_finish_title">Finish shopping?</string>
+    <string name="supermarket_mode_finish_message">You still have %1$d items left. Do you want to finish?</string>
+    <string name="supermarket_mode_finish_confirm">Finish</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
