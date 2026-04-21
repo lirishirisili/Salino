@@ -14,6 +14,7 @@ import com.salino.sali.data.repository.SuggestionsRepositoryImpl
 import com.salino.sali.data.service.NormalizedDuplicateDetector
 import com.salino.sali.data.service.RuleBasedSuggestionEngine
 import com.salino.sali.data.service.KeywordCategoryAutoDetector
+import com.salino.sali.data.service.KeywordVoiceInputParser
 import com.salino.sali.data.service.duplicate.ItemTextNormalizer
 import com.salino.sali.data.service.duplicate.ProductSignatureExtractor
 import com.salino.sali.data.service.duplicate.ProtectedPhraseMatcher
@@ -27,6 +28,7 @@ import com.salino.sali.domain.repository.SuggestionsRepository
 import com.salino.sali.domain.service.CategoryAutoDetector
 import com.salino.sali.domain.service.DuplicateDetector
 import com.salino.sali.domain.service.SuggestionEngine
+import com.salino.sali.domain.service.VoiceInputParser
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.Module
 import dagger.Provides
@@ -151,4 +153,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSuggestionEngine(): SuggestionEngine = RuleBasedSuggestionEngine()
+
+    @Provides
+    @Singleton
+    fun provideVoiceInputParser(): VoiceInputParser = KeywordVoiceInputParser()
 }

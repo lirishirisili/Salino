@@ -15,6 +15,7 @@ import com.salino.sali.domain.repository.SuggestionsRepository
 import com.salino.sali.domain.service.CategoryAutoDetector
 import com.salino.sali.domain.service.DuplicateDetector
 import com.salino.sali.domain.service.DuplicateMatch
+import com.salino.sali.domain.service.VoiceInputParser
 import com.salino.sali.util.normalizeItemName
 import com.salino.sali.util.parseQuantity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,7 +51,8 @@ class AddItemViewModel @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val recurringRepository: RecurringRepository,
     private val categoryAutoDetector: CategoryAutoDetector,
-    private val duplicateDetector: DuplicateDetector
+    private val duplicateDetector: DuplicateDetector,
+    private val voiceInputParser: VoiceInputParser
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddItemState())
@@ -111,6 +113,27 @@ class AddItemViewModel @Inject constructor(
 
     fun onUrgentToggle(enabled: Boolean) {
         _uiState.update { it.copy(isUrgent = enabled) }
+    }
+
+    fun onVoiceResult(spokenText: String) {
+        val parsed = voiceInputParser.parse(spokenText)
+        val detectedCategory = categoryAutoDetector.detectCategory(parsed.name) ?: ItemCategory.OTHER
+        categoryManuallyChanged = false
+        _uiState.update {
+            it.copy(
+                name = parsed.name,
+                quantity = if (parsed.quantity == parsed.quantity.toLong().toDouble()) {
+                    parsed.quantity.toLong().toString()
+                } else {
+                    parsed.quantity.toString()
+                },
+                unit = parsed.unit ?: it.unit,
+                category = detectedCategory,
+                isCategoryAutoDetected = true,
+                errorMessage = null
+            )
+        }
+        recomputeDuplicate()
     }
 
     fun applySuggestion(suggestion: SuggestionItem) {
