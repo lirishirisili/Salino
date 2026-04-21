@@ -184,4 +184,17 @@
     <string name="loading">טוען…</string>
     <string name="error_no_connection">אין חיבור לאינטרנט</string>
     <string name="error_generic">משהו השתבש</string>
+
+    <!-- Language -->
+    <string name="settings_language">שפת האפליקציה</string>
+    <string name="settings_language_system">ברירת מחדל של המערכת</string>
+    <string name="language_en">English</string>
+    <string name="language_he">עברית</string>
+    <string name="language_ar">العربية</string>
+    <string name="language_fr">Français</string>
+    <string name="language_es">Español</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_am">አማርኛ</string>
+    <string name="settings_language_change_title">שינוי שפה</string>
+    <string name="settings_language_change_message">האפליקציה תופעל מחדש כדי להחיל את השפה החדשה. להמשיך?</string>
 </resources>

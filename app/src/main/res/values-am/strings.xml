@@ -182,4 +182,17 @@
     <string name="loading">በመጫን ላይ…</string>
     <string name="error_no_connection">የበይነመረብ ግንኙነት የለም</string>
     <string name="error_generic">ችግር ተፈጥሯል</string>
+
+    <!-- Language -->
+    <string name="settings_language">የመተግበሪያ ቋንቋ</string>
+    <string name="settings_language_system">የስርዓት ነባሪ</string>
+    <string name="language_en">English</string>
+    <string name="language_he">עברית</string>
+    <string name="language_ar">العربية</string>
+    <string name="language_fr">Français</string>
+    <string name="language_es">Español</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_am">አማርኛ</string>
+    <string name="settings_language_change_title">ቋንቋ ቀይር</string>
+    <string name="settings_language_change_message">አዲሱን ቋንቋ ለመተግበር መተግበሪያው እንደገና ይጀምራል። ይቀጥል?</string>
 </resources>

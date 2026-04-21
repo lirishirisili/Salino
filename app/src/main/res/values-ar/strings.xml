@@ -184,4 +184,17 @@
     <string name="loading">جارٍ التحميل…</string>
     <string name="error_no_connection">لا يوجد اتصال بالإنترنت</string>
     <string name="error_generic">حدث خطأ ما</string>
+
+    <!-- Language -->
+    <string name="settings_language">لغة التطبيق</string>
+    <string name="settings_language_system">الافتراضي للنظام</string>
+    <string name="language_en">English</string>
+    <string name="language_he">עברית</string>
+    <string name="language_ar">العربية</string>
+    <string name="language_fr">Français</string>
+    <string name="language_es">Español</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_am">አማርኛ</string>
+    <string name="settings_language_change_title">تغيير اللغة</string>
+    <string name="settings_language_change_message">سيتم إعادة تشغيل التطبيق لتطبيق اللغة الجديدة. هل تريد المتابعة؟</string>
 </resources>

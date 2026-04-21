@@ -184,4 +184,17 @@
     <string name="loading">Загрузка…</string>
     <string name="error_no_connection">Нет подключения к интернету</string>
     <string name="error_generic">Что-то пошло не так</string>
+
+    <!-- Language -->
+    <string name="settings_language">Язык приложения</string>
+    <string name="settings_language_system">По умолчанию системы</string>
+    <string name="language_en">English</string>
+    <string name="language_he">עברית</string>
+    <string name="language_ar">العربية</string>
+    <string name="language_fr">Français</string>
+    <string name="language_es">Español</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_am">አማርኛ</string>
+    <string name="settings_language_change_title">Сменить язык</string>
+    <string name="settings_language_change_message">Приложение перезапустится для применения нового языка. Продолжить?</string>
 </resources>

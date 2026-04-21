@@ -56,7 +56,7 @@ class KeywordVoiceInputParser @Inject constructor() : VoiceInputParser {
         // 4. Try Hebrew/Arabic number words: "שלוש", "خمسة"
         if (detectedQuantity == null) {
             for ((word, value) in numberWords) {
-                val wordPattern = Regex("\\b${Regex.escape(word)}\\b", RegexOption.IGNORE_CASE)
+                val wordPattern = Regex("(?<=\\s|^)${Regex.escape(word)}(?=\\s|$)", RegexOption.IGNORE_CASE)
                 val match = wordPattern.find(remaining)
                 if (match != null) {
                     detectedQuantity = value
@@ -94,55 +94,58 @@ class KeywordVoiceInputParser @Inject constructor() : VoiceInputParser {
         private val leadingConnectorPattern = Regex("^(?:of|de|של|من|的)\\s+", RegexOption.IGNORE_CASE)
         private val trailingConnectorPattern = Regex("\\s+(?:of|de|של|من|的)$", RegexOption.IGNORE_CASE)
 
+        private const val WB = "(?<=\\s|^)"
+        private const val WE = "(?=\\s|$)"
+
         private val unitPatterns: Map<ItemUnit, List<Regex>> = mapOf(
             ItemUnit.KG to listOf(
-                Regex("\\b(?:קילו(?:גרם)?|ק״ג|ק\"ג)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:kilo(?:gram)?s?|kg)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:كيلو(?:غرام)?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:килограмм(?:ов)?|кг)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ኪሎ(?:ግራም)?)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:קילו(?:גרם)?|ק״ג|ק\"ג)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:kilo(?:gram)?s?|kg)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:كيلو(?:غرام)?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:килограмм(?:ов)?|кг)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ኪሎ(?:ግራም)?)${WE}", RegexOption.IGNORE_CASE)
             ),
             ItemUnit.GRAMS to listOf(
-                Regex("\\b(?:גרם)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:grams?|gr)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:غرام)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:грамм(?:ов)?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ግራም)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:גרם)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:grams?|gr)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:غرام)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:грамм(?:ов)?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ግራም)${WE}", RegexOption.IGNORE_CASE)
             ),
             ItemUnit.LITERS to listOf(
-                Regex("\\b(?:ליטר(?:ים)?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:liters?|litres?|ltr)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:لتر)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:литр(?:ов|а)?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ሊትር)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:ליטר(?:ים)?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:liters?|litres?|ltr)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:لتر)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:литр(?:ов|а)?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ሊትር)${WE}", RegexOption.IGNORE_CASE)
             ),
             ItemUnit.PACKS to listOf(
-                Regex("\\b(?:חבילות|חבילה|אריזות|אריזה)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:packs?|packages?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:علبة|علب|حزمة)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:упаковк[аи]|пачек|пачк[аи])\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ፓኬት|ጥቅል)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:חבילות|חבילה|אריזות|אריזה)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:packs?|packages?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:علبة|علب|حزمة)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:упаковк[аи]|пачек|пачк[аи])${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ፓኬት|ጥቅል)${WE}", RegexOption.IGNORE_CASE)
             ),
             ItemUnit.BOTTLES to listOf(
-                Regex("\\b(?:בקבוקים|בקבוק)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:bottles?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:زجاجة|زجاجات|قنينة)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:бутылк[аи]|бутылок)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ጠርሙስ|ጠርሙሶች)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:בקבוקים|בקבוק)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:bottles?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:زجاجة|زجاجات|قنينة)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:бутылк[аи]|бутылок)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ጠርሙስ|ጠርሙሶች)${WE}", RegexOption.IGNORE_CASE)
             ),
             ItemUnit.BAGS to listOf(
-                Regex("\\b(?:שקיות|שקית)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:bags?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:كيس|أكياس)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:пакет(?:ов|а|ы)?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ከረጢት)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:שקיות|שקית)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:bags?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:كيس|أكياس)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:пакет(?:ов|а|ы)?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ከረጢት)${WE}", RegexOption.IGNORE_CASE)
             ),
             ItemUnit.PIECES to listOf(
-                Regex("\\b(?:יחידות|יחידה)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:pieces?|pcs)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:قطعة|قطع)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:штук[аи]?)\\b", RegexOption.IGNORE_CASE),
-                Regex("\\b(?:ቁራጭ)\\b", RegexOption.IGNORE_CASE)
+                Regex("${WB}(?:יחידות|יחידה)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:pieces?|pcs)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:قطعة|قطع)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:штук[аи]?)${WE}", RegexOption.IGNORE_CASE),
+                Regex("${WB}(?:ቁራጭ)${WE}", RegexOption.IGNORE_CASE)
             )
         )
 

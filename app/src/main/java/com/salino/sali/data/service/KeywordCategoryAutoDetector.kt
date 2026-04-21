@@ -66,7 +66,10 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             add(cleaned.removeCommonHebrewPrefixes())
             add(cleaned.removeCommonHebrewSuffixes())
             add(cleaned.removeCommonHebrewPrefixes().removeCommonHebrewSuffixes())
+            add(cleaned.hebrewConstructToBase())
+            add(cleaned.removeCommonHebrewPrefixes().hebrewConstructToBase())
             add(cleaned.removeEnglishPluralSuffix())
+            add(cleaned.removeArabicDefiniteArticle())
         }.filter { it.isNotBlank() }.distinct()
     }
 
@@ -116,6 +119,12 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             else -> this
         }
 
+    private fun String.hebrewConstructToBase(): String =
+        if (endsWith("\u05EA") && length > 2) removeSuffix("\u05EA") + "\u05D4" else this
+
+    private fun String.removeArabicDefiniteArticle(): String =
+        removePrefix("\u0627\u0644")
+
     private val keywordMap: LinkedHashMap<ItemCategory, List<String>> = linkedMapOf(
         ItemCategory.DAIRY to listOf(
             "milk", "cheese", "yogurt", "butter", "cream", "cottage",
@@ -127,7 +136,15 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "leche", "queso", "yogur", "mantequilla", "crema", "requeson", "requesón", "queso cottage",
             "молоко", "сыр", "йогурт", "масло", "сливки", "творог", "сметана", "лабне", "моцарелла",
             "حليب", "جبنة", "جبن", "زبادي", "لبن", "زبدة", "كريمة", "لبنة", "موزاريلا", "قشطة",
-            "ወተት", "አይብ", "እርጎ", "ቅቤ", "ክሬም", "ላብኔ", "ሞዛሬላ", "ኮተጅ"
+            "መተት", "አይብ", "እርጎ", "ቅቤ", "ክሬም", "ላብኔ", "ሞዛሬላ", "ኮተጅ",
+            // Compound phrases
+            "chocolate milk", "soy milk", "almond milk", "oat milk", "coconut milk", "goat milk",
+            "cream cheese", "sour cream", "whipped cream", "cottage cheese", "string cheese",
+            "חלב שוקולד", "חלב סויה", "חלב שקדים", "חלב שיבולת שועל", "חלב קוקוס", "חלב עיזים",
+            "lait chocolat\u00e9", "lait de soja", "lait d'amande", "lait d'avoine", "lait de coco",
+            "leche con chocolate", "leche de soja", "leche de almendras", "leche de avena", "leche de coco",
+            "шоколадное молоко", "соевое молоко", "миндальное молоко", "овсяное молоко", "кокосовое молоко",
+            "حليب شوكولاتة", "حليب صويا", "حليب لوز", "حليب شوفان", "حليب جوز الهند"
         ),
         ItemCategory.BAKERY to listOf(
             "bread", "roll", "bagel", "pita", "croissant", "cake",
@@ -139,7 +156,14 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "pan", "panecillo", "bagel", "pita", "cruasan", "croissant", "pastel", "baguette", "bolleria", "bollería", "tortilla",
             "хлеб", "булочка", "бейгл", "пита", "круассан", "торт", "багет", "выпечка", "лаваш", "лепешка",
             "خبز", "كعك", "بيغل", "بيتا", "كرواسون", "كيك", "رغيف", "باجيت", "معجنات", "تورتيلا",
-            "ዳቦ", "ቡን", "ቤግል", "ፒታ", "ክሮሳን", "ኬክ", "ባጌት", "መጋገሪያ", "ቶርቲያ"
+            "ዳቦ", "ቡን", "ቤግል", "ፒታ", "ክሮሳን", "ኬክ", "ባጤት", "መጋገሪያ", "ቶርቲያ",
+            // Compound phrases
+            "chocolate cake", "cheesecake", "birthday cake", "sourdough bread", "banana bread", "whole wheat bread",
+            "עוגת שוקולד", "עוגת גבינה", "עוגת יום הולדת", "עוגת תפוחים", "עוגת דבש", "לחם מחמצת", "לחם מקמח מלא",
+            "g\u00e2teau au chocolat", "g\u00e2teau au fromage",
+            "pastel de chocolate", "tarta de queso",
+            "шоколадный торт", "чизкейк",
+            "كيكة شوكولاتة", "تشيز كيك"
         ),
         ItemCategory.FRUITS to listOf(
             "apple", "banana", "orange", "melon", "grape", "pear",
@@ -151,7 +175,14 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "manzana", "platano", "plátano", "banana", "naranja", "melon", "melón", "uva", "pera", "sandia", "sandía", "mango", "aguacate", "fresa", "limon", "limón",
             "яблоко", "банан", "апельсин", "дыня", "виноград", "груша", "арбуз", "манго", "авокадо", "персик", "клубника", "лимон",
             "تفاح", "موز", "برتقال", "شمام", "عنب", "كمثرى", "بطيخ", "مانجو", "أفوكادو", "خوخ", "فراولة", "ليمون",
-            "ፖም", "ሙዝ", "ብርቱካን", "ሜሎን", "ወይን", "ፒር", "ሐብሐብ", "ማንጎ", "አቮካዶ", "እንጆሪ", "ሎሚ"
+            "ፖም", "ሙዝ", "ብርቱካን", "ሜሎን", "ወይን", "ፒር", "ሐብሐብ", "ማንጎ", "አቮካዶ", "እንጆሪ", "ሎሚ",
+            // Compound phrases
+            "dried fruit", "fresh fruit", "fruit salad",
+            "פירות יבשים", "סלט פירות",
+            "fruits secs", "salade de fruits",
+            "fruta seca", "ensalada de frutas",
+            "сухофрукты", "фруктовый салат",
+            "فواكه مجففة", "سلطة فواكه"
         ),
         ItemCategory.VEGETABLES to listOf(
             "tomato", "cucumber", "onion", "potato", "carrot", "pepper",
@@ -190,7 +221,14 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "jabon", "jabón", "detergente", "lejia", "lejía", "esponja", "limpiador", "bolsa de basura", "lavavajillas", "suavizante", "toallitas", "papel higienico", "papel higiénico", "escoba",
             "мыло", "стиральный порошок", "отбеливатель", "губка", "чистящее средство", "мешки для мусора", "жидкость для посуды", "кондиционер для белья", "салфетки", "туалетная бумага", "веник",
             "صابون", "منظف", "مبيض", "إسفنجة", "اسفنجة", "أكياس قمامة", "سائل جلي", "منعم", "مناديل مبللة", "ورق تواليت", "مكنسة",
-            "ሳሙና", "የልብስ ሳሙና", "ነጭ ማጽጃ", "ስፖንጅ", "ማጽጃ", "የቆሻሻ ከረጢት", "የእቃ ማጠቢያ", "ለስላሳ ማድረጊያ", "የመፀዳጃ ወረቀት", "መጥረጊያ"
+            "ሳሙና", "የልብስ ሳሙና", "ነጭ ማጽጃ", "ስፖንጅ", "ማጽጃ", "የቆሻሻ ለረጢት", "የእቃ ማጠቢያ", "ለስላሳ ማድረጊያ", "የመጽዳጃ ወረቀት", "መጥረጊያ",
+            // Compound phrases
+            "dish soap", "floor cleaner", "glass cleaner", "laundry detergent", "fabric softener", "air freshener",
+            "סבון כלים", "סבון רצפה", "סבון ידיים",
+            "savon vaisselle", "nettoyant sol", "nettoyant vitres",
+            "jab\u00f3n de platos", "limpiador de pisos", "limpiador de vidrios",
+            "средство для мытья посуды", "средство для пола",
+            "صابون أطباق", "منظف أرضيات"
         ),
         ItemCategory.PANTRY to listOf(
             "rice", "pasta", "flour", "oil", "salt", "sugar",
@@ -206,7 +244,22 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "arroz", "pasta", "harina", "aceite", "sal", "azucar", "azúcar", "lentejas", "garbanzos", "quinoa", "avena", "cuscus", "ketchup", "mostaza", "tahini", "miel", "especias", "mermelada",
             "рис", "макароны", "мука", "масло", "соль", "сахар", "чечевица", "нут", "киноа", "овсянка", "кускус", "кетчуп", "горчица", "тахини", "мед", "специи", "варенье",
             "أرز", "معكرونة", "طحين", "زيت", "ملح", "سكر", "عدس", "حمص", "كينوا", "شوفان", "كسكس", "كاتشب", "خردل", "طحينة", "عسل", "بهارات", "مربى",
-            "ሩዝ", "ፓስታ", "ዱቄት", "ዘይት", "ጨው", "ስኳር", "ምስር", "ሽምብራ", "ኪኖዋ", "አጃ", "ኩስኩስ", "ኬችፕ", "ሰናፍጭ", "ጣሂኒ", "ማር", "ቅመማ ቅመም", "ጀም"
+            "ሩዝ", "ፓስታ", "ዱቄት", "ዘይት", "ጨው", "ስኳር", "ምስር", "ሽምብራ", "ኪኖዋ", "አጃ", "ኩስኩስ", "ኬችፕ", "ሰናፍጭ", "ጣሂኒ", "ማር", "ቅመማ ቅመም", "ጀም",
+            // Compound phrases - food syrups (NOT pharmacy)
+            "grape syrup", "maple syrup", "chocolate syrup", "date syrup", "agave syrup",
+            "strawberry syrup", "caramel syrup", "vanilla syrup", "pancake syrup",
+            "soy sauce", "hot sauce", "bbq sauce", "barbecue sauce", "tomato sauce", "pasta sauce",
+            "teriyaki sauce", "worcestershire sauce", "chocolate spread",
+            "סירופ ענבים", "סירופ מייפל", "סירופ שוקולד", "סירופ תות", "סירופ דבש",
+            "סירופ תמרים", "סירופ אגבה", "סירופ קרמל", "סירופ וניל",
+            "דבש תמרים", "מי ורדים", "תמצית וניל",
+            "רוטב סויה", "רוטב צ'ילי", "רוטב ברבקיו", "רוטב עגבניות", "רוטב פסטה", "רוטב חריף",
+            "ממרח שוקולד", "ממרח לוטוס", "ממרח ביסקוף",
+            "sirop d'\u00e9rable", "sirop de chocolat", "sauce tomate", "sauce soja", "sauce piquante", "p\u00e2te \u00e0 tartiner",
+            "jarabe de arce", "sirope de chocolate", "salsa de tomate", "salsa de soja", "salsa picante",
+            "кленовый сироп", "шоколадный сироп", "виноградный сироп", "финиковый сироп",
+            "соевый соус", "томатный соус", "острый соус",
+            "دبس عنب", "دبس تمر", "شراب القيقب", "صلصة طماطم", "صلصة صويا", "صلصة حارة"
         ),
         ItemCategory.SNACKS to listOf(
             "chips", "cookie", "cookies", "cracker", "chocolate", "snack",
@@ -220,7 +273,15 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "patatas fritas", "galleta", "galletas", "cracker", "chocolate", "snack", "caramelos", "palomitas", "pretzel", "frutos secos", "pistachos", "cacahuetes", "malvaviscos", "chicle",
             "чипсы", "печенье", "крекер", "шоколад", "снэк", "конфеты", "попкорн", "крендель", "орехи", "фисташки", "арахис", "маршмеллоу", "жвачка",
             "شيبس", "بسكويت", "كراكر", "شوكولاتة", "سناك", "حلويات", "فشار", "بريتزل", "مكسرات", "فستق", "فول سوداني", "مارشميلو", "علكة",
-            "ቺፕስ", "ብስኩት", "ክራከር", "ቸኮሌት", "ስናክ", "ከረሜላ", "ፖፕኮርን", "ፕረትዘል", "ፍሬ ነት", "ፒስታሽዮ", "ኦቾሎኒ", "ማርሽማሎ", "ማስቲካ"
+            "ቺፕስ", "ብስኩት", "ክራከር", "ቸኮሌት", "ስናክ", "ለረሜላ", "ፖፕኮርን", "ፕረትዘል", "ፍሬ ነት", "ፒስታሽዮ", "ኦኆሎኒ", "ማርሽማሎ", "ማስቲካ",
+            // Compound phrases
+            "chocolate bar", "protein bar", "granola bar", "energy bar",
+            "milk chocolate", "dark chocolate", "white chocolate",
+            "שוקולד חלב", "שוקולד מריר", "שוקולד לבן", "חטיף חלבון", "חטיף אנרגיה",
+            "chocolat au lait", "chocolat noir", "barre prot\u00e9in\u00e9e",
+            "chocolate con leche", "chocolate negro", "barra de prote\u00edna",
+            "молочный шоколад", "т\u0451мный шоколад", "протеиновый батончик",
+            "شوكولاتة حليب", "شوكولاتة داكنة", "بار بروتين"
         ),
         ItemCategory.BEVERAGES to listOf(
             "water", "juice", "cola", "coffee", "tea", "drink",
@@ -234,7 +295,16 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "agua", "jugo", "zumo", "cola", "café", "cafe", "té", "te", "bebida", "refresco", "vino", "cerveza", "zero", "sprite", "limonada", "espresso",
             "вода", "сок", "кола", "кофе", "чай", "напиток", "газировка", "вино", "пиво", "зеро", "спрайт", "лимонад", "эспрессо",
             "ماء", "عصير", "كولا", "قهوة", "شاي", "مشروب", "صودا", "نبيذ", "بيرة", "زيرو", "سبرايت", "ليمونادة", "إسبريسو", "اسبريسو",
-            "ውሃ", "ጭማቂ", "ኮላ", "ቡና", "ሻይ", "መጠጥ", "ሶዳ", "ወይን", "ቢራ", "ዚሮ", "ስፕራይት", "ሎሚ መጠጥ", "ኤስፕሬሶ"
+            "ውሃ", "ጭማቂ", "ኮላ", "ቡና", "ሻይ", "መጠጥ", "ሶዳ", "ወይን", "ቢራ", "ዚሮ", "ስፕራይት", "ሎሚ መጠጥ", "ኤስፕሬሶ",
+            // Compound phrases - juice types
+            "grape juice", "orange juice", "apple juice", "lemon juice", "cranberry juice",
+            "pomegranate juice", "grapefruit juice", "carrot juice", "iced tea", "iced coffee",
+            "מיץ ענבים", "מיץ תפוזים", "מיץ אשכוליות", "מיץ גזר", "מיץ לימון", "מיץ רימונים",
+            "מיץ אפרסק", "מיץ חמוציות", "תה קר", "קפה קר",
+            "jus d'orange", "jus de pomme", "jus de raisin", "th\u00e9 glac\u00e9", "caf\u00e9 glac\u00e9",
+            "jugo de naranja", "jugo de manzana", "jugo de uva", "zumo de naranja", "t\u00e9 helado",
+            "апельсиновый сок", "яблочный сок", "виноградный сок", "гранатовый сок",
+            "عصير برتقال", "عصير تفاح", "عصير عنب", "عصير رمان"
         ),
         ItemCategory.PHARMACY to listOf(
             "vitamin", "painkiller", "shampoo", "toothpaste", "medicine", "bandage",
@@ -255,7 +325,15 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             "vitamina", "analgésico", "analgesico", "champú", "champu", "pasta de dientes", "medicina", "venda", "jabón", "jabon", "gel de baño", "advil", "nurofen", "pañuelos", "panuelos", "papel higiénico", "papel higienico", "toallitas", "algodón", "algodon", "loción", "locion", "perfume", "afeitadora", "espuma de afeitar", "tampones", "compresas", "pomada", "acondicionador", "enjuague bucal", "hilo dental", "protector solar",
             "витамины", "обезболивающее", "шампунь", "зубная паста", "лекарство", "пластырь", "мыло", "гель для душа", "адвил", "нурофен", "салфетки", "туалетная бумага", "влажные салфетки", "вата", "лосьон", "духи", "бритва", "пена для бритья", "тампоны", "прокладки", "мазь", "кондиционер", "ополаскиватель для рта", "зубная нить", "солнцезащитный крем",
             "فيتامين", "مسكن", "شامبو", "معجون أسنان", "معجون اسنان", "دواء", "لاصق جروح", "صابون", "غسول جسم", "أدفيل", "ادفيل", "نوروفين", "مناديل", "ورق تواليت", "مناديل مبللة", "قطن", "لوشن", "عطر", "شفرة", "كريم حلاقة", "سدادات قطنية", "فوط", "مرهم", "بلسم", "غسول فم", "خيط أسنان", "خيط اسنان", "واقي شمس",
-            "ቪታሚን", "ህመም ማስታገሻ", "ሻምፑ", "የጥርስ ሳሙና", "መድሃኒት", "ፕላስተር", "ሳሙና", "የሰውነት ሳሙና", "አድቪል", "ኑሮፈን", "ቲሹ", "የመፀዳጃ ወረቀት", "እርጥብ መጥረጊያ", "ጥጥ", "ሎሽን", "ሽቶ", "ሬዘር", "የማጭደቂያ ክሬም", "ታምፖን", "ፓድ", "ቅባት", "ኮንዲሽነር", "የአፍ ማጠቢያ", "የጥርስ ክር", "የፀሐይ መከላከያ"
+            "ቪታሚን", "ህመም ማስታገሻ", "ሻምፑ", "የጥርስ ሳሙና", "መድሃኒት", "ፕላስተር", "ሳሙና", "የሰውነት ሳሙና", "አድቪል", "ኑሮፈን", "ቲሹ", "የመፀዳጃ ወረቀት", "እርጥብ መጥረጊያ", "ጥጥ", "ሎሽን", "ሽቶ", "ሬዘር", "የማጭደቂያ ክሬም", "ታምፖን", "ፓድ", "ቅባት", "ኮንዲሽነር", "የአፍ ማጠቢያ", "የጥርስ ክር", "የፀሐይ መከላከያ",
+            // Compound phrases - medical syrups (stay in PHARMACY)
+            "cough syrup", "children's syrup", "cold medicine", "eye drops", "nasal spray", "hand sanitizer",
+            "סירופ שיעול", "סירופ לילדים", "סירופ חום", "טיפות אף", "ספריי לאף", "שמן שיער",
+            "סבון גוף", "קרם פנים", "קרם עיניים", "קרם ידיים", "קרם רגליים",
+            "sirop pour la toux", "spray nasal", "désinfectant",
+            "jarabe para la tos", "spray nasal", "desinfectante",
+            "сироп от кашля", "детский сироп", "спрей для носа", "антисептик",
+            "شراب السعال", "بخاخ أنف", "معقم يدين"
         )
     )
 

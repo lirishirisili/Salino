@@ -184,4 +184,17 @@
     <string name="loading">Cargando…</string>
     <string name="error_no_connection">Sin conexión a Internet</string>
     <string name="error_generic">Algo salió mal</string>
+
+    <!-- Language -->
+    <string name="settings_language">Idioma de la aplicación</string>
+    <string name="settings_language_system">Predeterminado del sistema</string>
+    <string name="language_en">English</string>
+    <string name="language_he">עברית</string>
+    <string name="language_ar">العربية</string>
+    <string name="language_fr">Français</string>
+    <string name="language_es">Español</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_am">አማርኛ</string>
+    <string name="settings_language_change_title">Cambiar idioma</string>
+    <string name="settings_language_change_message">La aplicación se reiniciará para aplicar el nuevo idioma. ¿Continuar?</string>
 </resources>

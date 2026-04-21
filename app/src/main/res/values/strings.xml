@@ -184,4 +184,17 @@
     <string name="loading">Loading…</string>
     <string name="error_no_connection">No internet connection</string>
     <string name="error_generic">Something went wrong</string>
+
+    <!-- Language -->
+    <string name="settings_language">App language</string>
+    <string name="settings_language_system">System default</string>
+    <string name="language_en">English</string>
+    <string name="language_he">עברית</string>
+    <string name="language_ar">العربية</string>
+    <string name="language_fr">Français</string>
+    <string name="language_es">Español</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_am">አማርኛ</string>
+    <string name="settings_language_change_title">Change Language</string>
+    <string name="settings_language_change_message">The app will restart to apply the new language. Continue?</string>
 </resources>

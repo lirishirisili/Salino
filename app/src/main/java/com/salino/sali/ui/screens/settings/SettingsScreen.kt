@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.salino.sali.R
@@ -41,6 +44,8 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var showLanguageChangeDialog by remember { mutableStateOf(false) }
+    var pendingLanguageTag by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) onSignedOut()
@@ -115,6 +120,40 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissLeaveDialog() }) {
+                    Text(stringResource(R.string.no))
+                }
+            }
+        )
+    }
+
+    if (showLanguageChangeDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageChangeDialog = false },
+            title = { Text(stringResource(R.string.settings_language_change_title)) },
+            text = { Text(stringResource(R.string.settings_language_change_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLanguageChangeDialog = false
+                    val localeList = if (pendingLanguageTag == null) {
+                        LocaleListCompat.getEmptyLocaleList()
+                    } else {
+                        LocaleListCompat.forLanguageTags(pendingLanguageTag)
+                    }
+                    AppCompatDelegate.setApplicationLocales(localeList)
+                    // Full process restart so RTL/LTR and resources reload properly
+                    val pm = context.packageManager
+                    val intent = pm.getLaunchIntentForPackage(context.packageName)
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        context.startActivity(intent)
+                        Runtime.getRuntime().exit(0)
+                    }
+                }) {
+                    Text(stringResource(R.string.yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLanguageChangeDialog = false }) {
                     Text(stringResource(R.string.no))
                 }
             }
@@ -272,8 +311,67 @@ fun SettingsScreen(
                     }
                 }
 
+                // Language picker
+                SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.settings_language),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    val currentLocales = AppCompatDelegate.getApplicationLocales()
+                    val currentTag = if (currentLocales.isEmpty) null else currentLocales.toLanguageTags().split(",").firstOrNull()
+                    var expanded by remember { mutableStateOf(false) }
+
+                    val languages = remember {
+                        listOf(
+                            null to R.string.settings_language_system,
+                            "en" to R.string.language_en,
+                            "he" to R.string.language_he,
+                            "ar" to R.string.language_ar,
+                            "fr" to R.string.language_fr,
+                            "es" to R.string.language_es,
+                            "ru" to R.string.language_ru,
+                            "am" to R.string.language_am
+                        )
+                    }
+
+                    val currentLabel = languages.find { it.first == currentTag }?.second
+                        ?: R.string.settings_language_system
+
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it }
+                    ) {
+                        ListItem(
+                            modifier = Modifier.menuAnchor(),
+                            headlineContent = { Text(stringResource(currentLabel)) },
+                            leadingContent = { Icon(Icons.Default.Language, contentDescription = null) },
+                            trailingContent = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            languages.forEach { (tag, labelRes) ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(labelRes)) },
+                                    onClick = {
+                                        expanded = false
+                                        if (tag != currentTag) {
+                                            pendingLanguageTag = tag
+                                            showLanguageChangeDialog = true
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Text(
-                    text = stringResource(R.string.settings_version, "1.1.5"),
+                    text = stringResource(R.string.settings_version, com.salino.sali.BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
