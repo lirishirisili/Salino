@@ -1,5 +1,13 @@
 ﻿package com.salino.sali.ui.screens.edititem
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,20 +23,25 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.salino.sali.R
@@ -40,6 +53,7 @@ import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
 import com.salino.sali.domain.service.DuplicateReason
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +62,31 @@ fun EditItemScreen(
     viewModel: EditItemViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spoken = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+            if (!spoken.isNullOrBlank()) {
+                viewModel.onVoiceResult(spoken)
+            }
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            launchEditSpeechRecognizer(context, speechLauncher)
+        } else {
+            Toast.makeText(context, context.getString(R.string.voice_input_permission_denied), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(uiState.isSaved, uiState.isDeleted) {
         if (uiState.isSaved || uiState.isDeleted) onNavigateBack()
@@ -161,7 +199,24 @@ fun EditItemScreen(
                         label = { Text(stringResource(R.string.item_name_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        isError = uiState.errorMessage == "empty_name"
+                        isError = uiState.errorMessage == "empty_name",
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { viewModel.saveItem() }),
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                    launchEditSpeechRecognizer(context, speechLauncher)
+                                } else {
+                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Default.Mic,
+                                    contentDescription = stringResource(R.string.voice_input_action),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     )
 
                     if (errorText != null && uiState.errorMessage == "empty_name") {
@@ -343,5 +398,21 @@ fun EditItemScreen(
                 }
             }
         }
+    }
+}
+
+private fun launchEditSpeechRecognizer(
+    context: android.content.Context,
+    launcher: androidx.activity.result.ActivityResultLauncher<Intent>
+) {
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+        putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.voice_input_prompt))
+    }
+    if (intent.resolveActivity(context.packageManager) != null) {
+        launcher.launch(intent)
+    } else {
+        Toast.makeText(context, context.getString(R.string.voice_input_unavailable), Toast.LENGTH_SHORT).show()
     }
 }
