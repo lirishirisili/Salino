@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
+import com.salino.sali.MainActivity
+import kotlin.system.exitProcess
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -141,13 +143,11 @@ fun SettingsScreen(
                     }
                     AppCompatDelegate.setApplicationLocales(localeList)
                     // Full process restart so RTL/LTR and resources reload properly
-                    val pm = context.packageManager
-                    val intent = pm.getLaunchIntentForPackage(context.packageName)
-                    if (intent != null) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        context.startActivity(intent)
-                        Runtime.getRuntime().exit(0)
+                    val restartIntent = Intent(context, MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     }
+                    context.startActivity(restartIntent)
+                    exitProcess(0)
                 }) {
                     Text(stringResource(R.string.yes))
                 }
@@ -321,7 +321,8 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     val currentLocales = AppCompatDelegate.getApplicationLocales()
-                    val currentTag = if (currentLocales.isEmpty) null else currentLocales.toLanguageTags().split(",").firstOrNull()
+                    val rawTag = if (currentLocales.isEmpty) null else currentLocales.toLanguageTags().split(",").firstOrNull()
+                    val currentTag = normalizeLanguageTag(rawTag)
                     var expanded by remember { mutableStateOf(false) }
 
                     val languages = remember {
@@ -379,5 +380,16 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+}
+
+private fun normalizeLanguageTag(tag: String?): String? {
+    if (tag.isNullOrBlank()) return null
+    val lang = tag.split("-", "_").first().lowercase()
+    return when (lang) {
+        "iw" -> "he"
+        "in" -> "id"
+        "ji" -> "yi"
+        else -> lang
     }
 }
