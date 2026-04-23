@@ -1,0 +1,25 @@
+{
+  "name": "Haserli - חסרלי",
+  "short_name": "חסרלי",
+  "description": "Your shared shopping list",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F9F8",
+  "theme_color": "#0D9488",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
