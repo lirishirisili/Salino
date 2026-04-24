@@ -59,7 +59,12 @@ export default function SettingsScreen() {
     <div className="screen">
       <div className="app-bar">
         <button className="app-bar-back" onClick={() => navigate(-1)}>←</button>
-        <h1>⚙️ {t('settings_title')}</h1>
+        <h1>
+          <span>
+            <span className="brand-logo sm"><img src="/favicon.png" alt="" /></span>
+            <span>{t('settings_title')}</span>
+          </span>
+        </h1>
       </div>
 
       {/* Household Section */}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { subscribeToItems } from '../services/firestoreService';
 import type { ShoppingItem, ItemCategory } from '../types';
-import { CATEGORY_COLORS, CATEGORY_EMOJIS } from '../types';
+import { CATEGORY_COLORS } from '../types';
 import { formatQuantity } from '../utils';
 import { useI18n } from '../i18n/index';
 
@@ -65,9 +65,9 @@ export default function HistoryScreen() {
                       <span>{formatQuantity(item.quantity)}{item.unit ? ` ${tUnit(item.unit)}` : ''}</span>
                       <span
                         className="category-badge"
-                        style={{ background: CATEGORY_COLORS[item.category as ItemCategory] || CATEGORY_COLORS.OTHER }}
+                        style={{ ['--cat-color' as string]: CATEGORY_COLORS[item.category as ItemCategory] || CATEGORY_COLORS.OTHER }}
                       >
-                        {CATEGORY_EMOJIS[item.category as ItemCategory] || '📦'} {tCategory(item.category as ItemCategory)}
+                        {tCategory(item.category as ItemCategory)}
                       </span>
                       {item.boughtByName && <span>{t('shopping_list_bought_by', item.boughtByName)}</span>}
                     </div>

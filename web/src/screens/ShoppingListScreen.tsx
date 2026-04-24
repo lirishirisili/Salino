@@ -7,7 +7,6 @@ import {
   markAsBought,
   markAsActive,
   deleteItem,
-  toggleFavorite,
   logActivity,
   addItem,
 } from '../services/firestoreService';
@@ -45,7 +44,6 @@ export default function ShoppingListScreen() {
       filtered = filtered.filter((i) => i.category === selectedCategory);
     }
     return filtered.sort((a, b) => {
-      if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
       if (a.isUrgent !== b.isUrgent) return a.isUrgent ? -1 : 1;
       return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
     });
@@ -90,10 +88,6 @@ export default function ShoppingListScreen() {
     showToast(`${item.name} ${t('shopping_list_delete')}`);
   };
 
-  const handleToggleFav = async (item: ShoppingItem) => {
-    await toggleFavorite(householdId, item.id, !item.isFavorite);
-  };
-
   const handleAddSuggestion = async (s: SuggestionItem) => {
     await addItem(householdId, {
       name: s.name,
@@ -124,7 +118,8 @@ export default function ShoppingListScreen() {
       {/* App Bar - matches Android: BrandLogo + title + action icons */}
       <div className="app-bar">
         <h1>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span>
+            <span className="brand-logo sm"><img src="/favicon.png" alt="" /></span>
             <span>{t('shopping_list_title')}</span>
           </span>
         </h1>
@@ -142,7 +137,7 @@ export default function ShoppingListScreen() {
       </div>
 
       {/* Live badge */}
-      <div className="live-badge" style={{ textAlign: 'center', marginBottom: 8 }}>{t('shopping_list_live_badge')}</div>
+      <div className="live-badge">{t('shopping_list_live_badge')}</div>
 
       {/* Search */}
       <div className="search-bar">
@@ -217,24 +212,21 @@ export default function ShoppingListScreen() {
               <div className="checkbox" onClick={() => handleMarkBought(item)} />
               <div className="item-info" onClick={() => navigate(`/edit/${item.id}`)} style={{ cursor: 'pointer' }}>
                 <div className="item-name">
-                  {item.isFavorite && '⭐ '}{item.name}
+                  {item.name}
                 </div>
                 <div className="item-meta">
                   {item.quantity > 1 && <span>{formatQuantity(item.quantity)}{item.unit ? ` ${tUnit(item.unit)}` : ''}</span>}
                   {item.quantity <= 1 && item.unit && <span>{tUnit(item.unit)}</span>}
                   <span
                     className="category-badge"
-                    style={{ background: CATEGORY_COLORS[item.category as ItemCategory] || CATEGORY_COLORS.OTHER }}
+                    style={{ ['--cat-color' as string]: CATEGORY_COLORS[item.category as ItemCategory] || CATEGORY_COLORS.OTHER }}
                   >
-                    {CATEGORY_EMOJIS[item.category as ItemCategory] || '📦'} {tCategory(item.category as ItemCategory)}
+                    {tCategory(item.category as ItemCategory)}
                   </span>
                   {item.isUrgent && <span className="urgent-badge">{t('urgent_toggle_title')}</span>}
                 </div>
               </div>
               <div className="item-actions">
-                <button className="icon-btn" onClick={() => handleToggleFav(item)}>
-                  {item.isFavorite ? '⭐' : '☆'}
-                </button>
                 <button className="icon-btn" onClick={() => handleDelete(item)}>
                   🗑️
                 </button>
@@ -273,10 +265,16 @@ export default function ShoppingListScreen() {
       {/* Dual FABs - matches Android: Supermarket (green) + Add (orange) */}
       <div className="dual-fabs">
         <button className="fab-extended fab-supermarket" onClick={() => navigate('/supermarket')}>
-          🏪 {t('supermarket_mode_short')}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M21.9 8.89l-1.05-4.37c-.22-.9-1.0-1.52-1.91-1.52H5.05c-.9 0-1.69.63-1.9 1.52L2.1 8.89c-.24 1.02-.02 2.06.62 2.88.08.11.19.19.28.29V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6.94c.09-.09.2-.18.28-.28.64-.82.87-1.87.62-2.89zM13.99 4.99H14l1.04 4.36c.13.55 0 1.09-.32 1.53-.17.23-.5.62-1.05.62-.66 0-1.24-.53-1.31-1.19l-.68-5.32zm-5.05 4.37L10 5h1.96l.69 5.42c.08.58-.1 1.12-.49 1.55-.33.37-.8.58-1.36.58-.92 0-1.69-.77-1.85-1.79-.02-.11-.02-.23 0-.34zM4.04 9.36L5 5h1.97l-.64 5.07c-.08.66-.66 1.19-1.33 1.19-.45 0-.85-.2-1.14-.54-.29-.35-.4-.8-.31-1.26zM19 19H5v-5.03c.21.03.42.05.63.05.87 0 1.71-.32 2.36-.89.63.57 1.46.89 2.36.89.87 0 1.71-.32 2.36-.89.63.57 1.46.89 2.36.89.89 0 1.72-.32 2.36-.89.64.56 1.49.89 2.36.89.21 0 .42-.02.63-.05V19zm-.34-7.74c-.66 0-1.25-.52-1.33-1.19L16.7 5h1.95l1.01 4.2c.13.55 0 1.09-.32 1.52-.28.36-.67.54-1.08.54z"/>
+          </svg>
+          {t('supermarket_mode_title')}
         </button>
         <button className="fab-extended fab-add" onClick={() => navigate('/add')}>
-          ➕ {t('item_add')}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          {t('item_add')}
         </button>
       </div>
 

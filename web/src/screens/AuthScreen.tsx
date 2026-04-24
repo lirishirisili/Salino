@@ -25,7 +25,9 @@ export default function AuthScreen() {
   return (
     <div className="auth-screen">
       <div>
-        <div className="auth-logo">🛒</div>
+        <div className="auth-logo">
+          <img src="/favicon.png" alt="" />
+        </div>
         <h1 className="auth-title">{t('app_name')}</h1>
         <p className="auth-subtitle">{t('auth_welcome_subtitle')}</p>
       </div>

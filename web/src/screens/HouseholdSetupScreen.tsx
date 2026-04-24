@@ -46,10 +46,10 @@ export default function HouseholdSetupScreen() {
 
   return (
     <div className="screen" style={{ justifyContent: 'center', gap: 24 }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 48 }}>🏠</div>
+      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <div className="brand-logo lg"><img src="/favicon.png" alt="" /></div>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginTop: 8 }}>{t('household_setup_title')}</h1>
-        <p style={{ color: 'var(--on-surface-variant)', marginTop: 4 }}>
+        <p style={{ color: 'var(--on-surface-variant)', marginTop: 4, maxWidth: 320 }}>
           {t('household_setup_subtitle')}
         </p>
       </div>
