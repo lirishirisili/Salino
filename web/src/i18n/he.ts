@@ -158,6 +158,16 @@ const he = {
   settings_sign_out_confirm: 'להתנתק מחסרלי?',
   settings_version: 'גרסה {0}',
   settings_language: 'שפת האפליקציה',
+  settings_language_system: 'ברירת מחדל של המערכת',
+  settings_language_change_title: 'שינוי שפה',
+  settings_language_change_message: 'האפליקציה תיטען מחדש כדי להחיל את השפה החדשה. להמשיך?',
+  language_en: 'English',
+  language_he: 'עברית',
+  language_ar: 'العربية',
+  language_fr: 'Français',
+  language_es: 'Español',
+  language_ru: 'Русский',
+  language_am: 'አማርኛ',
 
   // General
   ok: 'אישור',

@@ -23,7 +23,6 @@ export default function ShoppingListScreen() {
   const householdId = user!.activeHouseholdId!;
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
   const [showBought, setShowBought] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -36,10 +35,6 @@ export default function ShoppingListScreen() {
 
   const activeItems = useMemo(() => {
     let filtered = items.filter((i) => i.status === 'ACTIVE');
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter((i) => i.name.toLowerCase().includes(q));
-    }
     if (selectedCategory) {
       filtered = filtered.filter((i) => i.category === selectedCategory);
     }
@@ -47,7 +42,7 @@ export default function ShoppingListScreen() {
       if (a.isUrgent !== b.isUrgent) return a.isUrgent ? -1 : 1;
       return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
     });
-  }, [items, searchQuery, selectedCategory]);
+  }, [items, selectedCategory]);
 
   const boughtItems = useMemo(
     () => items.filter((i) => i.status === 'BOUGHT')
@@ -139,18 +134,32 @@ export default function ShoppingListScreen() {
       {/* Live badge */}
       <div className="live-badge">{t('shopping_list_live_badge')}</div>
 
-      {/* Search */}
-      <div className="search-bar">
-        <span>🔍</span>
-        <input
-          placeholder={t('shopping_list_search_hint')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button onClick={() => setSearchQuery('')} style={{ color: 'var(--on-surface-variant)' }}>✕</button>
-        )}
-      </div>
+      {/* Hero Suggestions Card - matches Android HeroSuggestionsCard */}
+      {suggestions.length > 0 && (
+        <div className="card" style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+            <div style={{
+              width: 48, height: 48,
+              borderRadius: 12,
+              background: 'rgba(255, 138, 92, 0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, flexShrink: 0,
+            }}>✨</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--on-surface)' }}>{t('suggestions_title')}</div>
+              <div style={{ fontSize: 13, color: 'var(--on-surface-variant)', lineHeight: '16px', marginTop: 3 }}>{t('suggestions_subtitle_home')}</div>
+            </div>
+          </div>
+          <div className="horizontal-scroll" style={{ padding: '0 0 4px' }}>
+            {suggestions.map((s) => (
+              <button key={s.id} className="chip chip-outline" onClick={() => handleAddSuggestion(s)}
+                style={{ background: 'rgba(204,251,241,0.5)', borderColor: 'var(--primary-container)', color: 'var(--primary)', fontWeight: 600 }}>
+                <span style={{ fontSize: 14 }}>+</span> {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Category Filters */}
       {usedCategories.length > 0 && (
@@ -173,25 +182,6 @@ export default function ShoppingListScreen() {
         </div>
       )}
 
-      {/* Suggestions */}
-      {suggestions.length > 0 && !searchQuery && (
-        <>
-          <div className="section-header">
-            <span className="section-title">{t('suggestions_title')}</span>
-          </div>
-          <div className="horizontal-scroll">
-            {suggestions.map((s) => (
-              <button key={s.id} className="suggestion-card" onClick={() => handleAddSuggestion(s)}>
-                <div className="suggestion-card-name">{CATEGORY_EMOJIS[s.category as ItemCategory] || '📦'} {s.name}</div>
-                <div className="suggestion-card-reason">
-                  {s.reason === 'due' ? '🔄' : s.reason === 'frequent' ? '📊' : '🕐'}
-                </div>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
       {/* Active Items */}
       <div className="section-header">
         <span className="section-title">{t('shopping_list_active_section')} ({activeItems.length})</span>
@@ -200,10 +190,8 @@ export default function ShoppingListScreen() {
       {activeItems.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">🛒</div>
-          <div className="empty-state-text">
-            {searchQuery ? t('shopping_list_search_hint') : t('shopping_list_empty_title')}
-          </div>
-          {!searchQuery && <div className="empty-state-text" style={{ fontSize: 13 }}>{t('shopping_list_empty_subtitle')}</div>}
+          <div className="empty-state-text">{t('shopping_list_empty_title')}</div>
+          <div className="empty-state-text" style={{ fontSize: 13 }}>{t('shopping_list_empty_subtitle')}</div>
         </div>
       ) : (
         <div className="card">

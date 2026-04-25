@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import en from './en';
 import he from './he';
 import ar from './ar';
@@ -13,13 +13,21 @@ export type StringKey = keyof Strings;
 
 const translations: Record<string, Strings> = { en, he, ar, fr, es, ru, am };
 
+export const SUPPORTED_LANGUAGES = ['en', 'he', 'ar', 'fr', 'es', 'ru', 'am'] as const;
+export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
+
 const RTL_LANGUAGES = new Set(['he', 'ar']);
 
+const STORAGE_KEY = 'salino_lang';
+
 function detectLanguage(): string {
+  // Check localStorage override first
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored && translations[stored]) return stored;
+
   const browserLangs = navigator.languages ?? [navigator.language];
   for (const lang of browserLangs) {
     const code = lang.split('-')[0].toLowerCase();
-    // Android uses 'iw' for Hebrew
     const normalized = code === 'iw' ? 'he' : code === 'in' ? 'id' : code === 'ji' ? 'yi' : code;
     if (translations[normalized]) return normalized;
   }
@@ -87,26 +95,41 @@ export function tUnit(unit: ItemUnit): string {
   return t(UNIT_KEY_MAP[unit] ?? 'unit_pieces');
 }
 
-// React context for reactivity (optional, lang is static per page load)
-const I18nContext = createContext(currentLang);
+// React context for reactivity
+const I18nContext = createContext<{
+  lang: string;
+  setLanguage: (lang: string) => void;
+}>({ lang: currentLang, setLanguage: () => {} });
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const dir = useMemo(() => getDirection(), []);
+  const [lang, setLangState] = useState(currentLang);
 
-  // Apply direction to html element
+  const setLanguage = useCallback((newLang: string) => {
+    if (translations[newLang]) {
+      currentLang = newLang;
+      localStorage.setItem(STORAGE_KEY, newLang);
+      setLangState(newLang);
+      document.documentElement.dir = RTL_LANGUAGES.has(newLang) ? 'rtl' : 'ltr';
+      document.documentElement.lang = newLang;
+    }
+  }, []);
+
+  // Apply direction on mount
   useMemo(() => {
-    document.documentElement.dir = dir;
-    document.documentElement.lang = currentLang;
-  }, [dir]);
+    document.documentElement.dir = RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   return (
-    <I18nContext.Provider value={currentLang}>
+    <I18nContext.Provider value={{ lang, setLanguage }}>
       {children}
     </I18nContext.Provider>
   );
 }
 
 export function useI18n() {
-  useContext(I18nContext);
-  return { t, tCategory, tUnit, isRTL: isRTL(), dir: getDirection(), lang: currentLang };
+  const { lang, setLanguage } = useContext(I18nContext);
+  // re-read currentLang to get fresh translations
+  currentLang = lang;
+  return { t, tCategory, tUnit, isRTL: RTL_LANGUAGES.has(lang), dir: (RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr') as 'rtl' | 'ltr', lang, setLanguage };
 }

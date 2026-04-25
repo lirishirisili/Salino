@@ -158,6 +158,16 @@ const en = {
   settings_sign_out_confirm: 'Sign out of Haserli?',
   settings_version: 'Version {0}',
   settings_language: 'App language',
+  settings_language_system: 'System default',
+  settings_language_change_title: 'Change Language',
+  settings_language_change_message: 'The app will reload to apply the new language. Continue?',
+  language_en: 'English',
+  language_he: 'עברית',
+  language_ar: 'العربية',
+  language_fr: 'Français',
+  language_es: 'Español',
+  language_ru: 'Русский',
+  language_am: 'አማርኛ',
 
   // General
   ok: 'OK',

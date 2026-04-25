@@ -92,7 +92,7 @@ export default function HouseholdSetupScreen() {
               placeholder={t('household_invite_code_hint')}
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              maxLength={6}
+              maxLength={8}
               style={{ textAlign: 'center', fontSize: 24, letterSpacing: 4, fontWeight: 700 }}
               onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
             />

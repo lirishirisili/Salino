@@ -6,11 +6,13 @@ import {
   subscribeToMembers,
   leaveHousehold,
 } from '../services/firestoreService';
+import { copyToClipboard } from '../utils';
 import type { Household, HouseholdMember } from '../types';
-import { useI18n } from '../i18n/index';
+import { useI18n, SUPPORTED_LANGUAGES } from '../i18n/index';
+import type { StringKey } from '../i18n/index';
 
 export default function SettingsScreen() {
-  const { t } = useI18n();
+  const { t, lang, setLanguage } = useI18n();
   const { user, signOut, updateUser } = useAuth();
   const navigate = useNavigate();
   const householdId = user!.activeHouseholdId!;
@@ -20,6 +22,7 @@ export default function SettingsScreen() {
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [pendingLang, setPendingLang] = useState<string | null>(null);
 
   useEffect(() => {
     getHousehold(householdId).then(setHousehold);
@@ -29,9 +32,11 @@ export default function SettingsScreen() {
 
   const handleCopyCode = async () => {
     if (household?.inviteCode) {
-      await navigator.clipboard.writeText(household.inviteCode);
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 2000);
+      const ok = await copyToClipboard(household.inviteCode);
+      if (ok) {
+        setCodeCopied(true);
+        setTimeout(() => setCodeCopied(false), 2000);
+      }
     }
   };
 
@@ -159,6 +164,36 @@ export default function SettingsScreen() {
         </button>
       </div>
 
+      {/* Language Section */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="section-title" style={{ color: 'var(--primary)', padding: '16px 16px 0' }}>
+          {t('settings_language')}
+        </div>
+        <div className="settings-item">
+          <div style={{ width: '100%' }}>
+            <div className="settings-label">🌐 {t('settings_language')}</div>
+            <select
+              className="select-field"
+              value={lang}
+              onChange={(e) => {
+                const newLang = e.target.value;
+                if (newLang !== lang) {
+                  setPendingLang(newLang);
+                }
+              }}
+              style={{ marginTop: 10 }}
+            >
+              <option value="auto">{t('settings_language_system')}</option>
+              {SUPPORTED_LANGUAGES.map((code) => (
+                <option key={code} value={code}>
+                  {t((`language_${code}`) as StringKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* Version */}
       <div style={{ textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: 12, marginTop: 16, opacity: 0.6 }}>
         {t('app_name')} PWA {t('settings_version', '1.0.0')}
@@ -187,6 +222,28 @@ export default function SettingsScreen() {
             <div className="modal-actions">
               <button className="btn-secondary" onClick={() => setShowLeaveDialog(false)}>{t('cancel')}</button>
               <button className="btn-danger" onClick={handleLeave}>{t('settings_leave_household')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Language Change Confirm */}
+      {pendingLang && (
+        <div className="modal-overlay" onClick={() => setPendingLang(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>{t('settings_language_change_title')}</h2>
+            <p>{t('settings_language_change_message')}</p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setPendingLang(null)}>{t('cancel')}</button>
+              <button className="btn-primary" onClick={() => {
+                if (pendingLang === 'auto') {
+                  localStorage.removeItem('salino_lang');
+                  window.location.reload();
+                } else {
+                  setLanguage(pendingLang);
+                  setPendingLang(null);
+                }
+              }}>{t('ok')}</button>
             </div>
           </div>
         </div>
