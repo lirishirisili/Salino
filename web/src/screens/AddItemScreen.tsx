@@ -137,15 +137,16 @@ export default function AddItemScreen() {
   return (
     <div className="screen">
       <div className="app-bar">
-        <button className="app-bar-back" onClick={() => navigate(-1)}>←</button>
+        <button className="app-bar-back" onClick={() => navigate(-1)} aria-label={t('cancel')}>←</button>
         <h1>{t('add_item_title')}</h1>
       </div>
 
       {/* Name */}
       <div className="form-group">
-        <label className="input-label">{t('item_name_label')}</label>
+        <label className="input-label" htmlFor="add-item-name">{t('item_name_label')}</label>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
+            id="add-item-name"
             className="input-field"
             placeholder={t('item_name_hint')}
             value={name}
@@ -155,6 +156,8 @@ export default function AddItemScreen() {
           <button
             className="icon-btn"
             onClick={handleVoiceInput}
+            aria-label={isListening ? t('voice_input_prompt') : t('voice_input_action')}
+            aria-pressed={isListening}
             style={{
               background: isListening ? 'var(--error)' : 'var(--surface-variant)',
               color: isListening ? 'white' : 'var(--on-surface-variant)',
@@ -164,14 +167,14 @@ export default function AddItemScreen() {
               borderRadius: 'var(--radius-md)',
             }}
           >
-            🎤
+            <span aria-hidden="true">🎤</span>
           </button>
         </div>
       </div>
 
       {/* Duplicate Warning */}
       {duplicateMatch && (
-        <div className="duplicate-warning" style={{ marginBottom: 16 }}>
+        <div className="duplicate-warning" style={{ marginBottom: 16 }} role="alert">
           ⚠️ <span>
             {duplicateMatch.reason === 'EXACT_DUPLICATE' ? `${t('duplicate_warning_title')}: ` :
              duplicateMatch.reason === 'POSSIBLE_DUPLICATE' ? `${t('duplicate_warning_fuzzy')}: ` : `${t('duplicate_warning_similar')}: `}
@@ -191,8 +194,9 @@ export default function AddItemScreen() {
       {/* Quantity & Unit */}
       <div className="form-row">
         <div className="form-group">
-          <label className="input-label">{t('item_quantity_label')}</label>
+          <label className="input-label" htmlFor="add-item-qty">{t('item_quantity_label')}</label>
           <input
+            id="add-item-qty"
             className="input-field"
             type="text"
             inputMode="decimal"
@@ -202,8 +206,9 @@ export default function AddItemScreen() {
           />
         </div>
         <div className="form-group">
-          <label className="input-label">{t('item_unit_label')}</label>
+          <label className="input-label" htmlFor="add-item-unit">{t('item_unit_label')}</label>
           <select
+            id="add-item-unit"
             className="select-field"
             value={unit}
             onChange={(e) => setUnit(e.target.value as ItemUnit | '')}
@@ -225,6 +230,7 @@ export default function AddItemScreen() {
               key={cat}
               className={`chip ${category === cat ? 'chip-filled' : 'chip-outline'}`}
               onClick={() => { setCategory(cat); setIsCategoryAutoDetected(false); }}
+              aria-pressed={category === cat}
             >
               {CATEGORY_EMOJIS[cat]} {tCategory(cat)}
             </button>
@@ -234,8 +240,9 @@ export default function AddItemScreen() {
 
       {/* Note */}
       <div className="form-group">
-        <label className="input-label">{t('item_note_label')}</label>
+        <label className="input-label" htmlFor="add-item-note">{t('item_note_label')}</label>
         <input
+          id="add-item-note"
           className="input-field"
           placeholder={t('item_note_hint')}
           value={note}
@@ -245,20 +252,33 @@ export default function AddItemScreen() {
 
       {/* Urgent toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
-        <span style={{ fontWeight: 500, fontSize: 15 }}>🔴 {t('urgent_toggle_title')}</span>
-        <div className={`toggle ${isUrgent ? 'active' : ''}`} onClick={() => setIsUrgent(!isUrgent)} />
+        <span style={{ fontWeight: 500, fontSize: 15 }}><span aria-hidden="true">🔴</span> {t('urgent_toggle_title')}</span>
+        <button
+          className={`toggle ${isUrgent ? 'active' : ''}`}
+          role="switch"
+          aria-checked={isUrgent}
+          aria-label={t('urgent_toggle_title')}
+          onClick={() => setIsUrgent(!isUrgent)}
+        />
       </div>
 
       {/* Recurring toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
-        <span style={{ fontWeight: 500, fontSize: 15 }}>🔄 {t('recurring_toggle_title')}</span>
-        <div className={`toggle ${isRecurring ? 'active' : ''}`} onClick={() => setIsRecurring(!isRecurring)} />
+        <span style={{ fontWeight: 500, fontSize: 15 }}><span aria-hidden="true">🔄</span> {t('recurring_toggle_title')}</span>
+        <button
+          className={`toggle ${isRecurring ? 'active' : ''}`}
+          role="switch"
+          aria-checked={isRecurring}
+          aria-label={t('recurring_toggle_title')}
+          onClick={() => setIsRecurring(!isRecurring)}
+        />
       </div>
 
       {isRecurring && (
         <div className="form-group">
-          <label className="input-label">{t('recurring_every_days_label')}</label>
+          <label className="input-label" htmlFor="add-item-recur-days">{t('recurring_every_days_label')}</label>
           <input
+            id="add-item-recur-days"
             className="input-field"
             type="text"
             inputMode="numeric"

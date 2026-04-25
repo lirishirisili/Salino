@@ -79,27 +79,27 @@ export default function EditItemScreen() {
   return (
     <div className="screen">
       <div className="app-bar">
-        <button className="app-bar-back" onClick={() => navigate(-1)}>←</button>
+        <button className="app-bar-back" onClick={() => navigate(-1)} aria-label={t('cancel')}>←</button>
         <h1>{t('edit_item_title')}</h1>
-        <button className="icon-btn" onClick={() => setShowDeleteConfirm(true)} style={{ color: 'var(--error)' }}>
-          🗑️
+        <button className="icon-btn" onClick={() => setShowDeleteConfirm(true)} style={{ color: 'var(--error)' }} aria-label={t('shopping_list_delete')}>
+          <span aria-hidden="true">🗑️</span>
         </button>
       </div>
 
       <div className="form-group">
-        <label className="input-label">{t('item_name_label')}</label>
-        <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} />
+        <label className="input-label" htmlFor="edit-item-name">{t('item_name_label')}</label>
+        <input id="edit-item-name" className="input-field" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label className="input-label">{t('item_quantity_label')}</label>
-          <input className="input-field" type="text" inputMode="decimal" value={quantity}
+          <label className="input-label" htmlFor="edit-item-qty">{t('item_quantity_label')}</label>
+          <input id="edit-item-qty" className="input-field" type="text" inputMode="decimal" value={quantity}
             onChange={(e) => setQuantity(e.target.value.replace(/[^0-9.,]/g, ''))} />
         </div>
         <div className="form-group">
-          <label className="input-label">{t('item_unit_label')}</label>
-          <select className="select-field" value={unit} onChange={(e) => setUnit(e.target.value as ItemUnit | '')}>
+          <label className="input-label" htmlFor="edit-item-unit">{t('item_unit_label')}</label>
+          <select id="edit-item-unit" className="select-field" value={unit} onChange={(e) => setUnit(e.target.value as ItemUnit | '')}>
             <option value="">{t('unit_none')}</option>
             {ALL_UNITS.map((u) => <option key={u} value={u}>{tUnit(u)}</option>)}
           </select>
@@ -111,7 +111,8 @@ export default function EditItemScreen() {
         <div className="horizontal-scroll">
           {ALL_CATEGORIES.map((cat) => (
             <button key={cat} className={`chip ${category === cat ? 'chip-filled' : 'chip-outline'}`}
-              onClick={() => setCategory(cat)}>
+              onClick={() => setCategory(cat)}
+              aria-pressed={category === cat}>
               {CATEGORY_EMOJIS[cat]} {tCategory(cat)}
             </button>
           ))}
@@ -119,13 +120,19 @@ export default function EditItemScreen() {
       </div>
 
       <div className="form-group">
-        <label className="input-label">{t('item_note_label')}</label>
-        <input className="input-field" placeholder={t('item_note_hint')} value={note} onChange={(e) => setNote(e.target.value)} />
+        <label className="input-label" htmlFor="edit-item-note">{t('item_note_label')}</label>
+        <input id="edit-item-note" className="input-field" placeholder={t('item_note_hint')} value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
-        <span style={{ fontWeight: 500 }}>🔴 {t('urgent_toggle_title')}</span>
-        <div className={`toggle ${isUrgent ? 'active' : ''}`} onClick={() => setIsUrgent(!isUrgent)} />
+        <span style={{ fontWeight: 500 }}><span aria-hidden="true">🔴</span> {t('urgent_toggle_title')}</span>
+        <button
+          className={`toggle ${isUrgent ? 'active' : ''}`}
+          role="switch"
+          aria-checked={isUrgent}
+          aria-label={t('urgent_toggle_title')}
+          onClick={() => setIsUrgent(!isUrgent)}
+        />
       </div>
 
       <div style={{ padding: '16px 0 32px', display: 'flex', gap: 12 }}>
@@ -137,8 +144,14 @@ export default function EditItemScreen() {
 
       {showDeleteConfirm && (
         <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('shopping_list_delete_confirm')}</h2>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+          >
+            <h2 id="delete-dialog-title">{t('shopping_list_delete_confirm')}</h2>
             <p style={{ color: 'var(--on-surface-variant)' }}>
               {item.name}
             </p>

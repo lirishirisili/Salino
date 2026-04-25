@@ -63,7 +63,7 @@ export default function SettingsScreen() {
   return (
     <div className="screen">
       <div className="app-bar">
-        <button className="app-bar-back" onClick={() => navigate(-1)}>←</button>
+        <button className="app-bar-back" onClick={() => navigate(-1)} aria-label={t('cancel')}>←</button>
         <h1>
           <span>
             <span className="brand-logo sm"><img src="/favicon.png" alt="" /></span>
@@ -94,12 +94,12 @@ export default function SettingsScreen() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="icon-btn" onClick={handleCopyCode}>
-                {codeCopied ? '✅' : '📋'}
+              <button className="icon-btn" onClick={handleCopyCode} aria-label={t('copy')}>
+                {codeCopied ? <span aria-hidden="true">✅</span> : <span aria-hidden="true">📋</span>}
               </button>
               {typeof navigator.share === 'function' && (
-                <button className="icon-btn" onClick={handleShare}>
-                  📤
+                <button className="icon-btn" onClick={handleShare} aria-label={t('share')}>
+                  <span aria-hidden="true">📤</span>
                 </button>
               )}
             </div>
@@ -202,8 +202,14 @@ export default function SettingsScreen() {
       {/* Sign Out Confirm */}
       {showSignOutDialog && (
         <div className="modal-overlay" onClick={() => setShowSignOutDialog(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('settings_sign_out')}</h2>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="signout-dialog-title"
+          >
+            <h2 id="signout-dialog-title">{t('settings_sign_out')}</h2>
             <p>{t('settings_sign_out_confirm')}</p>
             <div className="modal-actions">
               <button className="btn-secondary" onClick={() => setShowSignOutDialog(false)}>{t('cancel')}</button>
@@ -216,8 +222,14 @@ export default function SettingsScreen() {
       {/* Leave Confirm */}
       {showLeaveDialog && (
         <div className="modal-overlay" onClick={() => setShowLeaveDialog(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('settings_leave_household')}</h2>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leave-dialog-title"
+          >
+            <h2 id="leave-dialog-title">{t('settings_leave_household')}</h2>
             <p>{t('settings_leave_household_confirm')}</p>
             <div className="modal-actions">
               <button className="btn-secondary" onClick={() => setShowLeaveDialog(false)}>{t('cancel')}</button>
@@ -230,8 +242,14 @@ export default function SettingsScreen() {
       {/* Language Change Confirm */}
       {pendingLang && (
         <div className="modal-overlay" onClick={() => setPendingLang(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('settings_language_change_title')}</h2>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lang-dialog-title"
+          >
+            <h2 id="lang-dialog-title">{t('settings_language_change_title')}</h2>
             <p>{t('settings_language_change_message')}</p>
             <div className="modal-actions">
               <button className="btn-secondary" onClick={() => setPendingLang(null)}>{t('cancel')}</button>

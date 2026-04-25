@@ -119,14 +119,14 @@ export default function ShoppingListScreen() {
           </span>
         </h1>
         <div className="app-bar-actions">
-          <button className="icon-btn" onClick={() => navigate('/settings')} title={t('settings_title')} style={{ color: '#67B656' }}>
-            ⚙️
+          <button className="icon-btn" onClick={() => navigate('/settings')} aria-label={t('settings_title')} title={t('settings_title')} style={{ color: '#67B656' }}>
+            <span aria-hidden="true">⚙️</span>
           </button>
-          <button className="icon-btn" onClick={() => navigate('/activity')} title={t('activity_feed_title')} style={{ color: '#F18E6A' }}>
-            📊
+          <button className="icon-btn" onClick={() => navigate('/activity')} aria-label={t('activity_feed_title')} title={t('activity_feed_title')} style={{ color: '#F18E6A' }}>
+            <span aria-hidden="true">📊</span>
           </button>
-          <button className="icon-btn" onClick={() => navigate('/history')} title={t('history_title')} style={{ color: '#67B656' }}>
-            🕐
+          <button className="icon-btn" onClick={() => navigate('/history')} aria-label={t('history_title')} title={t('history_title')} style={{ color: '#67B656' }}>
+            <span aria-hidden="true">🕐</span>
           </button>
         </div>
       </div>
@@ -167,6 +167,7 @@ export default function ShoppingListScreen() {
           <button
             className={`chip ${!selectedCategory ? 'chip-filled' : 'chip-outline'}`}
             onClick={() => setSelectedCategory(null)}
+            aria-pressed={!selectedCategory}
           >
             {t('category_all')}
           </button>
@@ -175,6 +176,7 @@ export default function ShoppingListScreen() {
               key={cat}
               className={`chip ${selectedCategory === cat ? 'chip-filled' : 'chip-outline'}`}
               onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+              aria-pressed={selectedCategory === cat}
             >
               {CATEGORY_EMOJIS[cat]} {tCategory(cat)}
             </button>
@@ -197,8 +199,19 @@ export default function ShoppingListScreen() {
         <div className="card">
           {activeItems.map((item) => (
             <div key={item.id} className="item-row">
-              <div className="checkbox" onClick={() => handleMarkBought(item)} />
-              <div className="item-info" onClick={() => navigate(`/edit/${item.id}`)} style={{ cursor: 'pointer' }}>
+              <button
+                className="checkbox"
+                role="checkbox"
+                aria-checked={false}
+                aria-label={`${t('shopping_list_mark_bought')}: ${item.name}`}
+                onClick={() => handleMarkBought(item)}
+              />
+              <button
+                className="item-info"
+                onClick={() => navigate(`/edit/${item.id}`)}
+                style={{ textAlign: 'start' }}
+                aria-label={`${item.name} – ${t('edit_item_title')}`}
+              >
                 <div className="item-name">
                   {item.name}
                 </div>
@@ -213,10 +226,10 @@ export default function ShoppingListScreen() {
                   </span>
                   {item.isUrgent && <span className="urgent-badge">{t('urgent_toggle_title')}</span>}
                 </div>
-              </div>
+              </button>
               <div className="item-actions">
-                <button className="icon-btn" onClick={() => handleDelete(item)}>
-                  🗑️
+                <button className="icon-btn" onClick={() => handleDelete(item)} aria-label={`${t('shopping_list_delete')}: ${item.name}`}>
+                  <span aria-hidden="true">🗑️</span>
                 </button>
               </div>
             </div>
@@ -227,15 +240,26 @@ export default function ShoppingListScreen() {
       {/* Bought Items */}
       {boughtItems.length > 0 && (
         <>
-          <div className="section-header" style={{ cursor: 'pointer' }} onClick={() => setShowBought(!showBought)}>
+          <button
+            className="section-header"
+            style={{ cursor: 'pointer', width: '100%', justifyContent: 'space-between' }}
+            onClick={() => setShowBought(!showBought)}
+            aria-expanded={showBought}
+          >
             <span className="section-title">{t('shopping_list_bought_section')} ({boughtItems.length})</span>
-            <span style={{ color: 'var(--on-surface-variant)', fontSize: 12 }}>{showBought ? '▲' : '▼'}</span>
-          </div>
+            <span style={{ color: 'var(--on-surface-variant)', fontSize: 12 }} aria-hidden="true">{showBought ? '▲' : '▼'}</span>
+          </button>
           {showBought && (
             <div className="card">
               {boughtItems.map((item) => (
                 <div key={item.id} className="item-row">
-                  <div className="checkbox checked" onClick={() => handleRestore(item)}>✓</div>
+                  <button
+                    className="checkbox checked"
+                    role="checkbox"
+                    aria-checked={true}
+                    aria-label={`${t('shopping_list_undo_bought')}: ${item.name}`}
+                    onClick={() => handleRestore(item)}
+                  ><span aria-hidden="true">✓</span></button>
                   <div className="item-info">
                     <div className="item-name bought">{item.name}</div>
                     <div className="item-meta">
@@ -266,8 +290,9 @@ export default function ShoppingListScreen() {
         </button>
       </div>
 
-      {/* Toast */}
-      {toast && <div className="toast">{toast}</div>}
+      {/* Toast — sr-only live region for screen readers, visual toast for sighted users */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">{toast ?? ''}</div>
+      {toast && <div className="toast" aria-hidden="true">{toast}</div>}
     </div>
   );
 }

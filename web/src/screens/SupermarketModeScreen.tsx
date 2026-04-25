@@ -57,7 +57,7 @@ export default function SupermarketModeScreen() {
   return (
     <div className="screen" style={{ paddingBottom: 80 }}>
       <div className="app-bar">
-        <button className="app-bar-back" onClick={() => navigate(-1)}>←</button>
+        <button className="app-bar-back" onClick={() => navigate(-1)} aria-label={t('cancel')}>←</button>
         <h1>
           <span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -74,13 +74,20 @@ export default function SupermarketModeScreen() {
           {checkedCount}/{totalItems}
         </div>
         <div style={{ fontSize: 13, color: 'var(--on-surface-variant)' }}>{t('supermarket_mode_progress', String(checkedCount), String(totalItems))}</div>
-        <div style={{
-          height: 6,
-          background: 'var(--surface-variant)',
-          borderRadius: 3,
-          marginTop: 8,
-          overflow: 'hidden',
-        }}>
+        <div
+          role="progressbar"
+          aria-valuenow={checkedCount}
+          aria-valuemin={0}
+          aria-valuemax={totalItems}
+          aria-label={t('supermarket_mode_progress', String(checkedCount), String(totalItems))}
+          style={{
+            height: 6,
+            background: 'var(--surface-variant)',
+            borderRadius: 3,
+            marginTop: 8,
+            overflow: 'hidden',
+          }}
+        >
           <div style={{
             height: '100%',
             background: 'var(--primary)',
@@ -97,11 +104,13 @@ export default function SupermarketModeScreen() {
           <button
             className={`chip ${!selectedCategory ? 'chip-filled' : 'chip-outline'}`}
             onClick={() => setSelectedCategory(null)}
+            aria-pressed={!selectedCategory}
           >{t('category_all')}</button>
           {usedCategories.map((cat) => (
             <button key={cat}
               className={`chip ${selectedCategory === cat ? 'chip-filled' : 'chip-outline'}`}
               onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+              aria-pressed={selectedCategory === cat}
             >{CATEGORY_EMOJIS[cat]} {tCategory(cat)}</button>
           ))}
         </div>
@@ -112,12 +121,15 @@ export default function SupermarketModeScreen() {
         const isChecked = checkedIds.has(item.id);
         return (
           <div key={item.id} className={`supermarket-item ${isChecked ? 'done' : ''}`}>
-            <div
+            <button
               className={`supermarket-check ${isChecked ? 'checked' : ''}`}
+              role="checkbox"
+              aria-checked={isChecked}
+              aria-label={`${item.name}: ${isChecked ? t('shopping_list_undo_bought') : t('shopping_list_mark_bought')}`}
               onClick={() => handleCheck(item)}
             >
-              {isChecked && '✓'}
-            </div>
+              {isChecked && <span aria-hidden="true">✓</span>}
+            </button>
             <div style={{ flex: 1 }}>
               <div className="item-name" style={{ fontSize: 18, fontWeight: 600 }}>
                 {item.name}
@@ -142,7 +154,7 @@ export default function SupermarketModeScreen() {
         </div>
       )}
 
-      <button className="fab" onClick={() => navigate('/add')}>+</button>
+      <button className="fab" onClick={() => navigate('/add')} aria-label={t('item_add')}><span aria-hidden="true">+</span></button>
     </div>
   );
 }

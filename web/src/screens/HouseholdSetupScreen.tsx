@@ -54,24 +54,25 @@ export default function HouseholdSetupScreen() {
         </p>
       </div>
 
-      <div className="tabs">
-        <button className={`tab ${tab === 'create' ? 'active' : ''}`} onClick={() => setTab('create')}>
+      <div className="tabs" role="tablist">
+        <button className={`tab ${tab === 'create' ? 'active' : ''}`} role="tab" aria-selected={tab === 'create'} onClick={() => setTab('create')}>
           {t('household_create')}
         </button>
-        <button className={`tab ${tab === 'join' ? 'active' : ''}`} onClick={() => setTab('join')}>
+        <button className={`tab ${tab === 'join' ? 'active' : ''}`} role="tab" aria-selected={tab === 'join'} onClick={() => setTab('join')}>
           {t('household_join')}
         </button>
       </div>
 
       {error && (
-        <div style={{ color: 'var(--error)', fontSize: 14, textAlign: 'center' }}>{error}</div>
+        <div role="alert" style={{ color: 'var(--error)', fontSize: 14, textAlign: 'center' }}>{error}</div>
       )}
 
       {tab === 'create' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="input-label">{t('household_name_label')}</label>
+            <label className="input-label" htmlFor="household-name">{t('household_name_label')}</label>
             <input
+              id="household-name"
               className="input-field"
               placeholder={t('household_name_hint')}
               value={name}
@@ -86,8 +87,9 @@ export default function HouseholdSetupScreen() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="input-label">{t('household_invite_code_label')}</label>
+            <label className="input-label" htmlFor="household-invite-code">{t('household_invite_code_label')}</label>
             <input
+              id="household-invite-code"
               className="input-field"
               placeholder={t('household_invite_code_hint')}
               value={inviteCode}

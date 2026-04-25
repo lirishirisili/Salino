@@ -16,9 +16,9 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="spinner" />
-        <p style={{ color: 'var(--on-surface-variant)' }}>Loading...</p>
+      <div className="loading-screen" role="status" aria-label="Loading">
+        <div className="spinner" aria-hidden="true" />
+        <p style={{ color: 'var(--on-surface-variant)' }} aria-hidden="true">Loading...</p>
       </div>
     );
   }
@@ -58,7 +58,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <a href="#main-content" className="skip-nav">Skip to main content</a>
+        <main id="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <AppRoutes />
+        </main>
       </AuthProvider>
     </BrowserRouter>
   );

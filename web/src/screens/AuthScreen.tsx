@@ -26,14 +26,14 @@ export default function AuthScreen() {
     <div className="auth-screen">
       <div>
         <div className="auth-logo">
-          <img src="/favicon.png" alt="" />
+          <img src="/favicon.png" alt={t('app_name')} />
         </div>
         <h1 className="auth-title">{t('app_name')}</h1>
         <p className="auth-subtitle">{t('auth_welcome_subtitle')}</p>
       </div>
 
       {error && (
-        <div style={{ color: 'var(--error)', fontSize: 14 }}>{error}</div>
+        <div role="alert" style={{ color: 'var(--error)', fontSize: 14 }}>{error}</div>
       )}
 
       <button className="google-btn" onClick={handleSignIn} disabled={loading}>
