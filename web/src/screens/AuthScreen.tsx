@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../i18n/index';
+import { mapAuthErrorToStringKey } from '../services/authErrorMapper';
 
 const ANDROID_WEB_CONTINUE_KEY = 'salino_android_web_continue';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.salino.sali&hl=he';
@@ -30,10 +31,8 @@ export default function AuthScreen() {
     setError(null);
     try {
       await signInWithGoogle();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error('Auth error:', msg);
-      setError(msg);
+    } catch (error: unknown) {
+      setError(t(mapAuthErrorToStringKey(error)));
     } finally {
       setLoading(false);
     }
@@ -48,9 +47,8 @@ export default function AuthScreen() {
       } else {
         await signInWithEmail(email, password);
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
+    } catch (error: unknown) {
+      setError(t(mapAuthErrorToStringKey(error)));
     } finally {
       setLoading(false);
     }

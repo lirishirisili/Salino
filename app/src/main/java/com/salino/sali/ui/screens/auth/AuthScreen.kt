@@ -1,4 +1,4 @@
-package com.salino.sali.ui.screens.auth
+﻿package com.salino.sali.ui.screens.auth
 
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -51,26 +51,19 @@ fun AuthScreen(
                 val account = task.getResult(ApiException::class.java)
                 val idToken = account.idToken
                 if (idToken.isNullOrBlank()) {
-                    viewModel.onGoogleSignInFailed("Missing Google ID token")
+                    viewModel.onGoogleSignInFailed()
                 } else {
                     viewModel.signInWithGoogle(idToken)
                 }
             } catch (error: ApiException) {
-                viewModel.onGoogleSignInFailed(
-                    error.localizedMessage ?: "Google sign-in failed (${error.statusCode})"
-                )
+                if (error.statusCode == 12501) {
+                    viewModel.onGoogleSignInCancelled()
+                } else {
+                    viewModel.onGoogleSignInFailed()
+                }
             }
         } else {
-            // Try to extract the real Google error even when resultCode != OK
-            try {
-                val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-                task.getResult(ApiException::class.java)
-                viewModel.onGoogleSignInFailed("Sign-in cancelled (code ${result.resultCode})")
-            } catch (error: ApiException) {
-                viewModel.onGoogleSignInFailed(
-                    "Google error ${error.statusCode}: ${error.localizedMessage}"
-                )
-            }
+            viewModel.onGoogleSignInCancelled()
         }
     }
 

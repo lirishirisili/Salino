@@ -1,7 +1,8 @@
-package com.salino.sali.ui.screens.auth
+﻿package com.salino.sali.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuthException
 import com.salino.sali.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,7 @@ class AuthViewModel @Inject constructor(
                 }
                 .onFailure { error ->
                     _uiState.value = AuthUiState(
-                        errorMessage = error.message ?: "Authentication failed"
+                        errorMessage = mapAuthError(error)
                     )
                 }
         }
@@ -65,13 +66,31 @@ class AuthViewModel @Inject constructor(
                 }
                 .onFailure { error ->
                     _uiState.value = AuthUiState(
-                        errorMessage = error.message ?: "Authentication failed"
+                        errorMessage = mapAuthError(error)
                     )
                 }
         }
     }
 
-    fun onGoogleSignInFailed(message: String) {
-        _uiState.value = AuthUiState(errorMessage = message)
+    fun onGoogleSignInCancelled() {
+        _uiState.value = AuthUiState(errorMessage = "Google sign-in was cancelled.")
+    }
+
+    fun onGoogleSignInFailed() {
+        _uiState.value = AuthUiState(errorMessage = "Google sign-in failed. Please try again.")
+    }
+
+    private fun mapAuthError(error: Throwable): String {
+        val code = (error as? FirebaseAuthException)?.errorCode
+        return when (code) {
+            "ERROR_WRONG_PASSWORD", "ERROR_INVALID_CREDENTIAL", "ERROR_INVALID_LOGIN_CREDENTIALS" ->
+                "Incorrect email or password."
+            "ERROR_USER_NOT_FOUND" -> "No account found for this email."
+            "ERROR_INVALID_EMAIL" -> "Please enter a valid email address."
+            "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already in use."
+            "ERROR_WEAK_PASSWORD" -> "Password is too weak (minimum 6 characters)."
+            "ERROR_TOO_MANY_REQUESTS" -> "Too many attempts. Try again later."
+            else -> "Something went wrong. Try again."
+        }
     }
 }

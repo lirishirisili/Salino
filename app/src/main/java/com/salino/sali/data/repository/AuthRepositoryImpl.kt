@@ -1,9 +1,12 @@
-package com.salino.sali.data.repository
+﻿package com.salino.sali.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.salino.sali.data.local.SalinoDatabase
+import com.salino.sali.data.model.NotificationMode
+import com.salino.sali.data.model.NotificationPrefs
+import com.salino.sali.data.model.ImportantEvent
 import com.salino.sali.data.model.User
 import com.salino.sali.domain.repository.AuthRepository
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +46,11 @@ class AuthRepositoryImpl @Inject constructor(
                     trySend(null)
                     return@addSnapshotListener
                 }
-                val user = snapshot?.toObject(User::class.java)?.copy(id = userId)
+                val parsedUser = snapshot?.toObject(User::class.java)
+                val user = parsedUser?.copy(
+                    id = userId,
+                    notificationPrefs = normalizeNotificationPrefs(parsedUser.notificationPrefs)
+                )
                 trySend(user)
             }
 
@@ -73,18 +80,32 @@ class AuthRepositoryImpl @Inject constructor(
         val snapshot = userDoc.get().await()
 
         if (snapshot.exists()) {
-            snapshot.toObject(User::class.java)?.copy(id = userId)
+            val existingUser = snapshot.toObject(User::class.java)?.copy(id = userId)
                 ?: throw IllegalStateException("Cannot deserialize user")
+            val normalizedPrefs = normalizeNotificationPrefs(existingUser.notificationPrefs)
+            if (existingUser.notificationPrefs != normalizedPrefs) {
+                userDoc.update("notificationPrefs", normalizedPrefs).await()
+            }
+            existingUser.copy(notificationPrefs = normalizedPrefs)
         } else {
             val newUser = User(
                 id = userId,
                 displayName = firebaseUser.displayName ?: "",
                 email = firebaseUser.email ?: "",
-                activeHouseholdId = null
+                activeHouseholdId = null,
+                notificationPrefs = defaultNotificationPrefs()
             )
             userDoc.set(newUser).await()
             newUser
         }
+    }
+
+    override suspend fun updateNotificationPrefs(prefs: NotificationPrefs): Result<Unit> = runCatching {
+        val userId = auth.currentUser?.uid ?: throw IllegalStateException("Not signed in")
+        firestore.collection("users")
+            .document(userId)
+            .update("notificationPrefs", normalizeNotificationPrefs(prefs))
+            .await()
     }
 
     override suspend fun signOut() {
@@ -92,5 +113,25 @@ class AuthRepositoryImpl @Inject constructor(
             database.clearAllTables()
         }
         auth.signOut()
+    }
+
+    private fun defaultNotificationPrefs(): NotificationPrefs = NotificationPrefs(
+        mode = NotificationMode.IMMEDIATE_IMPORTANT,
+        importantEvents = listOf(ImportantEvent.ITEM_ADDED),
+        maxImmediatePerHour = 3
+    )
+
+    private fun normalizeNotificationPrefs(prefs: NotificationPrefs?): NotificationPrefs {
+        val base = prefs ?: defaultNotificationPrefs()
+        val importantEvents = if (base.importantEvents.isEmpty()) {
+            listOf(ImportantEvent.ITEM_ADDED)
+        } else {
+            base.importantEvents.distinct()
+        }
+        return base.copy(
+            mode = base.mode,
+            importantEvents = importantEvents,
+            maxImmediatePerHour = base.maxImmediatePerHour.coerceIn(1, 20)
+        )
     }
 }

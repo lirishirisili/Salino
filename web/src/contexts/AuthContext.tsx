@@ -10,6 +10,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase';
 import type { User } from '../types';
+import { DEFAULT_NOTIFICATION_PREFS, normalizeNotificationPrefs } from '../services/notificationPrefs';
 
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
@@ -28,6 +29,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  async function ensureUserProfile(fbUser: FirebaseUser) {
+    const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+    if (userDoc.exists()) {
+      const raw = userDoc.data() as Partial<User>;
+      const mergedUser: User = {
+        id: fbUser.uid,
+        displayName: raw.displayName || fbUser.displayName || fbUser.email?.split('@')[0] || '',
+        email: raw.email || fbUser.email || '',
+        activeHouseholdId: raw.activeHouseholdId ?? null,
+        notificationPrefs: normalizeNotificationPrefs(raw.notificationPrefs),
+      };
+      if (!raw.notificationPrefs) {
+        await setDoc(
+          doc(db, 'users', fbUser.uid),
+          { notificationPrefs: DEFAULT_NOTIFICATION_PREFS },
+          { merge: true }
+        );
+      }
+      setUser(mergedUser);
+      return;
+    }
+
+    const newUser: User = {
+      id: fbUser.uid,
+      displayName: fbUser.displayName || fbUser.email?.split('@')[0] || '',
+      email: fbUser.email || '',
+      activeHouseholdId: null,
+      notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
+    };
+    await setDoc(doc(db, 'users', fbUser.uid), newUser);
+    setUser(newUser);
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -72,23 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userRef = doc(db, 'users', firebaseUser.uid);
     await setDoc(userRef, updates, { merge: true });
     setUser((prev) => (prev ? { ...prev, ...updates } : prev));
-  };
-
-  const ensureUserProfile = async (fbUser: FirebaseUser) => {
-    const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-    if (userDoc.exists()) {
-      setUser(userDoc.data() as User);
-      return;
-    }
-
-    const newUser: User = {
-      id: fbUser.uid,
-      displayName: fbUser.displayName || fbUser.email?.split('@')[0] || '',
-      email: fbUser.email || '',
-      activeHouseholdId: null,
-    };
-    await setDoc(doc(db, 'users', fbUser.uid), newUser);
-    setUser(newUser);
   };
 
   return (

@@ -33,6 +33,8 @@ export type ActivityType =
 export type SuggestionSource = 'FREQUENT' | 'RECENT' | 'RECURRING';
 
 export type DuplicateReason = 'EXACT_DUPLICATE' | 'POSSIBLE_DUPLICATE' | 'SIMILAR_ITEM';
+export type NotificationMode = 'IMMEDIATE_IMPORTANT' | 'DAILY_DIGEST' | 'WEEKLY_DIGEST' | 'SILENT';
+export type ImportantEvent = 'ITEM_ADDED' | 'ITEM_BOUGHT' | 'ITEM_UPDATED' | 'ITEM_DELETED';
 
 // ─── Data Models ───
 
@@ -41,6 +43,13 @@ export interface User {
   displayName: string;
   email: string;
   activeHouseholdId: string | null;
+  notificationPrefs: NotificationPrefs;
+}
+
+export interface NotificationPrefs {
+  mode: NotificationMode;
+  importantEvents: ImportantEvent[];
+  maxImmediatePerHour: number;
 }
 
 export interface Household {

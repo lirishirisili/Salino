@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.salino.sali.data.model.Household
 import com.salino.sali.data.model.HouseholdMember
+import com.salino.sali.data.model.ImportantEvent
+import com.salino.sali.data.model.NotificationMode
+import com.salino.sali.data.model.NotificationPrefs
 import com.salino.sali.data.model.User
 import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
@@ -118,6 +121,41 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(showLeaveDialog = false, hasLeftHousehold = true)
             } else {
                 _uiState.value = _uiState.value.copy(showLeaveDialog = false)
+            }
+        }
+    }
+
+    fun setNotificationMode(mode: NotificationMode) {
+        val user = _uiState.value.user ?: return
+        val updatedPrefs = user.notificationPrefs.copy(mode = mode)
+        updateNotificationPrefs(updatedPrefs)
+    }
+
+    fun setImportantEvent(event: ImportantEvent, enabled: Boolean) {
+        val user = _uiState.value.user ?: return
+        val current = user.notificationPrefs.importantEvents
+        val updatedEvents = if (enabled) {
+            (current + event).distinct()
+        } else {
+            current.filterNot { it == event }
+        }
+        val safeEvents = if (updatedEvents.isEmpty()) listOf(ImportantEvent.ITEM_ADDED) else updatedEvents
+        updateNotificationPrefs(user.notificationPrefs.copy(importantEvents = safeEvents))
+    }
+
+    fun setMaxImmediatePerHour(value: Int) {
+        val user = _uiState.value.user ?: return
+        updateNotificationPrefs(user.notificationPrefs.copy(maxImmediatePerHour = value.coerceIn(1, 20)))
+    }
+
+    private fun updateNotificationPrefs(prefs: NotificationPrefs) {
+        val user = _uiState.value.user ?: return
+        viewModelScope.launch {
+            val result = authRepository.updateNotificationPrefs(prefs)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    user = user.copy(notificationPrefs = prefs)
+                )
             }
         }
     }
