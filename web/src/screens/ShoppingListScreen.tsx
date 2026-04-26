@@ -16,6 +16,8 @@ import { ALL_CATEGORIES, CATEGORY_COLORS, CATEGORY_EMOJIS } from '../types';
 import { formatQuantity, formatRelativeTime } from '../utils';
 import { useI18n } from '../i18n/index';
 
+const INSTALL_BANNER_DISMISSED_KEY = 'salino_pwa_install_banner_dismissed';
+
 export default function ShoppingListScreen() {
   const { t, tCategory, tUnit } = useI18n();
   const { user } = useAuth();
@@ -26,12 +28,40 @@ export default function ShoppingListScreen() {
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
   const [showBought, setShowBought] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showInstallHelpModal, setShowInstallHelpModal] = useState(false);
+
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isIos = /iphone|ipad|ipod/.test(userAgent);
+  const isIosSafari = isIos && /safari/.test(userAgent) && !/crios|fxios|edgios/.test(userAgent);
+  const isAndroidChrome = /android/.test(userAgent) && /chrome/.test(userAgent) && !/edg|opr|samsungbrowser/.test(userAgent);
 
   useEffect(() => {
     const unsub1 = subscribeToItems(householdId, setItems);
     const unsub2 = subscribeToRecurringItems(householdId, setRecurringItems);
     return () => { unsub1(); unsub2(); };
   }, [householdId]);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) === '1';
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const supportedBrowser = isIosSafari || isAndroidChrome;
+
+    if (!dismissed && !isStandalone && supportedBrowser) {
+      setShowInstallBanner(true);
+    }
+
+    const onInstalled = () => {
+      localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, '1');
+      setShowInstallBanner(false);
+      setShowInstallHelpModal(false);
+    };
+
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, [isAndroidChrome, isIosSafari]);
 
   const activeItems = useMemo(() => {
     let filtered = items.filter((i) => i.status === 'ACTIVE');
@@ -103,6 +133,12 @@ export default function ShoppingListScreen() {
     showToast(`${s.name} ${t('activity_type_suggestion_accepted')}`);
   };
 
+  const dismissInstallBanner = () => {
+    localStorage.setItem(INSTALL_BANNER_DISMISSED_KEY, '1');
+    setShowInstallBanner(false);
+    setShowInstallHelpModal(false);
+  };
+
   const usedCategories = useMemo(() => {
     const cats = new Set(items.filter((i) => i.status === 'ACTIVE').map((i) => i.category));
     return ALL_CATEGORIES.filter((c) => cats.has(c));
@@ -133,6 +169,39 @@ export default function ShoppingListScreen() {
 
       {/* Live badge */}
       <div className="live-badge">{t('shopping_list_live_badge')}</div>
+
+      {showInstallBanner && (
+        <div className="card install-banner" role="region" aria-label={t('pwa_install_banner_title')}>
+          <div className="install-banner-header">{t('pwa_install_banner_title')}</div>
+          <div className="install-banner-row">
+            <div className="install-banner-text">
+              {isIosSafari ? t('pwa_install_banner_subtitle_ios') : t('pwa_install_banner_subtitle_android')}
+            </div>
+            <div className="install-banner-buttons">
+              <button className="install-btn install-btn-secondary" onClick={() => setShowInstallHelpModal(true)}>
+                {t('pwa_install_banner_how')}
+              </button>
+              <button className="install-btn install-btn-primary" onClick={dismissInstallBanner}>
+                {t('pwa_install_banner_got_it')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInstallHelpModal && (
+        <div className="install-help-overlay" role="dialog" aria-modal="true" aria-label={t('pwa_install_banner_how')}>
+          <div className="card install-help-modal">
+            <div className="install-banner-title">{t('pwa_install_banner_how')}</div>
+            <div className="install-banner-help">
+              {isIosSafari ? t('pwa_install_help_ios') : t('pwa_install_help_android')}
+            </div>
+            <div className="install-banner-actions" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn-primary" onClick={() => setShowInstallHelpModal(false)}>{t('ok')}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero Suggestions Card - matches Android HeroSuggestionsCard */}
       {suggestions.length > 0 && (

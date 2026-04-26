@@ -1,11 +1,13 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { subscribeToItems, markAsBought, markAsActive, logActivity } from '../services/firestoreService';
-import type { ShoppingItem, ItemCategory } from '../types';
+import { logActivity, markAsActive, markAsBought, subscribeToItems } from '../services/firestoreService';
 import { ALL_CATEGORIES, CATEGORY_EMOJIS } from '../types';
+import type { ItemCategory, ShoppingItem } from '../types';
 import { formatQuantity } from '../utils';
 import { useI18n } from '../i18n/index';
+
+type SupermarketFilter = 'ALL' | 'URGENT' | 'MINE' | 'PHARMACY' | 'NOT_FOUND';
 
 export default function SupermarketModeScreen() {
   const { t, tCategory, tUnit } = useI18n();
@@ -13,10 +15,11 @@ export default function SupermarketModeScreen() {
   const navigate = useNavigate();
   const householdId = user!.activeHouseholdId!;
   const [items, setItems] = useState<ShoppingItem[]>([]);
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<SupermarketFilter>('ALL');
+  const [notFoundIds, setNotFoundIds] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<ItemCategory>>(new Set());
   const [boughtInSession, setBoughtInSession] = useState<ShoppingItem[]>([]);
   const [showBoughtSection, setShowBoughtSection] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
   const [sessionStartCount, setSessionStartCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -26,198 +29,208 @@ export default function SupermarketModeScreen() {
 
   useEffect(() => {
     if (sessionStartCount !== null) return;
-    const activeNowCount = items.filter((i) => i.status === 'ACTIVE').length;
-    if (activeNowCount > 0) {
-      setSessionStartCount(activeNowCount);
-    }
+    const activeNow = items.filter((i) => i.status === 'ACTIVE').length;
+    if (activeNow > 0) setSessionStartCount(activeNow);
   }, [items, sessionStartCount]);
 
-  const activeItems = useMemo(() => {
-    let filtered = items.filter((i) => i.status === 'ACTIVE');
-    if (selectedCategory) {
-      filtered = filtered.filter((i) => i.category === selectedCategory);
+  const activeItems = useMemo(() => items.filter((i) => i.status === 'ACTIVE'), [items]);
+  const activeNonNotFound = useMemo(() => activeItems.filter((i) => !notFoundIds.has(i.id)), [activeItems, notFoundIds]);
+  const notFoundItems = useMemo(() => activeItems.filter((i) => notFoundIds.has(i.id)), [activeItems, notFoundIds]);
+
+  const filteredItems = useMemo(() => {
+    switch (filter) {
+      case 'URGENT':
+        return activeNonNotFound.filter((i) => i.isUrgent);
+      case 'MINE':
+        return activeNonNotFound.filter((i) => i.addedBy === user!.id);
+      case 'PHARMACY':
+        return activeNonNotFound.filter((i) => i.category === 'PHARMACY');
+      case 'NOT_FOUND':
+        return notFoundItems;
+      default:
+        return activeNonNotFound;
     }
-    return filtered.sort((a, b) => {
-      const aChecked = checkedIds.has(a.id);
-      const bChecked = checkedIds.has(b.id);
-      if (aChecked !== bChecked) return aChecked ? 1 : -1;
-      return (a.category || '').localeCompare(b.category || '');
-    });
-  }, [items, selectedCategory, checkedIds]);
+  }, [activeNonNotFound, filter, notFoundItems, user]);
 
-  const usedCategories = useMemo(() => {
-    const cats = new Set(items.filter((i) => i.status === 'ACTIVE').map((i) => i.category));
-    return ALL_CATEGORIES.filter((c) => cats.has(c));
-  }, [items]);
-
-  const handleCheck = async (item: ShoppingItem) => {
-    if (checkedIds.has(item.id)) {
-      const next = new Set(checkedIds);
-      next.delete(item.id);
-      setCheckedIds(next);
-    } else {
-      setCheckedIds(new Set([...checkedIds, item.id]));
-      setBoughtInSession((prev) =>
-        prev.some((boughtItem) => boughtItem.id === item.id) ? prev : [item, ...prev]
-      );
-      await markAsBought(householdId, item.id, user!.id, user!.displayName);
-      await logActivity(householdId, 'ITEM_BOUGHT', item.name, user!.id, user!.displayName, item.id);
+  const groupedItems = useMemo(() => {
+    const map = new Map<ItemCategory, ShoppingItem[]>();
+    const sorted = [...filteredItems].sort((a, b) => Number(b.isUrgent) - Number(a.isUrgent));
+    for (const category of ALL_CATEGORIES) map.set(category, []);
+    for (const item of sorted) {
+      const cat = (item.category as ItemCategory) || 'OTHER';
+      map.get(cat)?.push(item);
     }
-  };
+    return ALL_CATEGORIES
+      .map((cat) => ({ category: cat, items: map.get(cat) ?? [] }))
+      .filter((group) => group.items.length > 0);
+  }, [filteredItems]);
 
-  const handleRestore = async (item: ShoppingItem) => {
-    setBoughtInSession((prev) => prev.filter((boughtItem) => boughtItem.id !== item.id));
-    setCheckedIds((prev) => {
+  const checkedCount = boughtInSession.length;
+  const totalCount = sessionStartCount ?? (activeItems.length + checkedCount);
+  const remainingCount = activeNonNotFound.length;
+  const allDone = totalCount > 0 && remainingCount === 0;
+
+  const markItemBought = async (item: ShoppingItem) => {
+    setNotFoundIds((prev) => {
       const next = new Set(prev);
       next.delete(item.id);
       return next;
     });
+    setBoughtInSession((prev) => (prev.some((b) => b.id === item.id) ? prev : [item, ...prev]));
+    await markAsBought(householdId, item.id, user!.id, user!.displayName);
+    await logActivity(householdId, 'ITEM_BOUGHT', item.name, user!.id, user!.displayName, item.id);
+  };
+
+  const restoreBoughtItem = async (item: ShoppingItem) => {
+    setBoughtInSession((prev) => prev.filter((b) => b.id !== item.id));
     await markAsActive(householdId, item.id);
     await logActivity(householdId, 'ITEM_RESTORED', item.name, user!.id, user!.displayName, item.id);
   };
 
-  const checkedCount = boughtInSession.length;
-  const totalItems = sessionStartCount ?? (items.filter((i) => i.status === 'ACTIVE').length + checkedCount);
+  const markNotFound = (item: ShoppingItem) => {
+    setNotFoundIds((prev) => new Set(prev).add(item.id));
+  };
+
+  const undoNotFound = (item: ShoppingItem) => {
+    setNotFoundIds((prev) => {
+      const next = new Set(prev);
+      next.delete(item.id);
+      return next;
+    });
+  };
+
+  const toggleCategory = (category: ItemCategory) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+
+  const finishShopping = () => {
+    if (remainingCount > 0) {
+      const confirmed = window.confirm(t('supermarket_mode_finish_message', String(remainingCount)));
+      if (!confirmed) return;
+    }
+    navigate(-1);
+  };
 
   return (
-    <div className="screen" style={{ paddingBottom: 80 }}>
+    <div className="screen" style={{ paddingBottom: 92 }}>
       <div className="app-bar">
         <button className="app-bar-back" onClick={() => navigate(-1)} aria-label={t('cancel')}>←</button>
-        <h1>
-          <span>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M21.9 8.89l-1.05-4.37c-.22-.9-1-.52-1.91-1.52H5.05c-.9 0-1.69.63-1.9 1.52L2.1 8.89c-.24 1.02-.02 2.06.62 2.88.08.11.19.19.28.29V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-6.94c.09-.09.2-.18.28-.28.64-.82.87-1.87.62-2.89zM13.99 4.99H14l1.04 4.36c.13.55 0 1.09-.32 1.53-.17.23-.5.62-1.05.62-.66 0-1.24-.53-1.31-1.19l-.68-5.32zm-5.05 4.37L10 5h1.96l.69 5.42c.08.58-.1 1.12-.49 1.55-.33.37-.8.58-1.36.58-.92 0-1.69-.77-1.85-1.79-.02-.11-.02-.23 0-.34zM4.04 9.36L5 5h1.97l-.64 5.07c-.08.66-.66 1.19-1.33 1.19-.45 0-.85-.2-1.14-.54-.29-.35-.4-.8-.31-1.26zM19 19H5v-5.03c.21.03.42.05.63.05.87 0 1.71-.32 2.36-.89.63.57 1.46.89 2.36.89.87 0 1.71-.32 2.36-.89.63.57 1.46.89 2.36.89.89 0 1.72-.32 2.36-.89.64.56 1.49.89 2.36.89.21 0 .42-.02.63-.05V19zm-.34-7.74c-.66 0-1.25-.52-1.33-1.19L16.7 5h1.95l1.01 4.2c.13.55 0 1.09-.32 1.52-.28.36-.67.54-1.08.54z"/>
-            </svg>
-            <span>{t('supermarket_mode_title')}</span>
-          </span>
-        </h1>
+        <h1>{t('supermarket_mode_title')}</h1>
       </div>
 
-      {/* Progress */}
-      <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--primary)' }}>
-          {checkedCount}/{totalItems}
+      <div className="supermarket-header-box">
+        <div className="supermarket-progress-top">
+          <div className="supermarket-progress-count">{checkedCount}/{totalCount}</div>
+          <div className="supermarket-progress-text">{t('supermarket_mode_progress', String(checkedCount), String(totalCount))}</div>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--on-surface-variant)' }}>{t('supermarket_mode_progress', String(checkedCount), String(totalItems))}</div>
-        <div
-          role="progressbar"
-          aria-valuenow={checkedCount}
-          aria-valuemin={0}
-          aria-valuemax={totalItems}
-          aria-label={t('supermarket_mode_progress', String(checkedCount), String(totalItems))}
-          style={{
-            height: 6,
-            background: 'var(--surface-variant)',
-            borderRadius: 3,
-            marginTop: 8,
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{
-            height: '100%',
-            background: 'var(--primary)',
-            borderRadius: 3,
-            width: `${totalItems > 0 ? (checkedCount / totalItems) * 100 : 0}%`,
-            transition: 'width 0.3s ease',
-          }} />
+        <div className="supermarket-progress-track" role="progressbar" aria-valuenow={checkedCount} aria-valuemin={0} aria-valuemax={totalCount}>
+          <div className="supermarket-progress-bar" style={{ width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%` }} />
         </div>
       </div>
 
-      {/* Category filter */}
-      {usedCategories.length > 1 && (
-        <div className="horizontal-scroll" style={{ marginBottom: 8 }}>
-          <button
-            className={`chip ${!selectedCategory ? 'chip-filled' : 'chip-outline'}`}
-            onClick={() => setSelectedCategory(null)}
-            aria-pressed={!selectedCategory}
-          >{t('category_all')}</button>
-          {usedCategories.map((cat) => (
-            <button key={cat}
-              className={`chip ${selectedCategory === cat ? 'chip-filled' : 'chip-outline'}`}
-              onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-              aria-pressed={selectedCategory === cat}
-            >{CATEGORY_EMOJIS[cat]} {tCategory(cat)}</button>
-          ))}
-        </div>
-      )}
+      <div className="horizontal-scroll" style={{ marginBottom: 8 }}>
+        <button className={`chip ${filter === 'ALL' ? 'chip-filled' : 'chip-outline'}`} onClick={() => setFilter('ALL')}>{t('supermarket_mode_filter_all_label')}</button>
+        <button className={`chip ${filter === 'URGENT' ? 'chip-filled' : 'chip-outline'}`} onClick={() => setFilter('URGENT')}>❗ {t('supermarket_mode_filter_urgent')}</button>
+        <button className={`chip ${filter === 'MINE' ? 'chip-filled' : 'chip-outline'}`} onClick={() => setFilter('MINE')}>{t('supermarket_mode_filter_mine')}</button>
+        <button className={`chip ${filter === 'PHARMACY' ? 'chip-filled' : 'chip-outline'}`} onClick={() => setFilter('PHARMACY')}>💊 {t('supermarket_mode_filter_pharmacy_label')}</button>
+        <button className={`chip ${filter === 'NOT_FOUND' ? 'chip-filled' : 'chip-outline'}`} onClick={() => setFilter('NOT_FOUND')}>🔎 {t('supermarket_mode_filter_not_found')} ({notFoundIds.size})</button>
+      </div>
 
-      {/* Items */}
-      {activeItems.map((item) => {
-        const isChecked = checkedIds.has(item.id);
-        return (
-          <div key={item.id} className={`supermarket-item ${isChecked ? 'done' : ''}`}>
-            <button
-              className={`supermarket-check ${isChecked ? 'checked' : ''}`}
-              role="checkbox"
-              aria-checked={isChecked}
-              aria-label={`${item.name}: ${isChecked ? t('shopping_list_undo_bought') : t('shopping_list_mark_bought')}`}
-              onClick={() => handleCheck(item)}
-            >
-              {isChecked && <span aria-hidden="true">✓</span>}
-            </button>
-            <div style={{ flex: 1 }}>
-              <div className="item-name" style={{ fontSize: 18, fontWeight: 600 }}>
-                {item.name}
-              </div>
-            </div>
-            <div className="item-qty" style={{ fontSize: 16, color: 'var(--on-surface-variant)' }}>
-              {formatQuantity(item.quantity)}{item.unit ? ` ${tUnit(item.unit)}` : ''}
-            </div>
-          </div>
-        );
-      })}
-
-      {activeItems.length === 0 && boughtInSession.length === 0 && (
+      {allDone ? (
         <div className="empty-state">
           <div className="empty-state-icon">🎉</div>
-          <div className="empty-state-text">
-            {checkedCount > 0 ? t('supermarket_mode_all_done') : t('supermarket_mode_empty_title')}
-          </div>
-          <div className="empty-state-text" style={{ fontSize: 13 }}>
-            {checkedCount > 0 ? t('supermarket_mode_all_done_subtitle') : t('supermarket_mode_empty_subtitle')}
-          </div>
+          <div className="empty-state-text">{t('supermarket_mode_all_done')}</div>
+          <div className="empty-state-text" style={{ fontSize: 13 }}>{t('supermarket_mode_all_done_subtitle')}</div>
         </div>
-      )}
-
-      {boughtInSession.length > 0 && (
+      ) : groupedItems.length === 0 && boughtInSession.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🛍️</div>
+          <div className="empty-state-text">{t('supermarket_mode_empty_title')}</div>
+          <div className="empty-state-text" style={{ fontSize: 13 }}>{t('supermarket_mode_empty_subtitle')}</div>
+        </div>
+      ) : (
         <>
-          <button
-            className="section-header"
-            style={{ cursor: 'pointer', width: '100%', justifyContent: 'space-between' }}
-            onClick={() => setShowBoughtSection(!showBoughtSection)}
-            aria-expanded={showBoughtSection}
-          >
-            <span className="section-title">{t('shopping_list_bought_section')} ({boughtInSession.length})</span>
-            <span style={{ color: 'var(--on-surface-variant)', fontSize: 12 }} aria-hidden="true">
-              {showBoughtSection ? '▲' : '▼'}
-            </span>
-          </button>
-          {showBoughtSection && (
-            <div className="card">
-              {boughtInSession.map((item) => (
-                <div key={item.id} className="item-row" style={{ paddingTop: 2, paddingBottom: 2 }}>
-                  <button
-                    className="checkbox checked"
-                    role="checkbox"
-                    aria-checked={true}
-                    aria-label={`${t('shopping_list_undo_bought')}: ${item.name}`}
-                    onClick={() => handleRestore(item)}
-                    style={{ width: 30, height: 30 }}
-                  >
-                    <span aria-hidden="true">✓</span>
-                  </button>
-                  <div className="item-info">
-                    <div className="item-name bought" style={{ fontSize: 17 }}>{item.name}</div>
-                  </div>
-                  <button className="btn-text" onClick={() => handleRestore(item)}>{t('shopping_list_undo_bought')}</button>
+          {groupedItems.map((group) => {
+            const isCollapsed = collapsedCategories.has(group.category);
+            return (
+              <div key={group.category}>
+                <button className="section-header" style={{ width: '100%', justifyContent: 'space-between' }} onClick={() => toggleCategory(group.category)}>
+                  <span className="section-title">{CATEGORY_EMOJIS[group.category]} {tCategory(group.category)} ({group.items.length})</span>
+                  <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>{isCollapsed ? '▼' : '▲'}</span>
+                </button>
+                {!isCollapsed && group.items.map((item) => {
+                  const isNotFound = notFoundIds.has(item.id);
+                  if (isNotFound) {
+                    return (
+                      <div key={item.id} className="supermarket-item done">
+                        <div style={{ flex: 1 }}>
+                          <div className="item-name" style={{ fontSize: 17 }}>{item.name}</div>
+                        </div>
+                        <button className="btn-text" onClick={() => undoNotFound(item)}>{t('supermarket_mode_undo')}</button>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={item.id} className="supermarket-item">
+                      <button className="supermarket-check" onClick={() => markItemBought(item)} aria-label={`${t('shopping_list_mark_bought')}: ${item.name}`} />
+                      <div style={{ flex: 1 }}>
+                        <div className="item-name" style={{ fontSize: 18, fontWeight: 600 }}>
+                          {item.isUrgent ? `${item.name} ❗` : item.name}
+                        </div>
+                        {(item.quantity !== 1 || item.unit || item.note) && (
+                          <div className="item-qty">
+                            {formatQuantity(item.quantity)}{item.unit ? ` ${tUnit(item.unit)}` : ''}{item.note ? ` · ${item.note}` : ''}
+                          </div>
+                        )}
+                      </div>
+                      <button className="btn-text" onClick={() => markNotFound(item)}>{t('supermarket_mode_not_found')}</button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          {boughtInSession.length > 0 && (
+            <>
+              <button
+                className="section-header"
+                style={{ cursor: 'pointer', width: '100%', justifyContent: 'space-between', marginTop: 8 }}
+                onClick={() => setShowBoughtSection(!showBoughtSection)}
+                aria-expanded={showBoughtSection}
+              >
+                <span className="section-title">{t('shopping_list_bought_section')} ({boughtInSession.length})</span>
+                <span style={{ color: 'var(--on-surface-variant)', fontSize: 12 }} aria-hidden="true">{showBoughtSection ? '▲' : '▼'}</span>
+              </button>
+              {showBoughtSection && (
+                <div className="card">
+                  {boughtInSession.map((item) => (
+                    <div key={item.id} className="item-row" style={{ paddingTop: 6, paddingBottom: 6 }}>
+                      <button className="checkbox checked" role="checkbox" aria-checked={true} aria-label={`${t('shopping_list_undo_bought')}: ${item.name}`} onClick={() => restoreBoughtItem(item)}>
+                        <span aria-hidden="true">✓</span>
+                      </button>
+                      <div className="item-info">
+                        <div className="item-name bought">{item.name}</div>
+                      </div>
+                      <button className="btn-text" onClick={() => restoreBoughtItem(item)}>{t('shopping_list_undo_bought')}</button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </>
       )}
 
-      <button className="fab" onClick={() => navigate('/add')} aria-label={t('item_add')}><span aria-hidden="true">+</span></button>
+      <div className="dual-fabs">
+        <button className="fab-extended fab-add" onClick={() => navigate('/add')}>{t('supermarket_mode_add_item')}</button>
+        <button className="fab-extended fab-supermarket" onClick={finishShopping}>{t('supermarket_mode_finish')}</button>
+      </div>
     </div>
   );
 }

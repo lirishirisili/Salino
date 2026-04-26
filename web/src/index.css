@@ -747,6 +747,185 @@ input, select, textarea { font-family: inherit; font-size: inherit; border: none
 .google-btn:active { transform: scale(.98); }
 .google-btn:disabled { opacity: .6; cursor: not-allowed; }
 
+/* ---------- PWA install banner ---------- */
+.install-banner {
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, rgba(190, 245, 240, 0.55), rgba(190, 245, 240, 0.35));
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  border-radius: 18px;
+  padding: 12px;
+}
+.install-banner-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+.install-banner-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.install-banner-text {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--on-surface);
+}
+.install-banner-buttons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.install-btn {
+  border: none;
+  border-radius: 999px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.install-btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.install-btn-secondary {
+  background: rgba(13, 148, 136, 0.14);
+  color: var(--primary);
+}
+.install-banner-help {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  line-height: 19px;
+}
+.install-help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 40;
+}
+.install-help-modal {
+  width: min(520px, 100%);
+}
+
+/* ---------- Android download gate ---------- */
+.android-download-screen {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+}
+.android-download-card {
+  width: min(560px, 100%);
+  text-align: right;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(241, 253, 252, 0.95));
+  border: 1px solid rgba(13, 148, 136, 0.1);
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.12);
+}
+.android-download-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.android-download-logo-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(13, 148, 136, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.android-download-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.android-download-appname {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.android-download-badge {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.android-download-title {
+  margin-top: 12px;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--on-surface);
+}
+.android-download-subtitle {
+  margin-top: 8px;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+  font-size: 15px;
+}
+.android-download-list {
+  margin-top: 14px;
+  padding-right: 18px;
+  color: var(--on-surface);
+  line-height: 1.8;
+  font-size: 14px;
+}
+.android-download-btn {
+  width: 100%;
+  margin-top: 14px;
+  justify-content: center;
+  border-radius: 12px;
+}
+.android-download-continue {
+  margin-top: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .android-download-title { font-size: 21px; }
+  .android-download-subtitle { font-size: 14px; }
+}
+
+@media (max-width: 640px) {
+  .install-banner-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .install-banner-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .install-btn { height: 32px; font-size: 12px; }
+}
+
 /* ---------- Settings ---------- */
 .settings-item {
   display: flex; align-items: center; justify-content: space-between;
@@ -766,6 +945,32 @@ input, select, textarea { font-family: inherit; font-size: inherit; border: none
 }
 
 /* ---------- Supermarket mode ---------- */
+.supermarket-header-box {
+  text-align: center;
+  padding: 8px 0 14px;
+}
+.supermarket-progress-count {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.supermarket-progress-text {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+}
+.supermarket-progress-track {
+  height: 6px;
+  background: var(--surface-variant);
+  border-radius: 999px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.supermarket-progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width .25s ease;
+}
 .supermarket-item {
   display: flex; align-items: center; gap: 14px;
   padding: 16px 18px;

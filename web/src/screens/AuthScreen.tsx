@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../i18n/index';
+
+const ANDROID_WEB_CONTINUE_KEY = 'salino_android_web_continue';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.salino.sali&hl=he';
 
 export default function AuthScreen() {
   const { t } = useI18n();
@@ -10,6 +13,17 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [registerMode, setRegisterMode] = useState(false);
+  const [showAndroidDownloadPrompt, setShowAndroidDownloadPrompt] = useState(false);
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isAndroid = /android/.test(userAgent);
+
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const continueOnWeb = localStorage.getItem(ANDROID_WEB_CONTINUE_KEY) === '1';
+    if (isAndroid && !isStandalone && !continueOnWeb) {
+      setShowAndroidDownloadPrompt(true);
+    }
+  }, [isAndroid]);
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -41,6 +55,50 @@ export default function AuthScreen() {
       setLoading(false);
     }
   };
+
+  const continueToWeb = () => {
+    localStorage.setItem(ANDROID_WEB_CONTINUE_KEY, '1');
+    setShowAndroidDownloadPrompt(false);
+  };
+
+  if (showAndroidDownloadPrompt) {
+    return (
+      <div className="screen android-download-screen">
+        <div className="card android-download-card">
+          <div className="android-download-brand">
+            <div className="android-download-logo-wrap">
+              <img src="/favicon.png" alt={t('app_name')} className="android-download-logo" />
+            </div>
+            <div>
+              <div className="android-download-appname">{t('app_name')}</div>
+              <div className="android-download-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#00D1FF" d="M3 2l10.5 10L3 22z" />
+                  <path fill="#00E676" d="M3 2l13 7-2.5 2.5z" />
+                  <path fill="#FFEA00" d="M16 9l3.5 2-3.5 2-2.5-2.5z" />
+                  <path fill="#FF3D00" d="M3 22l13-7-2.5-2.5z" />
+                </svg>
+                <span>{t('android_download_play_label')}</span>
+              </div>
+            </div>
+          </div>
+          <h2 className="android-download-title">{t('android_download_title')}</h2>
+          <p className="android-download-subtitle">{t('android_download_subtitle')}</p>
+          <ul className="android-download-list">
+            <li>{t('android_download_bullet_1')}</li>
+            <li>{t('android_download_bullet_2')}</li>
+            <li>{t('android_download_bullet_3')}</li>
+          </ul>
+          <a className="btn-primary android-download-btn" href={PLAY_STORE_URL}>
+            {t('android_download_cta')}
+          </a>
+          <button className="android-download-continue" onClick={continueToWeb}>
+            {t('android_download_continue_web')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-screen">
