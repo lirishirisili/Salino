@@ -42,12 +42,10 @@ import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.ShoppingCartCheckout
 import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -104,6 +102,7 @@ fun SupermarketModeScreen(
     val boughtLabel = stringResource(R.string.supermarket_mode_item_bought)
     val notFoundLabel = stringResource(R.string.supermarket_mode_item_not_found)
     var showFinishDialog by remember { mutableStateOf(false) }
+    var isBoughtSectionExpanded by remember { mutableStateOf(true) }
 
     // Undo snackbar for bought items
     LaunchedEffect(uiState.lastBoughtItem) {
@@ -192,7 +191,7 @@ fun SupermarketModeScreen(
             when {
                 uiState.isLoading -> LoadingIndicator()
                 uiState.allDone -> AllDoneBanner()
-                uiState.groupedItems.isEmpty() -> EmptyState(
+                uiState.groupedItems.isEmpty() && uiState.boughtItems.isEmpty() -> EmptyState(
                     icon = Icons.Default.Storefront,
                     title = stringResource(R.string.supermarket_mode_empty_title),
                     subtitle = stringResource(R.string.supermarket_mode_empty_subtitle)
@@ -203,25 +202,6 @@ fun SupermarketModeScreen(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        // Bought items toggle
-                        if (uiState.boughtItems.isNotEmpty()) {
-                            item {
-                                BoughtToggleRow(
-                                    hideBought = uiState.hideBought,
-                                    boughtCount = uiState.boughtItems.size,
-                                    onToggle = { viewModel.toggleHideBought() }
-                                )
-                            }
-                        }
-
-                        // Bought items (expandable)
-                        if (!uiState.hideBought && uiState.boughtItems.isNotEmpty()) {
-                            items(uiState.boughtItems, key = { "bought_${it.id}" }) { item ->
-                                BoughtItemRow(item = item)
-                            }
-                            item { Spacer(modifier = Modifier.height(8.dp)) }
-                        }
-
                         // Grouped active items
                         uiState.groupedItems.forEach { (category, itemsForCategory) ->
                             val isCollapsed = category in uiState.collapsedCategories
@@ -247,6 +227,24 @@ fun SupermarketModeScreen(
                         }
 
                         // Bottom spacer for scroll clearance
+                        if (uiState.boughtItems.isNotEmpty()) {
+                            item { Spacer(modifier = Modifier.height(10.dp)) }
+                            item {
+                                BoughtToggleRow(
+                                    isExpanded = isBoughtSectionExpanded,
+                                    onToggle = { isBoughtSectionExpanded = !isBoughtSectionExpanded }
+                                )
+                            }
+                            if (isBoughtSectionExpanded) {
+                                items(uiState.boughtItems, key = { "bought_${it.id}" }) { item ->
+                                    BoughtItemRow(
+                                        item = item,
+                                        onRestore = { viewModel.undoBought(item) }
+                                    )
+                                }
+                            }
+                        }
+
                         item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
                 }
@@ -653,28 +651,35 @@ private fun NotFoundItemRow(item: ShoppingItem, onUndo: () -> Unit) {
 // ═══════════════════════════════════════════════════════════════
 
 @Composable
-private fun BoughtItemRow(item: ShoppingItem) {
+private fun BoughtItemRow(item: ShoppingItem, onRestore: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             Icons.Filled.CheckCircle,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(22.dp)
         )
         Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = item.name,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             textDecoration = TextDecoration.LineThrough,
+            modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+        TextButton(onClick = onRestore) {
+            Text(
+                text = stringResource(R.string.shopping_list_undo_bought),
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
     }
 }
 
@@ -684,38 +689,26 @@ private fun BoughtItemRow(item: ShoppingItem) {
 
 @Composable
 private fun BoughtToggleRow(
-    hideBought: Boolean,
-    boughtCount: Int,
+    isExpanded: Boolean,
     onToggle: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    TextButton(
+        onClick = onToggle,
+        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Icon(
-            if (hideBought) Icons.Default.VisibilityOff else Icons.Default.CheckCircle,
+            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(16.dp)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = if (hideBought) {
-                stringResource(R.string.supermarket_mode_show_bought, boughtCount)
-            } else {
-                stringResource(R.string.supermarket_mode_hide_bought)
-            },
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.outline
+            text = stringResource(R.string.shopping_list_bought_section),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 12.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-    )
 }
 
 // ═══════════════════════════════════════════════════════════════

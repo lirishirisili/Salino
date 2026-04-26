@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { subscribeToItems, markAsBought, logActivity } from '../services/firestoreService';
+import { subscribeToItems, markAsBought, markAsActive, logActivity } from '../services/firestoreService';
 import type { ShoppingItem, ItemCategory } from '../types';
 import { ALL_CATEGORIES, CATEGORY_EMOJIS } from '../types';
 import { formatQuantity } from '../utils';
@@ -14,12 +14,23 @@ export default function SupermarketModeScreen() {
   const householdId = user!.activeHouseholdId!;
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [boughtInSession, setBoughtInSession] = useState<ShoppingItem[]>([]);
+  const [showBoughtSection, setShowBoughtSection] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
+  const [sessionStartCount, setSessionStartCount] = useState<number | null>(null);
 
   useEffect(() => {
     const unsub = subscribeToItems(householdId, setItems);
     return unsub;
   }, [householdId]);
+
+  useEffect(() => {
+    if (sessionStartCount !== null) return;
+    const activeNowCount = items.filter((i) => i.status === 'ACTIVE').length;
+    if (activeNowCount > 0) {
+      setSessionStartCount(activeNowCount);
+    }
+  }, [items, sessionStartCount]);
 
   const activeItems = useMemo(() => {
     let filtered = items.filter((i) => i.status === 'ACTIVE');
@@ -46,13 +57,27 @@ export default function SupermarketModeScreen() {
       setCheckedIds(next);
     } else {
       setCheckedIds(new Set([...checkedIds, item.id]));
+      setBoughtInSession((prev) =>
+        prev.some((boughtItem) => boughtItem.id === item.id) ? prev : [item, ...prev]
+      );
       await markAsBought(householdId, item.id, user!.id, user!.displayName);
       await logActivity(householdId, 'ITEM_BOUGHT', item.name, user!.id, user!.displayName, item.id);
     }
   };
 
-  const totalItems = items.filter((i) => i.status === 'ACTIVE').length;
-  const checkedCount = checkedIds.size;
+  const handleRestore = async (item: ShoppingItem) => {
+    setBoughtInSession((prev) => prev.filter((boughtItem) => boughtItem.id !== item.id));
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(item.id);
+      return next;
+    });
+    await markAsActive(householdId, item.id);
+    await logActivity(householdId, 'ITEM_RESTORED', item.name, user!.id, user!.displayName, item.id);
+  };
+
+  const checkedCount = boughtInSession.length;
+  const totalItems = sessionStartCount ?? (items.filter((i) => i.status === 'ACTIVE').length + checkedCount);
 
   return (
     <div className="screen" style={{ paddingBottom: 80 }}>
@@ -142,7 +167,7 @@ export default function SupermarketModeScreen() {
         );
       })}
 
-      {activeItems.length === 0 && (
+      {activeItems.length === 0 && boughtInSession.length === 0 && (
         <div className="empty-state">
           <div className="empty-state-icon">🎉</div>
           <div className="empty-state-text">
@@ -152,6 +177,44 @@ export default function SupermarketModeScreen() {
             {checkedCount > 0 ? t('supermarket_mode_all_done_subtitle') : t('supermarket_mode_empty_subtitle')}
           </div>
         </div>
+      )}
+
+      {boughtInSession.length > 0 && (
+        <>
+          <button
+            className="section-header"
+            style={{ cursor: 'pointer', width: '100%', justifyContent: 'space-between' }}
+            onClick={() => setShowBoughtSection(!showBoughtSection)}
+            aria-expanded={showBoughtSection}
+          >
+            <span className="section-title">{t('shopping_list_bought_section')} ({boughtInSession.length})</span>
+            <span style={{ color: 'var(--on-surface-variant)', fontSize: 12 }} aria-hidden="true">
+              {showBoughtSection ? '▲' : '▼'}
+            </span>
+          </button>
+          {showBoughtSection && (
+            <div className="card">
+              {boughtInSession.map((item) => (
+                <div key={item.id} className="item-row" style={{ paddingTop: 2, paddingBottom: 2 }}>
+                  <button
+                    className="checkbox checked"
+                    role="checkbox"
+                    aria-checked={true}
+                    aria-label={`${t('shopping_list_undo_bought')}: ${item.name}`}
+                    onClick={() => handleRestore(item)}
+                    style={{ width: 30, height: 30 }}
+                  >
+                    <span aria-hidden="true">✓</span>
+                  </button>
+                  <div className="item-info">
+                    <div className="item-name bought" style={{ fontSize: 17 }}>{item.name}</div>
+                  </div>
+                  <button className="btn-text" onClick={() => handleRestore(item)}>{t('shopping_list_undo_bought')}</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <button className="fab" onClick={() => navigate('/add')} aria-label={t('item_add')}><span aria-hidden="true">+</span></button>

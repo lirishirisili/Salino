@@ -13,6 +13,15 @@
     <string name="auth_welcome_title">ברוכים הבאים לחסרלי</string>
     <string name="auth_welcome_subtitle">רשימת הקניות המשותפת שלכם</string>
     <string name="auth_sign_in_google">התחברות עם Google</string>
+    <string name="auth_sign_in_email">התחברות עם אימייל</string>
+    <string name="auth_register_email">הרשמה עם אימייל</string>
+    <string name="auth_email_label">אימייל</string>
+    <string name="auth_email_hint">your@email.com</string>
+    <string name="auth_password_label">סיסמה</string>
+    <string name="auth_password_hint">לפחות 6 תווים</string>
+    <string name="auth_no_account_register">אין לך חשבון? הרשמה</string>
+    <string name="auth_has_account_sign_in">כבר יש לך חשבון? התחברות</string>
+    <string name="auth_or">או</string>
     <string name="auth_signing_in">מתחבר…</string>
     <string name="auth_error_generic">משהו השתבש. נסו שוב.</string>
 

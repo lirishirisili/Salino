@@ -160,6 +160,22 @@ class SupermarketModeViewModel @Inject constructor(
         }
     }
 
+    fun undoBought(item: ShoppingItem) {
+        sessionBoughtItems.removeAll { it.id == item.id }
+        _uiState.update { state ->
+            if (state.lastBoughtItem?.id == item.id) {
+                state.copy(lastBoughtItem = null)
+            } else {
+                state
+            }
+        }
+        viewModelScope.launch {
+            runCatching {
+                shoppingRepository.markAsActive(householdId, item.id)
+            }
+        }
+    }
+
     fun clearLastBought() {
         _uiState.update { it.copy(lastBoughtItem = null) }
     }

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
@@ -14,6 +16,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
 }
@@ -29,19 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
-        const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-        if (userDoc.exists()) {
-          setUser(userDoc.data() as User);
-        } else {
-          const newUser: User = {
-            id: fbUser.uid,
-            displayName: fbUser.displayName || '',
-            email: fbUser.email || '',
-            activeHouseholdId: null,
-          };
-          await setDoc(doc(db, 'users', fbUser.uid), newUser);
-          setUser(newUser);
-        }
+        await ensureUserProfile(fbUser);
       } else {
         setUser(null);
       }
@@ -53,11 +45,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      console.log('Sign-in success:', result.user.email);
+      await ensureUserProfile(result.user);
     } catch (err: unknown) {
       console.error('Sign-in error:', err);
       throw err;
     }
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+    await ensureUserProfile(result.user);
+  };
+
+  const registerWithEmail = async (email: string, password: string) => {
+    const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    await ensureUserProfile(result.user);
   };
 
   const signOut = async () => {
@@ -72,8 +74,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
+  const ensureUserProfile = async (fbUser: FirebaseUser) => {
+    const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+    if (userDoc.exists()) {
+      setUser(userDoc.data() as User);
+      return;
+    }
+
+    const newUser: User = {
+      id: fbUser.uid,
+      displayName: fbUser.displayName || fbUser.email?.split('@')[0] || '',
+      email: fbUser.email || '',
+      activeHouseholdId: null,
+    };
+    await setDoc(doc(db, 'users', fbUser.uid), newUser);
+    setUser(newUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ firebaseUser, user, loading, signInWithGoogle, signOut, updateUser }}>
+    <AuthContext.Provider
+      value={{ firebaseUser, user, loading, signInWithGoogle, signInWithEmail, registerWithEmail, signOut, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

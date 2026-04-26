@@ -1,4 +1,4 @@
-﻿package com.salino.sali.data.repository
+package com.salino.sali.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -53,6 +53,16 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun signInWithGoogle(idToken: String): Result<User> = runCatching {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).await()
+        getOrCreateUserProfile().getOrThrow()
+    }
+
+    override suspend fun signInWithEmail(email: String, password: String): Result<User> = runCatching {
+        auth.signInWithEmailAndPassword(email, password).await()
+        getOrCreateUserProfile().getOrThrow()
+    }
+
+    override suspend fun registerWithEmail(email: String, password: String): Result<User> = runCatching {
+        auth.createUserWithEmailAndPassword(email, password).await()
         getOrCreateUserProfile().getOrThrow()
     }
 

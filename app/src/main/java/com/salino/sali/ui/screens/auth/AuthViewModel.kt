@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.auth
+package com.salino.sali.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,6 +30,32 @@ class AuthViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             authRepository.signInWithGoogle(idToken)
+                .onSuccess {
+                    val user = authRepository.observeCurrentUser().first()
+                    _uiState.value = AuthUiState(
+                        isAuthenticated = true,
+                        hasHousehold = !user?.activeHouseholdId.isNullOrBlank()
+                    )
+                }
+                .onFailure { error ->
+                    _uiState.value = AuthUiState(
+                        errorMessage = error.message ?: "Authentication failed"
+                    )
+                }
+        }
+    }
+
+    fun signInWithEmail(email: String, password: String, register: Boolean) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+            val authResult = if (register) {
+                authRepository.registerWithEmail(email.trim(), password)
+            } else {
+                authRepository.signInWithEmail(email.trim(), password)
+            }
+
+            authResult
                 .onSuccess {
                     val user = authRepository.observeCurrentUser().first()
                     _uiState.value = AuthUiState(

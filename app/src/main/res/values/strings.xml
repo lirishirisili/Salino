@@ -13,6 +13,15 @@
     <string name="auth_welcome_title">Welcome to Haserli</string>
     <string name="auth_welcome_subtitle">Your shared shopping list</string>
     <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_sign_in_email">Sign in with email</string>
+    <string name="auth_register_email">Register with email</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_email_hint">you@email.com</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_password_hint">At least 6 characters</string>
+    <string name="auth_no_account_register">Don\'t have an account? Register</string>
+    <string name="auth_has_account_sign_in">Already have an account? Sign in</string>
+    <string name="auth_or">OR</string>
     <string name="auth_signing_in">Signing in…</string>
     <string name="auth_error_generic">Something went wrong. Try again.</string>
 

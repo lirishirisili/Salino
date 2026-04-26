@@ -4,9 +4,12 @@ import { useI18n } from '../i18n/index';
 
 export default function AuthScreen() {
   const { t } = useI18n();
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signInWithEmail, registerWithEmail } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [registerMode, setRegisterMode] = useState(false);
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -16,6 +19,23 @@ export default function AuthScreen() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('Auth error:', msg);
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (registerMode) {
+        await registerWithEmail(email, password);
+      } else {
+        await signInWithEmail(email, password);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       setError(msg);
     } finally {
       setLoading(false);
@@ -53,6 +73,53 @@ export default function AuthScreen() {
             {t('auth_sign_in_google')}
           </>
         )}
+      </button>
+
+      <div style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>{t('auth_or')}</div>
+
+      <div style={{ width: '100%', maxWidth: 360 }}>
+        <label className="input-label" htmlFor="auth-email">{t('auth_email_label')}</label>
+        <input
+          id="auth-email"
+          className="input-field"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t('auth_email_hint')}
+          autoComplete="email"
+          dir="ltr"
+        />
+
+        <div style={{ height: 12 }} />
+
+        <label className="input-label" htmlFor="auth-password">{t('auth_password_label')}</label>
+        <input
+          id="auth-password"
+          className="input-field"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={t('auth_password_hint')}
+          autoComplete={registerMode ? 'new-password' : 'current-password'}
+        />
+      </div>
+
+      <button
+        className="btn-primary"
+        onClick={handleEmailAuth}
+        disabled={loading || !email || password.length < 6}
+        style={{ width: '100%', maxWidth: 360 }}
+      >
+        {loading ? t('auth_signing_in') : registerMode ? t('auth_register_email') : t('auth_sign_in_email')}
+      </button>
+
+      <button
+        className="btn-text"
+        onClick={() => setRegisterMode((prev) => !prev)}
+        disabled={loading}
+        style={{ width: '100%', maxWidth: 360 }}
+      >
+        {registerMode ? t('auth_has_account_sign_in') : t('auth_no_account_register')}
       </button>
     </div>
   );
