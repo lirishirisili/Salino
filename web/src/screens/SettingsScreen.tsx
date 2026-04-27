@@ -8,10 +8,8 @@ import {
 } from '../services/firestoreService';
 import { copyToClipboard } from '../utils';
 import type { Household, HouseholdMember } from '../types';
-import type { NotificationMode } from '../types';
 import { useI18n, SUPPORTED_LANGUAGES } from '../i18n/index';
 import type { StringKey } from '../i18n/index';
-import { DEFAULT_NOTIFICATION_PREFS, normalizeNotificationPrefs } from '../services/notificationPrefs';
 
 export default function SettingsScreen() {
   const { t, lang, setLanguage } = useI18n();
@@ -25,43 +23,12 @@ export default function SettingsScreen() {
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [pendingLang, setPendingLang] = useState<string | null>(null);
-  const [permissionState] = useState<NotificationPermission>(
-    typeof Notification !== 'undefined' ? Notification.permission : 'default'
-  );
 
   useEffect(() => {
     getHousehold(householdId).then(setHousehold);
     const unsub = subscribeToMembers(householdId, setMembers);
     return unsub;
   }, [householdId]);
-
-  const notificationPrefs = normalizeNotificationPrefs(user?.notificationPrefs ?? DEFAULT_NOTIFICATION_PREFS);
-
-  const updateNotificationPrefs = async (updates: Partial<typeof notificationPrefs>) => {
-    await updateUser({
-      notificationPrefs: {
-        ...notificationPrefs,
-        ...updates,
-      },
-    });
-  };
-
-  const toggleImportantEvent = async (event: 'ITEM_ADDED' | 'ITEM_BOUGHT' | 'ITEM_UPDATED' | 'ITEM_DELETED') => {
-    const hasEvent = notificationPrefs.importantEvents.includes(event);
-    const importantEvents = hasEvent
-      ? notificationPrefs.importantEvents.filter((it) => it !== event)
-      : [...notificationPrefs.importantEvents, event];
-    await updateNotificationPrefs({
-      importantEvents: importantEvents.length ? importantEvents : ['ITEM_ADDED'],
-    });
-  };
-
-  const permissionDescriptionKey: StringKey =
-    permissionState === 'granted'
-      ? 'settings_notifications_browser_permission_granted'
-      : permissionState === 'denied'
-        ? 'settings_notifications_browser_permission_denied'
-        : 'settings_notifications_browser_permission_default';
 
   const handleCopyCode = async () => {
     if (household?.inviteCode) {
@@ -223,91 +190,6 @@ export default function SettingsScreen() {
                 </option>
               ))}
             </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Notifications Section */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="section-title" style={{ color: 'var(--primary)', padding: '16px 16px 0' }}>
-          {t('settings_notifications_section')}
-        </div>
-        <div className="settings-item">
-          <div style={{ width: '100%' }}>
-            <div className="settings-label">{t('settings_notifications_mode')}</div>
-            <select
-              className="select-field"
-              value={notificationPrefs.mode}
-              onChange={(e) => updateNotificationPrefs({ mode: e.target.value as NotificationMode })}
-              style={{ marginTop: 10 }}
-            >
-              <option value="IMMEDIATE_IMPORTANT">{t('settings_notifications_mode_immediate')}</option>
-              <option value="DAILY_DIGEST">{t('settings_notifications_mode_daily_digest')}</option>
-              <option value="WEEKLY_DIGEST">{t('settings_notifications_mode_weekly_digest')}</option>
-              <option value="SILENT">{t('settings_notifications_mode_silent')}</option>
-            </select>
-          </div>
-        </div>
-        <div className="settings-item">
-          <div style={{ width: '100%' }}>
-            <div className="settings-label">{t('settings_notifications_important_events')}</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <input
-                type="checkbox"
-                checked={notificationPrefs.importantEvents.includes('ITEM_ADDED')}
-                onChange={() => void toggleImportantEvent('ITEM_ADDED')}
-              />
-              <span>{t('settings_notifications_event_item_added')}</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <input
-                type="checkbox"
-                checked={notificationPrefs.importantEvents.includes('ITEM_BOUGHT')}
-                onChange={() => void toggleImportantEvent('ITEM_BOUGHT')}
-              />
-              <span>{t('settings_notifications_event_item_bought')}</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <input
-                type="checkbox"
-                checked={notificationPrefs.importantEvents.includes('ITEM_UPDATED')}
-                onChange={() => void toggleImportantEvent('ITEM_UPDATED')}
-              />
-              <span>{t('settings_notifications_event_item_updated')}</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <input
-                type="checkbox"
-                checked={notificationPrefs.importantEvents.includes('ITEM_DELETED')}
-                onChange={() => void toggleImportantEvent('ITEM_DELETED')}
-              />
-              <span>{t('settings_notifications_event_item_deleted')}</span>
-            </label>
-          </div>
-        </div>
-        <div className="settings-item">
-          <div style={{ width: '100%' }}>
-            <div className="settings-label">{t('settings_notifications_max_immediate_per_hour')}</div>
-            <input
-              className="input-field"
-              type="number"
-              min={1}
-              max={20}
-              value={notificationPrefs.maxImmediatePerHour}
-              onChange={(e) => {
-                const parsed = Number(e.target.value);
-                const value = Number.isFinite(parsed) ? Math.max(1, Math.min(20, parsed)) : 1;
-                void updateNotificationPrefs({ maxImmediatePerHour: value });
-              }}
-              style={{ marginTop: 8, maxWidth: 140 }}
-              disabled={notificationPrefs.mode !== 'IMMEDIATE_IMPORTANT'}
-            />
-          </div>
-        </div>
-        <div className="settings-item" style={{ alignItems: 'flex-start' }}>
-          <div>
-            <div className="settings-label">{t('settings_notifications_browser_permission_title')}</div>
-            <div className="settings-value">{t(permissionDescriptionKey)}</div>
           </div>
         </div>
       </div>

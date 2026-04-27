@@ -9,14 +9,10 @@ import HistoryScreen from './screens/HistoryScreen';
 import ActivityFeedScreen from './screens/ActivityFeedScreen';
 import SupermarketModeScreen from './screens/SupermarketModeScreen';
 import SettingsScreen from './screens/SettingsScreen';
-import { useActivityNotifications } from './services/notificationOrchestrator';
-import { useI18n } from './i18n';
 import './index.css';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
-  const { t } = useI18n();
-  useActivityNotifications(user, t);
 
   if (loading) {
     return (

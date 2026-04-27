@@ -22,7 +22,7 @@ fun LoadingIndicator(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            BrandLogo(iconSize = 64.dp)
+            BrandLogo(iconSize = 64.dp, showGlow = false)
             Spacer(modifier = Modifier.height(18.dp))
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(14.dp))

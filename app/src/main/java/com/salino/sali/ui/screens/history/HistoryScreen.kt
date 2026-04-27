@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Receipt
@@ -18,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,7 +27,11 @@ import com.salino.sali.ui.components.CategoryChip
 import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
+import com.salino.sali.ui.components.SalinoSectionTitle
 import com.salino.sali.ui.components.SalinoSurfaceCard
+import com.salino.sali.ui.components.SalinoWebInnerTopBar
+import com.salino.sali.ui.components.SalinoWebTokens
+import com.salino.sali.ui.components.salinoWebMaxWidth
 import com.salino.sali.util.formatQuantity
 import com.salino.sali.util.formatTimestamp
 
@@ -45,17 +47,10 @@ fun HistoryScreen(
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
             topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    title = { Text(stringResource(R.string.history_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.cancel)
-                            )
-                        }
-                    }
+                SalinoWebInnerTopBar(
+                    title = stringResource(R.string.history_title),
+                    onBack = onNavigateBack,
+                    backContentDescription = stringResource(R.string.cancel)
                 )
             }
         ) { padding ->
@@ -78,58 +73,34 @@ fun HistoryScreen(
                 modifier = Modifier
                     .padding(padding)
                     .consumeWindowInsets(padding)
-                    .navigationBarsPadding(),
-                contentPadding = PaddingValues(16.dp),
+                    .navigationBarsPadding()
+                    .salinoWebMaxWidth()
+                    .padding(horizontal = SalinoWebTokens.HorizontalPadding),
+                contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                item {
-                    SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = stringResource(R.string.history_title),
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.shopping_list_bought_section),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
                 uiState.dayGroups.forEach { dayGroup ->
                     val isExpanded = uiState.expandedDays.contains(dayGroup.dateLabel)
 
                     item(key = "header_${dayGroup.dateLabel}") {
-                        SalinoSurfaceCard(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { viewModel.toggleDay(dayGroup.dateLabel) }
+                                .clickable { viewModel.toggleDay(dayGroup.dateLabel) },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = dayGroup.dateLabel,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.history_items_count, dayGroup.items.size),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp
-                                        else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            SalinoSectionTitle(
+                                text = dayGroup.dateLabel,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp
+                                    else Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
                         }
                     }
 

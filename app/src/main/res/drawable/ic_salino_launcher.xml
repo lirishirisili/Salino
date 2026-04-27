@@ -6,16 +6,17 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Background full bleed -->
+    <!-- Background full bleed — diagonal teal (fills circle when cropped); no outer white gaps -->
     <path android:pathData="M 0,0 L 108,0 L 108,108 L 0,108 Z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
-                android:startX="0" android:startY="0"
-                android:endX="108" android:endY="108">
-                <item android:offset="0.0" android:color="#00695C" />
-                <item android:offset="0.5" android:color="#0D9488" />
-                <item android:offset="1.0" android:color="#2DD4A8" />
+                android:startX="18" android:startY="14"
+                android:endX="96" android:endY="98">
+                <item android:offset="0.0" android:color="#005A52" />
+                <item android:offset="0.35" android:color="#0D9488" />
+                <item android:offset="0.72" android:color="#14B8A6" />
+                <item android:offset="1.0" android:color="#34D399" />
             </gradient>
         </aapt:attr>
     </path>

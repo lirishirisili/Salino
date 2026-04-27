@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -27,7 +28,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Mic
@@ -52,6 +52,10 @@ import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
+import com.salino.sali.ui.components.SalinoWebInnerTopBar
+import com.salino.sali.ui.components.SalinoWebTokens
+import com.salino.sali.ui.components.salinoWebMaxWidth
+import com.salino.sali.ui.components.salinoWebOutlinedFieldColors
 import com.salino.sali.domain.service.DuplicateReason
 import java.util.Locale
 
@@ -132,19 +136,15 @@ fun EditItemScreen(
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
             topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    title = { Text(stringResource(R.string.edit_item_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.cancel)
-                            )
-                        }
-                    },
+                SalinoWebInnerTopBar(
+                    title = stringResource(R.string.edit_item_title),
+                    onBack = onNavigateBack,
+                    backContentDescription = stringResource(R.string.cancel),
                     actions = {
-                        IconButton(onClick = { showDeleteDialog = true }) {
+                        IconButton(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier.size(42.dp)
+                        ) {
                             Icon(
                                 Icons.Default.Delete,
                                 contentDescription = stringResource(R.string.shopping_list_delete),
@@ -165,7 +165,8 @@ fun EditItemScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .consumeWindowInsets(padding)
-                    .padding(16.dp)
+                    .salinoWebMaxWidth()
+                    .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                     .imePadding()
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState()),
@@ -205,6 +206,8 @@ fun EditItemScreen(
                     OutlinedTextField(
                         value = uiState.name,
                         onValueChange = viewModel::onNameChange,
+                        shape = SalinoWebTokens.InputCorner,
+                        colors = salinoWebOutlinedFieldColors(),
                         label = { Text(stringResource(R.string.item_name_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -243,6 +246,8 @@ fun EditItemScreen(
                         OutlinedTextField(
                             value = uiState.quantity,
                             onValueChange = viewModel::onQuantityChange,
+                            shape = SalinoWebTokens.InputCorner,
+                            colors = salinoWebOutlinedFieldColors(),
                             label = { Text(stringResource(R.string.item_quantity_label)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
@@ -260,6 +265,8 @@ fun EditItemScreen(
                                 value = uiState.unit?.let { stringResource(it.labelResId) } ?: "",
                                 onValueChange = {},
                                 readOnly = true,
+                                shape = SalinoWebTokens.InputCorner,
+                                colors = salinoWebOutlinedFieldColors(),
                                 label = { Text(stringResource(R.string.item_unit_label)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
                                 modifier = Modifier.menuAnchor()
@@ -312,6 +319,8 @@ fun EditItemScreen(
                     OutlinedTextField(
                         value = uiState.note,
                         onValueChange = viewModel::onNoteChange,
+                        shape = SalinoWebTokens.InputCorner,
+                        colors = salinoWebOutlinedFieldColors(),
                         label = { Text(stringResource(R.string.item_note_label)) },
                         placeholder = { Text(stringResource(R.string.item_note_hint)) },
                         modifier = Modifier.fillMaxWidth(),
@@ -342,6 +351,8 @@ fun EditItemScreen(
                         OutlinedTextField(
                             value = uiState.recurrenceDays,
                             onValueChange = viewModel::onRecurrenceDaysChange,
+                            shape = SalinoWebTokens.InputCorner,
+                            colors = salinoWebOutlinedFieldColors(),
                             label = { Text(stringResource(R.string.recurring_every_days_label)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,

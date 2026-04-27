@@ -2,6 +2,7 @@
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,12 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +38,11 @@ import com.salino.sali.ui.components.BrandLogo
 import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
+import com.salino.sali.ui.components.SalinoSectionTitle
+import com.salino.sali.ui.components.SalinoWebAppBarTitle
+import com.salino.sali.ui.components.SalinoWebTokens
 import com.salino.sali.ui.components.ShoppingItemCard
+import com.salino.sali.ui.components.salinoWebMaxWidth
 import com.salino.sali.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +61,8 @@ fun ShoppingListScreen(
     var isBoughtSectionExpanded by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val isCompactWidth = configuration.screenWidthDp < 400
+    val tintSettingsLight = Color(0xFF67B656)
+    val tintActivityLight = Color(0xFFF18E6A)
     val isDark = isSystemInDarkTheme()
 
     SalinoGradientBackground {
@@ -63,76 +70,91 @@ fun ShoppingListScreen(
             containerColor = Color.Transparent,
             floatingActionButtonPosition = FabPosition.Center,
             topBar = {
-                // התאמת צבע הרקע לדארק מוד
-                val topBarBackgroundColor = if (isDark) Color(0xFF181B22) else Color(0xFFFCFBF2)
-                TopAppBar(
-                    modifier = Modifier.drawWithCache {
-                        onDrawBehind {
-                            // רדיוס ענק כדי שהקשת תהיה עוד פחות עגולה (כמעט שטוחה)
-                            val curveRadius = size.width * 4.0f
-                            drawCircle(
-                                color = topBarBackgroundColor,
-                                radius = curveRadius,
-                                center = Offset(size.width / 2f, size.height - curveRadius + 4.dp.toPx()) // ממוקם קצת יותר למעלה
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        actionIconContentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    title = {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            BrandLogo(iconSize = 38.dp)
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(R.string.shopping_list_title),
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = if (isCompactWidth) 18.sp else 22.sp,
-                                        lineHeight = if (isCompactWidth) 22.sp else 28.sp
-                                    ),
-                                    color = if (isDark) Color.White else MaterialTheme.colorScheme.primary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    text = stringResource(R.string.shopping_list_live_badge),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (isDark) Color.White.copy(alpha = 0.75f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                val topBarCurveColor = if (isDark) Color(0xFF181B22) else Color(0xFFFCFBF2)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .drawWithCache {
+                            onDrawBehind {
+                                val curveRadius = size.width * 4.0f
+                                drawCircle(
+                                    color = topBarCurveColor,
+                                    radius = curveRadius,
+                                    center = Offset(
+                                        size.width / 2f,
+                                        size.height - curveRadius + 4.dp.toPx()
+                                    )
                                 )
                             }
                         }
-                    },
-                    actions = {
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(
-                                Icons.Default.Settings,
-                                contentDescription = stringResource(R.string.settings_title),
-                                tint = if (isDark) Color.White else Color(0xFF67B656)
+                        .statusBarsPadding()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp, top = 14.dp, end = 4.dp, bottom = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BrandLogo(iconSize = 38.dp, showWordmark = false, showGlow = true)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 10.dp, end = 8.dp)
+                        ) {
+                            SalinoWebAppBarTitle(
+                                text = stringResource(R.string.shopping_list_title),
+                                color = if (isDark) Color.White else null
+                            )
+                            Text(
+                                text = stringResource(R.string.shopping_list_live_badge),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    letterSpacing = 0.2.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 2.dp)
                             )
                         }
-                        IconButton(onClick = onNavigateToActivityFeed) {
-                            Icon(
-                                Icons.Default.Timeline,
-                                contentDescription = stringResource(R.string.activity_feed_title),
-                                tint = if (isDark) Color.White else Color(0xFFF18E6A)
-                            )
-                        }
-                        IconButton(onClick = onNavigateToHistory) {
-                            Icon(
-                                Icons.Default.History,
-                                contentDescription = stringResource(R.string.history_title),
-                                tint = if (isDark) Color.White else Color(0xFF67B656)
-                            )
+                        Row {
+                            IconButton(
+                                onClick = onNavigateToSettings,
+                                modifier = Modifier.size(42.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = stringResource(R.string.settings_title),
+                                    tint = if (isDark) Color.White else tintSettingsLight
+                                )
+                            }
+                            IconButton(
+                                onClick = onNavigateToActivityFeed,
+                                modifier = Modifier.size(42.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Timeline,
+                                    contentDescription = stringResource(R.string.activity_feed_title),
+                                    tint = if (isDark) Color.White else tintActivityLight
+                                )
+                            }
+                            IconButton(
+                                onClick = onNavigateToHistory,
+                                modifier = Modifier.size(42.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.History,
+                                    contentDescription = stringResource(R.string.history_title),
+                                    tint = if (isDark) Color.White else tintSettingsLight
+                                )
+                            }
                         }
                     }
-                )
+                }
             },
             floatingActionButton = {
                 Row(
@@ -185,6 +207,8 @@ fun ShoppingListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
+                        .salinoWebMaxWidth()
+                        .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                 ) {
                     EmptyState(
                         icon = Icons.Default.ShoppingCart,
@@ -198,7 +222,9 @@ fun ShoppingListScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding),
+                        .padding(padding)
+                        .salinoWebMaxWidth()
+                        .padding(horizontal = SalinoWebTokens.HorizontalPadding),
                     contentPadding = PaddingValues(bottom = if (isCompactWidth) 120.dp else 100.dp)
                 ) {
                     // ── Hero Card: gradient badge + suggestions ──
@@ -208,14 +234,14 @@ fun ShoppingListScreen(
                             suggestionsSubtitle = stringResource(R.string.suggestions_subtitle_home),
                             suggestions = uiState.suggestions,
                             onSuggestionClick = viewModel::addSuggestion,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
 
                     // ── Category filter chips ──
                     item(key = "__filters") {
                         LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            contentPadding = PaddingValues(vertical = 6.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             item {
@@ -228,7 +254,18 @@ fun ShoppingListScreen(
                                             style = MaterialTheme.typography.labelMedium
                                         )
                                     },
-                                    shape = RoundedCornerShape(50)
+                                    shape = RoundedCornerShape(50),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = uiState.selectedCategory == null,
+                                        borderColor = MaterialTheme.colorScheme.outlineVariant
+                                    )
                                 )
                             }
                             items(ItemCategory.entries) { category ->
@@ -241,10 +278,27 @@ fun ShoppingListScreen(
                                             style = MaterialTheme.typography.labelMedium
                                         )
                                     },
-                                    shape = RoundedCornerShape(50)
+                                    shape = RoundedCornerShape(50),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        labelColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = uiState.selectedCategory == category,
+                                        borderColor = MaterialTheme.colorScheme.outlineVariant
+                                    )
                                 )
                             }
                         }
+                    }
+
+                    item(key = "__section_active") {
+                        SalinoSectionTitle(
+                            text = "${stringResource(R.string.shopping_list_active_section)} (${filteredActive.size})"
+                        )
                     }
 
                     // ── Active items ──
@@ -253,29 +307,33 @@ fun ShoppingListScreen(
                             item = item,
                             onToggleBought = { viewModel.markAsBought(item.id) },
                             onClick = { onNavigateToEditItem(item.id) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)
+                            modifier = Modifier.padding(vertical = 5.dp)
                         )
                     }
 
                     // ── Bought items (collapsible) ──
                     if (uiState.boughtItems.isNotEmpty()) {
                         item(key = "__bought_header") {
-                            TextButton(
-                                onClick = { isBoughtSectionExpanded = !isBoughtSectionExpanded },
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isBoughtSectionExpanded = !isBoughtSectionExpanded },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = if (isBoughtSectionExpanded)
-                                        Icons.Default.KeyboardArrowUp
-                                    else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                SalinoSectionTitle(
+                                    text = "${stringResource(R.string.shopping_list_bought_section)} (${uiState.boughtItems.size})",
+                                    modifier = Modifier.weight(1f)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(R.string.shopping_list_bought_section),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                Icon(
+                                    imageVector = if (isBoughtSectionExpanded) {
+                                        Icons.Default.KeyboardArrowUp
+                                    } else {
+                                        Icons.Default.KeyboardArrowDown
+                                    },
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(end = 4.dp)
                                 )
                             }
                         }
@@ -285,7 +343,7 @@ fun ShoppingListScreen(
                                     item = item,
                                     onToggleBought = { viewModel.markAsActive(item.id) },
                                     onClick = { onNavigateToEditItem(item.id) },
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(vertical = 4.dp)
                                 )
                             }
                         }
@@ -318,7 +376,7 @@ private fun HeroSuggestionsCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(
             containerColor = cardColor,
             contentColor = onSurfaceColor

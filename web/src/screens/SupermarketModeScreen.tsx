@@ -9,6 +9,15 @@ import { useI18n } from '../i18n/index';
 
 type SupermarketFilter = 'ALL' | 'URGENT' | 'MINE' | 'PHARMACY' | 'NOT_FOUND';
 
+/** Matches Android SupermarketModeItemRow: Icons.Default.SearchOff */
+function SearchOffGlyph() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={22} height={22} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm11.71 7.29l1.41-1.41-16-16-1.41 1.41 16 16z" />
+    </svg>
+  );
+}
+
 export default function SupermarketModeScreen() {
   const { t, tCategory, tUnit } = useI18n();
   const { user } = useAuth();
@@ -188,7 +197,15 @@ export default function SupermarketModeScreen() {
                           </div>
                         )}
                       </div>
-                      <button className="btn-text" onClick={() => markNotFound(item)}>{t('supermarket_mode_not_found')}</button>
+                      <button
+                        type="button"
+                        className="icon-btn supermarket-not-found-btn"
+                        onClick={() => markNotFound(item)}
+                        aria-label={t('supermarket_mode_not_found')}
+                        title={t('supermarket_mode_not_found')}
+                      >
+                        <SearchOffGlyph />
+                      </button>
                     </div>
                   );
                 })}

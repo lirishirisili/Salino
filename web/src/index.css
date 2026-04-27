@@ -1011,6 +1011,15 @@ input, select, textarea { font-family: inherit; font-size: inherit; border: none
   color: var(--on-primary);
 }
 
+/* Not found on shelf — icon-only control (matches Android SearchOff) */
+.supermarket-not-found-btn {
+  flex-shrink: 0;
+  color: var(--outline);
+}
+.supermarket-not-found-btn:hover {
+  color: var(--on-surface-variant);
+}
+
 /* ---------- Form helpers ---------- */
 .form-group { margin-bottom: 18px; }
 .form-row { display: flex; gap: 12px; }
@@ -1089,7 +1098,8 @@ input, select, textarea { font-family: inherit; font-size: inherit; border: none
 .google-btn:focus-visible,
 .chip:focus-visible,
 .checkbox:focus-visible,
-.supermarket-check:focus-visible {
+.supermarket-check:focus-visible,
+.supermarket-not-found-btn:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }

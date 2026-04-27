@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +27,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PriorityHigh
@@ -43,8 +43,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,6 +68,10 @@ import com.salino.sali.ui.components.DuplicateWarningCard
 import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
+import com.salino.sali.ui.components.SalinoWebInnerTopBar
+import com.salino.sali.ui.components.SalinoWebTokens
+import com.salino.sali.ui.components.salinoWebMaxWidth
+import com.salino.sali.ui.components.salinoWebOutlinedFieldColors
 import com.salino.sali.ui.components.SuggestionSection
 import com.salino.sali.domain.service.DuplicateReason
 import java.util.Locale
@@ -138,14 +140,10 @@ fun AddItemScreen(
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
             topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    title = { Text(stringResource(R.string.add_item_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
-                        }
-                    }
+                SalinoWebInnerTopBar(
+                    title = stringResource(R.string.add_item_title),
+                    onBack = onNavigateBack,
+                    backContentDescription = stringResource(R.string.cancel)
                 )
             }
         ) { padding ->
@@ -154,7 +152,8 @@ fun AddItemScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .consumeWindowInsets(padding)
-                    .padding(16.dp)
+                    .salinoWebMaxWidth()
+                    .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                     .imePadding()
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState()),
@@ -195,6 +194,8 @@ fun AddItemScreen(
                     OutlinedTextField(
                         value = uiState.name,
                         onValueChange = viewModel::onNameChange,
+                        shape = SalinoWebTokens.InputCorner,
+                        colors = salinoWebOutlinedFieldColors(),
                         label = { Text(stringResource(R.string.item_name_label)) },
                         placeholder = { Text(stringResource(R.string.item_name_hint)) },
                         modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
@@ -234,6 +235,8 @@ fun AddItemScreen(
                         OutlinedTextField(
                             value = uiState.quantity,
                             onValueChange = viewModel::onQuantityChange,
+                            shape = SalinoWebTokens.InputCorner,
+                            colors = salinoWebOutlinedFieldColors(),
                             label = { Text(stringResource(R.string.item_quantity_label)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
@@ -250,6 +253,8 @@ fun AddItemScreen(
                                 value = uiState.unit?.let { stringResource(it.labelResId) } ?: "",
                                 onValueChange = {},
                                 readOnly = true,
+                                shape = SalinoWebTokens.InputCorner,
+                                colors = salinoWebOutlinedFieldColors(),
                                 label = { Text(stringResource(R.string.item_unit_label)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
                                 modifier = Modifier.menuAnchor().fillMaxWidth()
@@ -297,6 +302,8 @@ fun AddItemScreen(
                     OutlinedTextField(
                         value = uiState.note,
                         onValueChange = viewModel::onNoteChange,
+                        shape = SalinoWebTokens.InputCorner,
+                        colors = salinoWebOutlinedFieldColors(),
                         label = { Text(stringResource(R.string.item_note_label)) },
                         placeholder = { Text(stringResource(R.string.item_note_hint)) },
                         modifier = Modifier.fillMaxWidth(),
@@ -326,6 +333,8 @@ fun AddItemScreen(
                         OutlinedTextField(
                             value = uiState.recurrenceDays,
                             onValueChange = viewModel::onRecurrenceDaysChange,
+                            shape = SalinoWebTokens.InputCorner,
+                            colors = salinoWebOutlinedFieldColors(),
                             label = { Text(stringResource(R.string.recurring_every_days_label)) },
                             placeholder = { Text("7") },
                             modifier = Modifier.fillMaxWidth(),

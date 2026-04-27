@@ -10,7 +10,6 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase';
 import type { User } from '../types';
-import { DEFAULT_NOTIFICATION_PREFS, normalizeNotificationPrefs } from '../services/notificationPrefs';
 
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
@@ -39,15 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName: raw.displayName || fbUser.displayName || fbUser.email?.split('@')[0] || '',
         email: raw.email || fbUser.email || '',
         activeHouseholdId: raw.activeHouseholdId ?? null,
-        notificationPrefs: normalizeNotificationPrefs(raw.notificationPrefs),
       };
-      if (!raw.notificationPrefs) {
-        await setDoc(
-          doc(db, 'users', fbUser.uid),
-          { notificationPrefs: DEFAULT_NOTIFICATION_PREFS },
-          { merge: true }
-        );
-      }
       setUser(mergedUser);
       return;
     }
@@ -57,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       displayName: fbUser.displayName || fbUser.email?.split('@')[0] || '',
       email: fbUser.email || '',
       activeHouseholdId: null,
-      notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
     };
     await setDoc(doc(db, 'users', fbUser.uid), newUser);
     setUser(newUser);

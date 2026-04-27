@@ -4,13 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import com.salino.sali.MainActivity
 import kotlin.system.exitProcess
@@ -32,8 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
 import androidx.core.os.LocaleListCompat
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.salino.sali.R
@@ -41,8 +35,9 @@ import com.salino.sali.ui.components.BrandLogo
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoSurfaceCard
-import com.salino.sali.data.model.ImportantEvent
-import com.salino.sali.data.model.NotificationMode
+import com.salino.sali.ui.components.SalinoWebAppBarTitle
+import com.salino.sali.ui.components.SalinoWebTokens
+import com.salino.sali.ui.components.salinoWebMaxWidth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,18 +52,6 @@ fun SettingsScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showLanguageChangeDialog by remember { mutableStateOf(false) }
     var pendingLanguageTag by remember { mutableStateOf<String?>(null) }
-    var notificationsGranted by remember {
-        mutableStateOf(
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val notificationsPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        notificationsGranted = granted
-    }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) onSignedOut()
@@ -190,26 +173,21 @@ fun SettingsScreen(
                     title = {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            BrandLogo(iconSize = 38.dp)
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(R.string.settings_title),
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                    )
-                                )
-                                Text(
-                                    text = stringResource(R.string.settings_profile_badge),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            BrandLogo(iconSize = 38.dp, showWordmark = false)
+                            SalinoWebAppBarTitle(
+                                text = stringResource(R.string.settings_title),
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(
+                            onClick = onNavigateBack,
+                            modifier = Modifier.size(42.dp)
+                        ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.cancel)
@@ -229,8 +207,9 @@ fun SettingsScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .consumeWindowInsets(padding)
-                    .padding(16.dp)
                     .navigationBarsPadding()
+                    .salinoWebMaxWidth()
+                    .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -387,165 +366,6 @@ fun SettingsScreen(
                                         }
                                     }
                                 )
-                            }
-                        }
-                    }
-                }
-
-                SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.settings_notifications_section),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    val prefs = uiState.user?.notificationPrefs
-                    val mode = prefs?.mode ?: NotificationMode.IMMEDIATE_IMPORTANT
-                    var modeExpanded by remember { mutableStateOf(false) }
-
-                    val modes = listOf(
-                        NotificationMode.IMMEDIATE_IMPORTANT to R.string.settings_notifications_mode_immediate,
-                        NotificationMode.DAILY_DIGEST to R.string.settings_notifications_mode_daily_digest,
-                        NotificationMode.WEEKLY_DIGEST to R.string.settings_notifications_mode_weekly_digest,
-                        NotificationMode.SILENT to R.string.settings_notifications_mode_silent
-                    )
-
-                    Text(
-                        text = stringResource(R.string.settings_notifications_mode),
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    ExposedDropdownMenuBox(
-                        expanded = modeExpanded,
-                        onExpandedChange = { modeExpanded = it }
-                    ) {
-                        ListItem(
-                            modifier = Modifier.menuAnchor(),
-                            headlineContent = {
-                                val label = modes.find { it.first == mode }?.second
-                                    ?: R.string.settings_notifications_mode_immediate
-                                Text(stringResource(label))
-                            },
-                            trailingContent = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modeExpanded) }
-                        )
-                        ExposedDropdownMenu(
-                            expanded = modeExpanded,
-                            onDismissRequest = { modeExpanded = false }
-                        ) {
-                            modes.forEach { (option, labelRes) ->
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(labelRes)) },
-                                    onClick = {
-                                        modeExpanded = false
-                                        viewModel.setNotificationMode(option)
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    HorizontalDivider()
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.settings_notifications_event_item_added)) },
-                        supportingContent = { Text(stringResource(R.string.settings_notifications_important_events)) },
-                        trailingContent = {
-                            Checkbox(
-                                checked = prefs?.importantEvents?.contains(ImportantEvent.ITEM_ADDED) == true,
-                                onCheckedChange = { checked ->
-                                    viewModel.setImportantEvent(ImportantEvent.ITEM_ADDED, checked == true)
-                                }
-                            )
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.settings_notifications_event_item_bought)) },
-                        trailingContent = {
-                            Checkbox(
-                                checked = prefs?.importantEvents?.contains(ImportantEvent.ITEM_BOUGHT) == true,
-                                onCheckedChange = { checked ->
-                                    viewModel.setImportantEvent(ImportantEvent.ITEM_BOUGHT, checked == true)
-                                }
-                            )
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.settings_notifications_event_item_updated)) },
-                        trailingContent = {
-                            Checkbox(
-                                checked = prefs?.importantEvents?.contains(ImportantEvent.ITEM_UPDATED) == true,
-                                onCheckedChange = { checked ->
-                                    viewModel.setImportantEvent(ImportantEvent.ITEM_UPDATED, checked == true)
-                                }
-                            )
-                        }
-                    )
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.settings_notifications_event_item_deleted)) },
-                        trailingContent = {
-                            Checkbox(
-                                checked = prefs?.importantEvents?.contains(ImportantEvent.ITEM_DELETED) == true,
-                                onCheckedChange = { checked ->
-                                    viewModel.setImportantEvent(ImportantEvent.ITEM_DELETED, checked == true)
-                                }
-                            )
-                        }
-                    )
-
-                    HorizontalDivider()
-                    Text(
-                        text = stringResource(R.string.settings_notifications_max_immediate_per_hour),
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    Slider(
-                        value = (prefs?.maxImmediatePerHour ?: 3).toFloat(),
-                        onValueChange = { viewModel.setMaxImmediatePerHour(it.toInt()) },
-                        valueRange = 1f..20f,
-                        steps = 18,
-                        enabled = mode == NotificationMode.IMMEDIATE_IMPORTANT
-                    )
-                    Text(
-                        text = "${prefs?.maxImmediatePerHour ?: 3}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    HorizontalDivider()
-                    Text(
-                        text = stringResource(R.string.settings_notifications_android_permission_title),
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    Text(
-                        text = if (notificationsGranted) {
-                            stringResource(R.string.settings_notifications_android_permission_granted)
-                        } else {
-                            stringResource(R.string.settings_notifications_android_permission_missing)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (!notificationsGranted) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(
-                                onClick = {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        notificationsPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                    }
-                                }
-                            ) {
-                                Text(stringResource(R.string.settings_notifications_request_permission))
-                            }
-                            TextButton(
-                                onClick = {
-                                    val intent = Intent(
-                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                        Uri.fromParts("package", context.packageName, null)
-                                    )
-                                    context.startActivity(intent)
-                                }
-                            ) {
-                                Text(stringResource(R.string.settings_notifications_open_settings))
                             }
                         }
                     }

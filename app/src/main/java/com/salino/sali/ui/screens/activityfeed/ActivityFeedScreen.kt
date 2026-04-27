@@ -13,16 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -37,6 +32,9 @@ import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoSurfaceCard
+import com.salino.sali.ui.components.SalinoWebInnerTopBar
+import com.salino.sali.ui.components.SalinoWebTokens
+import com.salino.sali.ui.components.salinoWebMaxWidth
 import com.salino.sali.util.formatTimestamp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,14 +49,10 @@ fun ActivityFeedScreen(
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
             topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    title = { Text(stringResource(R.string.activity_feed_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
-                        }
-                    }
+                SalinoWebInnerTopBar(
+                    title = stringResource(R.string.activity_feed_title),
+                    onBack = onNavigateBack,
+                    backContentDescription = stringResource(R.string.cancel)
                 )
             }
         ) { padding ->
@@ -75,8 +69,10 @@ fun ActivityFeedScreen(
                         .fillMaxSize()
                         .padding(padding)
                         .consumeWindowInsets(padding)
-                        .navigationBarsPadding(),
-                    contentPadding = PaddingValues(16.dp),
+                        .navigationBarsPadding()
+                        .salinoWebMaxWidth()
+                        .padding(horizontal = SalinoWebTokens.HorizontalPadding),
+                    contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(uiState.entries, key = { it.id }) { entry ->

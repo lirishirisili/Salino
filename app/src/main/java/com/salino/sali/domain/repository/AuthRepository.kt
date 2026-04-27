@@ -1,7 +1,6 @@
-﻿package com.salino.sali.domain.repository
+package com.salino.sali.domain.repository
 
 import com.salino.sali.data.model.User
-import com.salino.sali.data.model.NotificationPrefs
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
@@ -13,6 +12,5 @@ interface AuthRepository {
     suspend fun signInWithEmail(email: String, password: String): Result<User>
     suspend fun registerWithEmail(email: String, password: String): Result<User>
     suspend fun getOrCreateUserProfile(): Result<User>
-    suspend fun updateNotificationPrefs(prefs: NotificationPrefs): Result<Unit>
     suspend fun signOut()
 }

@@ -1,6 +1,8 @@
 package com.salino.sali.ui.components
 
+import android.os.Build
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,15 +30,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import com.salino.sali.R
 import com.salino.sali.ui.theme.*
 
@@ -55,24 +65,47 @@ fun SalinoGradientBackground(
         Brush.verticalGradient(colors = listOf(bg, soft, bg, soft, bg))
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(gradientBrush)
-            .drawWithCache {
-                val w = size.width
-                val h = size.height
-                onDrawBehind {
-                    // Solid colored circles — cached, only redrawn on size change
-                    drawCircle(color = mintGlow, radius = w * 0.38f, center = Offset(-w * 0.1f, -h * 0.02f))
-                    drawCircle(color = peachGlow, radius = w * 0.36f, center = Offset(w * 1.1f, h * 0.04f))
-                    drawCircle(color = peachGlow, radius = w * 0.30f, center = Offset(-w * 0.08f, h * 0.55f))
-                    drawCircle(color = mintGlow, radius = w * 0.32f, center = Offset(w * 1.08f, h * 0.42f))
-                    drawCircle(color = mintGlow, radius = w * 0.28f, center = Offset(w * 0.5f, h * 1.02f))
+    val blurGlowLayer = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // Base vertical gradient (sharp)
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(gradientBrush)
+        )
+        // Soft radial glow blobs + optional blur (matches web layered radial-gradient feel)
+        Box(
+            Modifier
+                .fillMaxSize()
+                .then(if (blurGlowLayer) Modifier.blur(20.dp) else Modifier)
+                .drawWithCache {
+                    val w = size.width
+                    val h = size.height
+                    onDrawBehind {
+                        fun glow(center: Offset, radius: Float, core: Color) {
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(core, Color.Transparent),
+                                    center = center,
+                                    radius = radius,
+                                    tileMode = TileMode.Clamp
+                                ),
+                                radius = radius,
+                                center = center
+                            )
+                        }
+                        glow(Offset(-w * 0.1f, -h * 0.02f), w * 0.42f, mintGlow)
+                        glow(Offset(w * 1.1f, h * 0.04f), w * 0.40f, peachGlow)
+                        glow(Offset(-w * 0.08f, h * 0.55f), w * 0.34f, peachGlow)
+                        glow(Offset(w * 1.08f, h * 0.42f), w * 0.36f, mintGlow)
+                        glow(Offset(w * 0.5f, h * 1.02f), w * 0.32f, mintGlow)
+                    }
                 }
-            }
-    ) {
-        content()
+        )
+        Box(Modifier.fillMaxSize()) {
+            content()
+        }
     }
 }
 
@@ -82,29 +115,72 @@ fun BrandLogo(
     iconSize: Dp = 64.dp,
     showWordmark: Boolean = false,
     showTagline: Boolean = false,
-    center: Boolean = false
+    center: Boolean = false,
+    /** Soft radial halo behind the circle (matches web brand-logo glow). */
+    showGlow: Boolean = true,
+    surfaceShadowElevation: Dp = 4.dp
 ) {
     val horizontalAlignment = if (center) Alignment.CenterHorizontally else Alignment.Start
     val textModifier = if (center) Modifier.fillMaxWidth() else Modifier
     val textAlign = if (center) TextAlign.Center else TextAlign.Start
+    val primary = MaterialTheme.colorScheme.primary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val rimColor = Color.White.copy(alpha = 0.33f)
+
     Column(
         modifier = modifier,
         horizontalAlignment = horizontalAlignment,
         verticalArrangement = Arrangement.Center
     ) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 4.dp,
-            tonalElevation = 2.dp
+        Box(
+            modifier = Modifier.wrapContentSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(R.drawable.ic_salino_launcher),
-                contentDescription = stringResource(R.string.app_name),
+            if (showGlow) {
+                val halo = iconSize * 1.72f
+                Box(
+                    Modifier
+                        .size(halo)
+                        .drawBehind {
+                            val glowCenter = Offset(size.width / 2f, size.height / 2f)
+                            val r = size.minDimension / 2f
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    0f to primary.copy(alpha = 0.38f),
+                                    0.38f to tertiary.copy(alpha = 0.22f),
+                                    0.62f to tertiary.copy(alpha = 0.08f),
+                                    1f to Color.Transparent,
+                                    center = glowCenter,
+                                    radius = r,
+                                    tileMode = TileMode.Clamp
+                                ),
+                                radius = r,
+                                center = glowCenter
+                            )
+                        }
+                )
+            }
+            // Full-bleed vector inside circle (no white Surface): Crop fills disc; launcher art already has teal gradient.
+            Box(
                 modifier = Modifier
                     .size(iconSize)
-                    .padding((iconSize.value * 0.12f).dp)
-            )
+                    .shadow(
+                        elevation = surfaceShadowElevation,
+                        shape = CircleShape,
+                        ambientColor = primary.copy(alpha = 0.14f),
+                        spotColor = primary.copy(alpha = 0.30f),
+                        clip = false
+                    )
+                    .clip(CircleShape)
+                    .border(BorderStroke(1.dp, rimColor), CircleShape)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_salino_launcher),
+                    contentDescription = stringResource(R.string.app_name),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
         if (showWordmark) {
             Spacer(modifier = Modifier.height(14.dp))
