@@ -15,13 +15,16 @@ import type { ShoppingItem, SuggestionItem, RecurringItem, ItemCategory } from '
 import { ALL_CATEGORIES, CATEGORY_COLORS, CATEGORY_EMOJIS } from '../types';
 import { formatQuantity, formatRelativeTime } from '../utils';
 import { useI18n } from '../i18n/index';
+import logoHeader from '../assets/logo_header.png';
+import logoHeaderDark from '../assets/logo_header_dark.png';
 
 const INSTALL_BANNER_DISMISSED_KEY = 'salino_pwa_install_banner_dismissed';
 
 export default function ShoppingListScreen() {
-  const { t, tCategory, tUnit } = useI18n();
+  const { t, tCategory, tUnit, lang } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
   const householdId = user!.activeHouseholdId!;
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
@@ -41,6 +44,14 @@ export default function ShoppingListScreen() {
     const unsub2 = subscribeToRecurringItems(householdId, setRecurringItems);
     return () => { unsub1(); unsub2(); };
   }, [householdId]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (event: MediaQueryListEvent) => setIsDarkMode(event.matches);
+    setIsDarkMode(mediaQuery.matches);
+    mediaQuery.addEventListener('change', onChange);
+    return () => mediaQuery.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     const dismissed = localStorage.getItem(INSTALL_BANNER_DISMISSED_KEY) === '1';
@@ -144,16 +155,22 @@ export default function ShoppingListScreen() {
     return ALL_CATEGORIES.filter((c) => cats.has(c));
   }, [items]);
 
+  const headerLogo = isDarkMode ? logoHeaderDark : logoHeader;
+
   return (
     <div className="screen" style={{ paddingBottom: 80 }}>
       {/* App Bar - matches Android: BrandLogo + title + action icons */}
       <div className="app-bar">
-        <h1>
-          <span>
-            <span className="brand-logo sm"><img src="/favicon.png" alt="" /></span>
-            <span>{t('shopping_list_title')}</span>
-          </span>
-        </h1>
+        {lang === 'he' ? (
+          <img src={headerLogo} alt={t('shopping_list_title')} className="app-bar-logo" />
+        ) : (
+          <h1>
+            <span>
+              <span className="brand-logo sm"><img src="/favicon.png" alt="" /></span>
+              <span>{t('shopping_list_title')}</span>
+            </span>
+          </h1>
+        )}
         <div className="app-bar-actions">
           <button className="icon-btn" onClick={() => navigate('/settings')} aria-label={t('settings_title')} title={t('settings_title')} style={{ color: '#67B656' }}>
             <span aria-hidden="true">⚙️</span>
@@ -168,7 +185,7 @@ export default function ShoppingListScreen() {
       </div>
 
       {/* Live badge */}
-      <div className="live-badge">{t('shopping_list_live_badge')}</div>
+      {lang !== 'he' && <div className="live-badge">{t('shopping_list_live_badge')}</div>}
 
       {showInstallBanner && (
         <div className="card install-banner" role="region" aria-label={t('pwa_install_banner_title')}>

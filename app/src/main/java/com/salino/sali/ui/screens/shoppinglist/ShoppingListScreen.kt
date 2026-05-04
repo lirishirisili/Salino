@@ -1,6 +1,7 @@
 ﻿package com.salino.sali.ui.screens.shoppinglist
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -21,9 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +69,7 @@ fun ShoppingListScreen(
     val tintSettingsLight = Color(0xFF67B656)
     val tintActivityLight = Color(0xFFF18E6A)
     val isDark = isSystemInDarkTheme()
+    val isHebrew = configuration.locales[0]?.language in setOf("he", "iw")
 
     SalinoGradientBackground {
         Scaffold(
@@ -92,34 +98,53 @@ fun ShoppingListScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 4.dp, top = 14.dp, end = 4.dp, bottom = 10.dp),
+                            .padding(start = 0.dp, top = 14.dp, end = 4.dp, bottom = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        BrandLogo(iconSize = 38.dp, showWordmark = false, showGlow = true)
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 10.dp, end = 8.dp)
-                        ) {
-                            SalinoWebAppBarTitle(
-                                text = stringResource(R.string.shopping_list_title),
-                                color = if (isDark) Color.White else null
-                            )
-                            Text(
-                                text = stringResource(R.string.shopping_list_live_badge),
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    letterSpacing = 0.2.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Start,
+                        if (isHebrew) {
+                            val logoRes = if (isDark) R.drawable.logo_header_dark else R.drawable.logo_header
+                            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(88.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Image(
+                                        painter = painterResource(logoRes),
+                                        contentDescription = stringResource(R.string.shopping_list_title),
+                                        modifier = Modifier.fillMaxHeight(),
+                                        contentScale = ContentScale.Fit
+                                    )
+                                }
+                            }
+                        } else {
+                            BrandLogo(iconSize = 38.dp, showWordmark = false, showGlow = true)
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 2.dp)
-                            )
+                                    .weight(1f)
+                                    .padding(start = 10.dp, end = 8.dp)
+                            ) {
+                                SalinoWebAppBarTitle(
+                                    text = stringResource(R.string.shopping_list_title),
+                                    color = if (isDark) Color.White else null
+                                )
+                                Text(
+                                    text = stringResource(R.string.shopping_list_live_badge),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        letterSpacing = 0.2.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 2.dp)
+                                )
+                            }
                         }
                         Row {
                             IconButton(
