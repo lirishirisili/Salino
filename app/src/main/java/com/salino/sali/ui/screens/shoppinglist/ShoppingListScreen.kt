@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -38,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.salino.sali.R
 import com.salino.sali.data.model.ItemCategory
+import com.salino.sali.data.model.ShoppingItem
 import com.salino.sali.data.model.SuggestionItem
 import com.salino.sali.ui.components.BrandLogo
 import com.salino.sali.ui.components.EmptyState
@@ -46,7 +48,7 @@ import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoSectionTitle
 import com.salino.sali.ui.components.SalinoWebAppBarTitle
 import com.salino.sali.ui.components.SalinoWebTokens
-import com.salino.sali.ui.components.ShoppingItemCard
+import com.salino.sali.ui.components.ShoppingItemsGroupCard
 import com.salino.sali.ui.components.salinoWebMaxWidth
 import com.salino.sali.ui.theme.*
 
@@ -64,6 +66,7 @@ fun ShoppingListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filteredActive by viewModel.filteredActiveItems.collectAsStateWithLifecycle(emptyList())
     var isBoughtSectionExpanded by remember { mutableStateOf(false) }
+    var pendingDeleteItem by remember { mutableStateOf<ShoppingItem?>(null) }
     val configuration = LocalConfiguration.current
     val isCompactWidth = configuration.screenWidthDp < 400
     val tintSettingsLight = Color(0xFF67B656)
@@ -326,13 +329,13 @@ fun ShoppingListScreen(
                         )
                     }
 
-                    // ── Active items ──
-                    items(filteredActive, key = { it.id }) { item ->
-                        ShoppingItemCard(
-                            item = item,
-                            onToggleBought = { viewModel.markAsBought(item.id) },
-                            onClick = { onNavigateToEditItem(item.id) },
-                            modifier = Modifier.padding(vertical = 5.dp)
+                    item(key = "__active_group") {
+                        ShoppingItemsGroupCard(
+                            items = filteredActive,
+                            onToggleBought = { item -> viewModel.markAsBought(item.id) },
+                            onItemClick = { item -> onNavigateToEditItem(item.id) },
+                            onDeleteItem = { item -> pendingDeleteItem = item },
+                            modifier = Modifier.padding(vertical = 6.dp)
                         )
                     }
 
@@ -363,11 +366,11 @@ fun ShoppingListScreen(
                             }
                         }
                         if (isBoughtSectionExpanded) {
-                            items(uiState.boughtItems, key = { it.id }) { item ->
-                                ShoppingItemCard(
-                                    item = item,
-                                    onToggleBought = { viewModel.markAsActive(item.id) },
-                                    onClick = { onNavigateToEditItem(item.id) },
+                            item(key = "__bought_group") {
+                                ShoppingItemsGroupCard(
+                                    items = uiState.boughtItems,
+                                    onToggleBought = { item -> viewModel.markAsActive(item.id) },
+                                    onItemClick = { item -> onNavigateToEditItem(item.id) },
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )
                             }
@@ -375,6 +378,28 @@ fun ShoppingListScreen(
                     }
                 }
             }
+        }
+
+        pendingDeleteItem?.let { itemToDelete ->
+            AlertDialog(
+                onDismissRequest = { pendingDeleteItem = null },
+                text = { Text(text = stringResource(R.string.shopping_list_delete_confirm)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteItem(itemToDelete.id)
+                            pendingDeleteItem = null
+                        }
+                    ) {
+                        Text(stringResource(R.string.shopping_list_delete))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingDeleteItem = null }) {
+                        Text(text = stringResource(android.R.string.cancel))
+                    }
+                }
+            )
         }
     }
 }
@@ -393,6 +418,8 @@ private fun HeroSuggestionsCard(
     val cardBorder = if (isDark) {
         BorderStroke(1.dp, OutlineVariantDark.copy(alpha = 0.5f))
     } else null
+    val cardShape = RoundedCornerShape(30.dp)
+    val shadowColor = if (isDark) Color.Black.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.1f)
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
@@ -400,14 +427,21 @@ private fun HeroSuggestionsCard(
     val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = if (isDark) 6.dp else 8.dp,
+                shape = cardShape,
+                ambientColor = shadowColor,
+                spotColor = shadowColor
+            ),
+        shape = cardShape,
         colors = CardDefaults.cardColors(
             containerColor = cardColor,
             contentColor = onSurfaceColor
         ),
         border = cardBorder,
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 2.dp else 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier

@@ -119,6 +119,8 @@ export default function ShoppingListScreen() {
   };
 
   const handleDelete = async (item: ShoppingItem) => {
+    const shouldDelete = window.confirm(t('shopping_list_delete_confirm'));
+    if (!shouldDelete) return;
     await deleteItem(householdId, item.id);
     await logActivity(householdId, 'ITEM_DELETED', item.name, user!.id, user!.displayName, item.id);
     showToast(`${item.name} ${t('shopping_list_delete')}`);

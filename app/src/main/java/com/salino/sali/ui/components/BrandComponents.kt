@@ -212,21 +212,26 @@ fun SalinoSurfaceCard(
 ) {
     val isDark = isSystemInDarkTheme()
     val cardColor = if (isDark) SurfaceBrightDark else SurfaceBright
+    val cardShape = MaterialTheme.shapes.large
+    val shadowColor = if (isDark) Color.Black.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.1f)
     val cardBorder = if (isDark) {
         BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
     } else null
 
     Card(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
+        modifier = modifier.shadow(
+            elevation = if (isDark) 6.dp else 8.dp,
+            shape = cardShape,
+            ambientColor = shadowColor,
+            spotColor = shadowColor
+        ),
+        shape = cardShape,
         colors = CardDefaults.cardColors(
             containerColor = cardColor,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
         border = cardBorder,
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isDark) 1.dp else 4.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(18.dp), content = content)
     }
