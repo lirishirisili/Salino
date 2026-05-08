@@ -1,0 +1,119 @@
+name: Salino
+
+options:
+  bundleIdPrefix: com.salino
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+configs:
+  Debug: debug
+  Release: release
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    from: 11.0.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS.git
+    from: 7.1.0
+
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    IPHONEOS_DEPLOYMENT_TARGET: 17.0
+    DEVELOPMENT_TEAM: "$(DEVELOPMENT_TEAM)"
+    MARKETING_VERSION: 1.3.1
+    CURRENT_PROJECT_VERSION: 28
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  Salino:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - UI
+      - ViewModels
+      - Domain
+      - Data
+      - Local
+      - Remote
+      - Services
+      - Models
+    resources:
+      - Resources
+    configFiles:
+      Debug: Config/FirebaseSecrets.xcconfig
+      Release: Config/FirebaseSecrets.xcconfig
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.salino.sali
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+    info:
+      path: Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Haserli
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations:
+          - en
+          - he
+          - ar
+          - ru
+          - es
+          - fr
+          - am
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSApplicationQueriesSchemes:
+          - google
+          - comgooglemaps
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - "$(GOOGLE_REVERSED_CLIENT_ID)"
+        NSMicrophoneUsageDescription: Voice input lets you add items by speaking.
+        NSSpeechRecognitionUsageDescription: Speech recognition turns spoken item names into shopping list entries.
+        UILaunchScreen:
+          UIColorName: ""
+        UIUserInterfaceStyle: Automatic
+        UIApplicationSupportsIndirectInputEvents: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  SalinoTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Salino
+
+schemes:
+  Salino:
+    build:
+      targets:
+        Salino: all
+        SalinoTests: [test]
+    test:
+      targets:
+        - SalinoTests
+      gatherCoverageData: true
+    run:
+      config: Debug
+    archive:
+      config: Release

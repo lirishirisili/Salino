@@ -1,0 +1,59 @@
+workflows:
+  ios-debug-build:
+    name: iOS Debug Build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: latest
+      vars:
+        XCODE_WORKSPACE_DIR: ios
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen || true
+      - name: Prepare Firebase config
+        script: |
+          chmod +x ios/Scripts/setup_firebase_config.sh
+          ios/Scripts/setup_firebase_config.sh
+      - name: Generate Xcode project
+        script: |
+          cd ios
+          xcodegen generate
+      - name: Build unsigned simulator app
+        script: |
+          cd ios
+          xcodebuild build \
+            -scheme Salino \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+    artifacts:
+      - ios/build/**/*
+
+  ios-testflight-ready:
+    name: iOS TestFlight Archive
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    environment:
+      xcode: latest
+      groups:
+        - app-store-connect
+        - ios-code-signing
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen || true
+      - name: Prepare Firebase config
+        script: |
+          chmod +x ios/Scripts/setup_firebase_config.sh
+          ios/Scripts/setup_firebase_config.sh
+      - name: Generate Xcode project
+        script: |
+          cd ios
+          xcodegen generate
+      - name: Archive
+        script: |
+          cd ios
+          xcodebuild archive \
+            -scheme Salino \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/Salino.xcarchive"
+    artifacts:
+      - Salino.xcarchive
