@@ -92,7 +92,7 @@ extension WriteBatch {
     }
 }
 
-final class NoopListenerRegistration: ListenerRegistration {
+final class NoopListenerRegistration: NSObject, ListenerRegistration {
     func remove() {}
 }
 
