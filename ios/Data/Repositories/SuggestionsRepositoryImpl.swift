@@ -13,13 +13,14 @@ final class SuggestionsRepositoryImpl: SuggestionsRepository {
     }
 
     func observeSuggestions(householdId: String) -> AsyncStream<[SuggestionItem]> {
-        AsyncStream { continuation in
+        let engine = suggestionEngine
+        return AsyncStream { continuation in
             var activeItems: [ShoppingItem] = []
             var boughtItems: [ShoppingItem] = []
             var recurringItems: [RecurringItem] = []
 
             func yield() {
-                continuation.yield(suggestionEngine.buildSuggestions(
+                continuation.yield(engine.buildSuggestions(
                     activeItems: activeItems,
                     boughtItems: boughtItems,
                     recurringItems: recurringItems,

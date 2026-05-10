@@ -146,8 +146,8 @@ final class ShoppingRepositoryImpl: ShoppingRepository {
         itemListeners[householdId] = remoteDataSource.listenToItems(householdId: householdId) { [weak self] items in
             Task { @MainActor in
                 guard let self else { return }
-                localStore.mergeRemoteShoppingItems(householdId: householdId, items: items)
-                try? await syncQueueProcessor.flush(householdId: householdId)
+                self.localStore.mergeRemoteShoppingItems(householdId: householdId, items: items)
+                try? await self.syncQueueProcessor.flush(householdId: householdId)
             }
         }
     }
