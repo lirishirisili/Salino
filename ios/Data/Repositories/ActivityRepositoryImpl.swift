@@ -39,8 +39,8 @@ final class ActivityRepositoryImpl: ActivityRepository {
         listeners[householdId] = remoteDataSource.listenToActivity(householdId: householdId) { [weak self] logs in
             Task { @MainActor in
                 guard let self else { return }
-                localStore.mergeRemoteActivity(householdId: householdId, logs: logs)
-                try? await syncQueueProcessor.flush(householdId: householdId)
+                self.localStore.mergeRemoteActivity(householdId: householdId, logs: logs)
+                try? await self.syncQueueProcessor.flush(householdId: householdId)
             }
         }
     }

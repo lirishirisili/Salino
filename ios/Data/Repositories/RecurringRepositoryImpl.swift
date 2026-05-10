@@ -77,8 +77,8 @@ final class RecurringRepositoryImpl: RecurringRepository {
         listeners[householdId] = remoteDataSource.listenToRecurringItems(householdId: householdId) { [weak self] items in
             Task { @MainActor in
                 guard let self else { return }
-                localStore.mergeRemoteRecurringItems(householdId: householdId, items: items)
-                try? await syncQueueProcessor.flush(householdId: householdId)
+                self.localStore.mergeRemoteRecurringItems(householdId: householdId, items: items)
+                try? await self.syncQueueProcessor.flush(householdId: householdId)
             }
         }
     }
