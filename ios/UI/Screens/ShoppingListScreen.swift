@@ -128,11 +128,17 @@ struct ShoppingListScreen: View {
             .padding()
             .background(.ultraThinMaterial)
         }
-        .alert(LocalizedStringKey("shopping_list_delete_confirm"), item: $pendingDelete) { item in
+        .alert(LocalizedStringKey("shopping_list_delete_confirm"), isPresented: Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } }
+        )) {
             Button(LocalizedStringKey("shopping_list_delete"), role: .destructive) {
-                viewModel.deleteItem(itemId: item.id)
+                if let item = pendingDelete {
+                    viewModel.deleteItem(itemId: item.id)
+                    pendingDelete = nil
+                }
             }
-            Button(LocalizedStringKey("cancel"), role: .cancel) {}
+            Button(LocalizedStringKey("cancel"), role: .cancel) { pendingDelete = nil }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             viewModel.forceRefresh()
