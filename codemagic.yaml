@@ -57,6 +57,10 @@ workflows:
         script: |
           cd ios
           xcode-project use-profiles --project Salino.xcodeproj --archive-method app-store
+      - name: Patch Info.plist for App Store validation
+        script: |
+          chmod +x ios/Scripts/patch_app_store_bundle_plist.sh
+          ios/Scripts/patch_app_store_bundle_plist.sh
       - name: Archive
         script: |
           cd ios
