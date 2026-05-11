@@ -38,9 +38,6 @@ workflows:
       xcode: latest
       groups:
         - app-store-connect
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.salino.sali
     scripts:
       - name: Install XcodeGen
         script: brew install xcodegen || true
