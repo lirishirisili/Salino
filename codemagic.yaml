@@ -49,23 +49,26 @@ workflows:
           xcodegen generate
       - name: Set up code signing
         script: |
+          set -euo pipefail
           keychain initialize
-          # Generate a new private key for certificate creation
-          openssl genrsa -out /tmp/certificate_key.pem 2048
+          # EC P-256 key for Apple distribution CSR; --certificate-key needs @file: (bare path is invalid).
+          openssl ecparam -name prime256v1 -genkey -noout -out /tmp/certificate_key.pem
+          PROFILES_DIR="${HOME}/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
           app-store-connect fetch-signing-files "com.salino.sali" \
             --type IOS_APP_STORE \
             --create \
-            --certificate-key /tmp/certificate_key.pem
+            --profiles-dir "$PROFILES_DIR" \
+            --certificate-key "@file:/tmp/certificate_key.pem"
           keychain add-certificates
           # Extract provisioning profile info
-          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
           PROFILE_PATH=$(find "$PROFILES_DIR" -name "*.mobileprovision" | head -1)
           if [ -z "$PROFILE_PATH" ]; then
             echo "ERROR: No provisioning profile found!"
             exit 1
           fi
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i "$PROFILE_PATH"))
-          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< $(security cms -D -i "$PROFILE_PATH"))
+          PROFILE_UUID=$(security cms -D -i "$PROFILE_PATH" 2>/dev/null | /usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin)
+          PROFILE_NAME=$(security cms -D -i "$PROFILE_PATH" 2>/dev/null | /usr/libexec/PlistBuddy -c "Print Name" /dev/stdin)
           echo "Profile UUID: $PROFILE_UUID"
           echo "Profile Name: $PROFILE_NAME"
           echo "PROFILE_UUID=$PROFILE_UUID" >> $CM_ENV
