@@ -26,8 +26,7 @@ if [[ -f "${PLIST_PATH}" ]]; then
     echo "GOOGLE_REVERSED_CLIENT_ID = ${REVERSED_CLIENT_ID}"
   } > "${XCCONFIG_PATH}"
 else
-  {
-    echo "// Generated without Firebase secrets. Google Sign-In will not work until GoogleService-Info.plist is supplied."
-    echo "GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.REPLACE_ME"
-  } > "${XCCONFIG_PATH}"
+  echo "ERROR: GoogleService-Info.plist not found at ${PLIST_PATH}"
+  echo "Set GOOGLE_SERVICE_INFO_PLIST_BASE64 in Codemagic (secure), or add the plist for local builds."
+  exit 1
 fi
