@@ -54,11 +54,14 @@ workflows:
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
-          xcode-project use-profiles
+            cd ios
+            xcode-project use-profiles \
+              --project "Salino.xcodeproj"
       - name: Build IPA
         script: |
           cd ios
           xcode-project build-ipa \
+              --project "Salino.xcodeproj" \
             --scheme Salino \
             --archive-flags="-destination 'generic/platform=iOS'"
     artifacts:
