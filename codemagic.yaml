@@ -47,24 +47,46 @@ workflows:
         script: |
           cd ios
           xcodegen generate
-      - name: Set up code signing
+      - name: Write API key file
         script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "com.salino.sali" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
-          cd ios
-          xcode-project use-profiles --project Salino.xcodeproj
-      - name: Build IPA
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
+      - name: Archive
         script: |
           cd ios
-          xcode-project build-ipa \
-            --project Salino.xcodeproj \
-            --scheme Salino
+          xcodebuild archive \
+            -project Salino.xcodeproj \
+            -scheme Salino \
+            -destination "generic/platform=iOS" \
+            -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath /tmp/AuthKey.p8 \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+      - name: Export IPA
+        script: |
+          cat > /tmp/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath /tmp/AuthKey.p8 \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
     artifacts:
-      - ios/build/ios/ipa/*.ipa
-      - "**/Salino*.ipa"
+      - build/ios/ipa/*.ipa
+      - "**/*.ipa"
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
