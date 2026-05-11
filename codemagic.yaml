@@ -32,8 +32,6 @@ workflows:
     name: iOS TestFlight Archive
     instance_type: mac_mini_m2
     max_build_duration: 90
-    integrations:
-      app_store_connect: Codemagic
     environment:
       xcode: latest
       groups:
@@ -68,7 +66,6 @@ workflows:
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
-        auth: integration
         submit_to_testflight: true
         beta_groups:
           - Internal Testers
