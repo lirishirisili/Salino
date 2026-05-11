@@ -58,6 +58,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.salino.sali
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        INFOPLIST_KEY_CFBundleIconName: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         ENABLE_PREVIEWS: YES
     info:
