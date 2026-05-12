@@ -36,12 +36,6 @@ workflows:
       xcode: latest
       groups:
         - app-store-connect
-        # Add this group in Codemagic: App settings → Environment variables → Variable groups.
-        # Link Apple Distribution .p12 + App Store provisioning profile for com.salino.sali (Code signing identities).
-        - ios-code-signing
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.salino.sali
     scripts:
       - name: Install XcodeGen
         script: brew install xcodegen || true
