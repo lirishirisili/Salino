@@ -25,10 +25,15 @@ workflows:
           cd ios
           xcodebuild build \
             -scheme Salino \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath "$CM_BUILD_DIR/derivedData" \
             CODE_SIGNING_ALLOWED=NO
+          # Zip the .app for Appetize.io
+          APP_PATH=$(find "$CM_BUILD_DIR/derivedData" -name "Salino.app" -type d | head -1)
+          cd "$(dirname "$APP_PATH")"
+          zip -qr "$CM_BUILD_DIR/Salino-simulator.zip" "$(basename "$APP_PATH")"
     artifacts:
-      - ios/build/**/*
+      - Salino-simulator.zip
 
   ios-testflight-ready:
     name: iOS TestFlight Archive
