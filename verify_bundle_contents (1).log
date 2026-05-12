@@ -1,0 +1,115 @@
+=== .strings files ===
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/de.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/he.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ar.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/el.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ja.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/en.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/uk.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/es_MX.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/zh_CN.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/nb.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/es.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pt_BR.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/da.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/it.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/sk.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pt_PT.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ms.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/sv.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/cs.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ko.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/hu.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/tr.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pl.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/zh_TW.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/en_GB.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/vi.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ru.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/fr_CA.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/fr.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/fi.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/id.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/nl.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/th.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pt.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ro.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/hr.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/hi.lproj/GoogleSignIn.strings
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ca.lproj/GoogleSignIn.strings
+=== .lproj dirs ===
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/de.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/he.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ar.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/el.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ja.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/en.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/uk.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/es_MX.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/zh_CN.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/nb.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/es.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pt_BR.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/da.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/it.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/sk.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pt_PT.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ms.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/sv.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/cs.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ko.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/hu.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/tr.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pl.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/zh_TW.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/en_GB.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/vi.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ru.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/fr_CA.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/fr.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/fi.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/id.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/nl.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/th.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/pt.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ro.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/hr.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/hi.lproj
+/Users/builder/clone/derivedData/Build/Products/Debug-iphonesimulator/Salino.app/GoogleSignIn_GoogleSignIn.bundle/ca.lproj
+=== GoogleService-Info.plist ===
+=== All top-level files ===
+total 63784
+-rwxr-xr-x   1 builder  staff     16752 May 12 17:48 __preview.dylib
+drwxr-xr-x  31 builder  staff       992 May 12 17:48 .
+drwxr-xr-x@ 68 builder  staff      2176 May 12 17:48 ..
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 abseil_abslWrapper.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 AppAuth_AppAuth.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 AppAuth_AppAuthCore.bundle
+-rw-r--r--   1 builder  staff     15233 May 12 17:48 AppIcon60x60@2x.png
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 Firebase_FirebaseAuth.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 Firebase_FirebaseCore.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 Firebase_FirebaseCoreExtension.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 Firebase_FirebaseCoreInternal.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 Firebase_FirebaseFirestore.bundle
+drwxr-xr-x   7 builder  staff       224 May 12 17:48 Frameworks
+drwxr-xr-x  46 builder  staff      1472 May 12 17:48 GoogleSignIn_GoogleSignIn.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GoogleUtilities_GoogleUtilities-AppDelegateSwizzler.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GoogleUtilities_GoogleUtilities-Environment.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GoogleUtilities_GoogleUtilities-Logger.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GoogleUtilities_GoogleUtilities-Network.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GoogleUtilities_GoogleUtilities-NSData.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GoogleUtilities_GoogleUtilities-Reachability.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 gRPC_grpcppWrapper.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 gRPC_grpcWrapper.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 gRPC_opensslWrapper.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GTMAppAuth_GTMAppAuth.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 GTMSessionFetcher_GTMSessionFetcherCore.bundle
+-rw-r--r--   1 builder  staff      1424 May 12 17:48 Info.plist
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 leveldb_leveldb.bundle
+drwxr-xr-x   4 builder  staff       128 May 12 17:48 nanopb_nanopb.bundle
+-rw-r--r--   1 builder  staff         8 May 12 17:48 PkgInfo
+=== Copy Bundle Resources phase (pbxproj) ===
+0
+NOT FOUND in pbxproj
+0
+NOT FOUND in pbxproj

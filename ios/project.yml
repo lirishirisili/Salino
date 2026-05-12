@@ -76,6 +76,29 @@ targets:
         ENABLE_PREVIEWS: YES
     # Copy phase alone did not place PNG at .app root in IPA; explicit copy before codesign is reliable.
     postBuildScripts:
+      - name: Copy resources into bundle
+        basedOnDependencyAnalysis: false
+        shell: /bin/bash
+        script: |
+          set -euo pipefail
+          DEST="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          if [[ ! -d "${DEST}" ]] && [[ -n "${CODESIGNING_FOLDER_PATH:-}" ]]; then
+            DEST="${CODESIGNING_FOLDER_PATH}"
+          fi
+          # Copy .lproj directories (localization)
+          for lproj in en he ar ru es fr am Base; do
+            SRC="${SRCROOT}/Resources/${lproj}.lproj"
+            if [[ -d "$SRC" ]]; then
+              cp -R "$SRC" "${DEST}/"
+              echo "Copied ${lproj}.lproj"
+            fi
+          done
+          # Copy GoogleService-Info.plist (Firebase)
+          FIREBASE="${SRCROOT}/Resources/GoogleService-Info.plist"
+          if [[ -f "$FIREBASE" ]]; then
+            cp "$FIREBASE" "${DEST}/"
+            echo "Copied GoogleService-Info.plist"
+          fi
       - name: App Store 120px icon at bundle root
         basedOnDependencyAnalysis: false
         shell: /bin/bash
