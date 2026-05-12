@@ -53,8 +53,8 @@
 "shopping_list_empty_subtitle" = "Add something that ran out";
 "shopping_list_active_section" = "To buy";
 "shopping_list_bought_section" = "Already bought";
-"shopping_list_added_by" = "Added by %1$s";
-"shopping_list_bought_by" = "Bought by %1$s";
+"shopping_list_added_by" = "Added by %1$@";
+"shopping_list_bought_by" = "Bought by %1$@";
 "shopping_list_mark_bought" = "Mark as bought";
 "shopping_list_undo_bought" = "Return to list";
 "shopping_list_delete" = "Delete";
@@ -102,7 +102,7 @@
 "category_beverages" = "Beverages";
 "category_pharmacy" = "Pharmacy";
 "category_other" = "Other";
-"category_auto_detected" = "Detected automatically: %1$s";
+"category_auto_detected" = "Detected automatically: %1$@";
 "unit_pieces" = "pcs";
 "unit_kg" = "kg";
 "unit_grams" = "g";
@@ -163,10 +163,10 @@
 "settings_edit_household_name" = "Edit household name";
 "settings_leave_household" = "Leave household";
 "settings_leave_household_confirm" = "Are you sure you want to leave this household? You can always join again with an invite code or create a new one.";
-"settings_share_invite_message" = "Join my household on Haserli! Use this invite code: %1$s";
+"settings_share_invite_message" = "Join my household on Haserli! Use this invite code: %1$@";
 "settings_sign_out" = "Sign out";
 "settings_sign_out_confirm" = "Sign out of Haserli?";
-"settings_version" = "Version %1$s";
+"settings_version" = "Version %1$@";
 "ok" = "OK";
 "cancel" = "Cancel";
 "yes" = "Yes";

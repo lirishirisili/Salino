@@ -53,8 +53,8 @@
 "shopping_list_empty_subtitle" = "Добавьте то, что закончилось";
 "shopping_list_active_section" = "Купить";
 "shopping_list_bought_section" = "Уже куплено";
-"shopping_list_added_by" = "Добавил(а) %1$s";
-"shopping_list_bought_by" = "Купил(а) %1$s";
+"shopping_list_added_by" = "Добавил(а) %1$@";
+"shopping_list_bought_by" = "Купил(а) %1$@";
 "shopping_list_mark_bought" = "Отметить как купленное";
 "shopping_list_undo_bought" = "Вернуть в список";
 "shopping_list_delete" = "Удалить";
@@ -102,7 +102,7 @@
 "category_beverages" = "Напитки";
 "category_pharmacy" = "Аптека и гигиена";
 "category_other" = "Другое";
-"category_auto_detected" = "Определено автоматически: %1$s";
+"category_auto_detected" = "Определено автоматически: %1$@";
 "unit_pieces" = "шт";
 "unit_kg" = "кг";
 "unit_grams" = "г";
@@ -163,10 +163,10 @@
 "settings_edit_household_name" = "Изменить название дома";
 "settings_leave_household" = "Покинуть дом";
 "settings_leave_household_confirm" = "Вы уверены, что хотите покинуть этот дом? Вы всегда сможете вернуться по коду приглашения или создать новый дом.";
-"settings_share_invite_message" = "Присоединяйтесь к моему дому в Haserli! Используйте код приглашения: %1$s";
+"settings_share_invite_message" = "Присоединяйтесь к моему дому в Haserli! Используйте код приглашения: %1$@";
 "settings_sign_out" = "Выйти";
 "settings_sign_out_confirm" = "Выйти из Haserli?";
-"settings_version" = "Версия %1$s";
+"settings_version" = "Версия %1$@";
 "ok" = "ОК";
 "cancel" = "Отмена";
 "yes" = "Да";

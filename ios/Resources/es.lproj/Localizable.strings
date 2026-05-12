@@ -53,8 +53,8 @@
 "shopping_list_empty_subtitle" = "Agrega algo que se haya acabado";
 "shopping_list_active_section" = "Por comprar";
 "shopping_list_bought_section" = "Ya comprado";
-"shopping_list_added_by" = "Agregado por %1$s";
-"shopping_list_bought_by" = "Comprado por %1$s";
+"shopping_list_added_by" = "Agregado por %1$@";
+"shopping_list_bought_by" = "Comprado por %1$@";
 "shopping_list_mark_bought" = "Marcar como comprado";
 "shopping_list_undo_bought" = "Devolver a la lista";
 "shopping_list_delete" = "Eliminar";
@@ -102,7 +102,7 @@
 "category_beverages" = "Bebidas";
 "category_pharmacy" = "Farmacia e higiene";
 "category_other" = "Otro";
-"category_auto_detected" = "Detectado automáticamente: %1$s";
+"category_auto_detected" = "Detectado automáticamente: %1$@";
 "unit_pieces" = "uds";
 "unit_kg" = "kg";
 "unit_grams" = "g";
@@ -163,10 +163,10 @@
 "settings_edit_household_name" = "Editar nombre del hogar";
 "settings_leave_household" = "Abandonar hogar";
 "settings_leave_household_confirm" = "¿Seguro que quieres abandonar este hogar? Siempre puedes volver con un código de invitación o crear uno nuevo.";
-"settings_share_invite_message" = "¡Únete a mi hogar en Haserli! Usa este código de invitación: %1$s";
+"settings_share_invite_message" = "¡Únete a mi hogar en Haserli! Usa este código de invitación: %1$@";
 "settings_sign_out" = "Cerrar sesión";
 "settings_sign_out_confirm" = "¿Cerrar sesión en Haserli?";
-"settings_version" = "Versión %1$s";
+"settings_version" = "Versión %1$@";
 "ok" = "OK";
 "cancel" = "Cancelar";
 "yes" = "Sí";

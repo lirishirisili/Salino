@@ -53,8 +53,8 @@
 "shopping_list_empty_subtitle" = "הוסיפו משהו שנגמר";
 "shopping_list_active_section" = "לקנות";
 "shopping_list_bought_section" = "כבר קנינו";
-"shopping_list_added_by" = "נוסף ע״י %1$s";
-"shopping_list_bought_by" = "נקנה ע״י %1$s";
+"shopping_list_added_by" = "נוסף ע״י %1$@";
+"shopping_list_bought_by" = "נקנה ע״י %1$@";
 "shopping_list_mark_bought" = "סמן כנקנה";
 "shopping_list_undo_bought" = "החזר לרשימה";
 "shopping_list_delete" = "מחיקה";
@@ -102,7 +102,7 @@
 "category_beverages" = "משקאות";
 "category_pharmacy" = "פארם וטואלטיקה";
 "category_other" = "אחר";
-"category_auto_detected" = "זוהה אוטומטית: %1$s";
+"category_auto_detected" = "זוהה אוטומטית: %1$@";
 "unit_pieces" = "יח׳";
 "unit_kg" = "ק״ג";
 "unit_grams" = "גרם";
@@ -163,10 +163,10 @@
 "settings_edit_household_name" = "עריכת שם הבית";
 "settings_leave_household" = "עזיבת הבית";
 "settings_leave_household_confirm" = "בטוח שאתה רוצה לעזוב את הבית? תמיד תוכל להצטרף שוב עם קוד הזמנה או ליצור בית חדש.";
-"settings_share_invite_message" = "הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: %1$s";
+"settings_share_invite_message" = "הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: %1$@";
 "settings_sign_out" = "התנתקות";
 "settings_sign_out_confirm" = "להתנתק מחסרלי?";
-"settings_version" = "גרסה %1$s";
+"settings_version" = "גרסה %1$@";
 "ok" = "אישור";
 "cancel" = "ביטול";
 "yes" = "כן";

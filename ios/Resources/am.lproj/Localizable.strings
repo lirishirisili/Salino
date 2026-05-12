@@ -53,8 +53,8 @@
 "shopping_list_empty_subtitle" = "ያለቀ ነገር ያክሉ";
 "shopping_list_active_section" = "ለመግዛት";
 "shopping_list_bought_section" = "ተገዝቷል";
-"shopping_list_added_by" = "በ%1$s ተጨምሯል";
-"shopping_list_bought_by" = "በ%1$s ተገዝቷል";
+"shopping_list_added_by" = "በ%1$@ ተጨምሯል";
+"shopping_list_bought_by" = "በ%1$@ ተገዝቷል";
 "shopping_list_mark_bought" = "እንደ ተገዛ ምልክት ያድርጉ";
 "shopping_list_undo_bought" = "ወደ ዝርዝር ይመልሱ";
 "shopping_list_delete" = "ይሰርዙ";
@@ -102,7 +102,7 @@
 "category_beverages" = "መጠጦች";
 "category_pharmacy" = "ፋርማሲ እና ንጽህና";
 "category_other" = "ሌላ";
-"category_auto_detected" = "ራስ-ሰር ተለይቷል፡ %1$s";
+"category_auto_detected" = "ራስ-ሰር ተለይቷል፡ %1$@";
 "unit_pieces" = "ቁ";
 "unit_kg" = "ኪግ";
 "unit_grams" = "ግ";
@@ -163,10 +163,10 @@
 "settings_edit_household_name" = "የቤት ስም ያርትዑ";
 "settings_leave_household" = "ቤቱን ይልቀቁ";
 "settings_leave_household_confirm" = "ይህን ቤት መልቀቅ ይፈልጋሉ? ሁልጊዜ በግብዣ ኮድ መመለስ ወይም አዲስ መፍጠር ይችላሉ።";
-"settings_share_invite_message" = "በ Haserli ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ %1$s";
+"settings_share_invite_message" = "በ Haserli ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ %1$@";
 "settings_sign_out" = "ይውጡ";
 "settings_sign_out_confirm" = "ከ Haserli ይውጡ?";
-"settings_version" = "ስሪት %1$s";
+"settings_version" = "ስሪት %1$@";
 "ok" = "እሺ";
 "cancel" = "ይቅር";
 "yes" = "አዎ";

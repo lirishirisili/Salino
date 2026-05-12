@@ -53,8 +53,8 @@
 "shopping_list_empty_subtitle" = "أضف شيئاً نفد من البيت";
 "shopping_list_active_section" = "للشراء";
 "shopping_list_bought_section" = "تم الشراء";
-"shopping_list_added_by" = "أضافه %1$s";
-"shopping_list_bought_by" = "اشتراه %1$s";
+"shopping_list_added_by" = "أضافه %1$@";
+"shopping_list_bought_by" = "اشتراه %1$@";
 "shopping_list_mark_bought" = "تم الشراء";
 "shopping_list_undo_bought" = "إرجاع إلى القائمة";
 "shopping_list_delete" = "حذف";
@@ -102,7 +102,7 @@
 "category_beverages" = "مشروبات";
 "category_pharmacy" = "صيدلية ونظافة";
 "category_other" = "أخرى";
-"category_auto_detected" = "تم الاكتشاف تلقائياً: %1$s";
+"category_auto_detected" = "تم الاكتشاف تلقائياً: %1$@";
 "unit_pieces" = "قطعة";
 "unit_kg" = "كغ";
 "unit_grams" = "غ";
@@ -163,10 +163,10 @@
 "settings_edit_household_name" = "تعديل اسم البيت";
 "settings_leave_household" = "مغادرة البيت";
 "settings_leave_household_confirm" = "هل أنت متأكد من مغادرة هذا البيت؟ يمكنك العودة في أي وقت برمز دعوة أو إنشاء بيت جديد.";
-"settings_share_invite_message" = "انضم إلى بيتي في Haserli! استخدم رمز الدعوة: %1$s";
+"settings_share_invite_message" = "انضم إلى بيتي في Haserli! استخدم رمز الدعوة: %1$@";
 "settings_sign_out" = "تسجيل الخروج";
 "settings_sign_out_confirm" = "تسجيل الخروج من Haserli؟";
-"settings_version" = "الإصدار %1$s";
+"settings_version" = "الإصدار %1$@";
 "ok" = "حسناً";
 "cancel" = "إلغاء";
 "yes" = "نعم";
