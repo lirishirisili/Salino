@@ -43,7 +43,9 @@ targets:
       - Services
       - Models
     resources:
-      - Resources
+      - path: Resources
+        excludes:
+          - "AppIcon60x60@2x.png"
     configFiles:
       Debug: Config/FirebaseSecrets.xcconfig
       Release: Config/FirebaseSecrets.xcconfig
@@ -67,6 +69,21 @@ targets:
         ENABLE_PREVIEWS: YES
     info:
       path: Resources/Info.plist
+    # Copy phase alone did not place PNG at .app root in IPA; explicit copy before codesign is reliable.
+    postBuildScripts:
+      - name: App Store 120px icon at bundle root
+        basedOnDependencyAnalysis: false
+        shell: /bin/bash
+        script: |
+          set -euo pipefail
+          SRC="${SRCROOT}/Resources/AppIcon60x60@2x.png"
+          test -f "$SRC"
+          DEST="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          if [[ ! -d "${DEST}" ]] && [[ -n "${CODESIGNING_FOLDER_PATH:-}" ]]; then
+            DEST="${CODESIGNING_FOLDER_PATH}"
+          fi
+          cp "$SRC" "${DEST}/AppIcon60x60@2x.png"
+          test -f "${DEST}/AppIcon60x60@2x.png"
 
   SalinoTests:
     type: bundle.unit-test

@@ -90,12 +90,16 @@ workflows:
             echo "ERROR: Expected CFBundleIconName=AppIcon in signed app Info.plist"
             exit 1
           fi
-          echo "=== Loose 120px PNG at .app root (90022 check) ==="
+          echo "=== AppIcon60x60@2x.png (90022 — must exist in IPA) ==="
           find "$APP" -maxdepth 1 -name '*.png' -print || true
-          if [[ ! -f "$APP/AppIcon60x60@2x.png" ]]; then
-            echo "ERROR: Missing AppIcon60x60@2x.png (120x120 legacy-named icon for App Store validation)"
+          ICON120="$(find "$APP" -name 'AppIcon60x60@2x.png' | head -1)"
+          if [[ -z "${ICON120}" ]]; then
+            echo "ERROR: Missing AppIcon60x60@2x.png (post-build copy should place it at .app root)."
+            echo "PNG files in bundle:"
+            find "$APP" -name '*.png' || true
             exit 1
           fi
+          echo "OK: ${ICON120}"
           codesign --verify --deep --strict --verbose=2 "$APP"
     artifacts:
       - build/ios/ipa/*.ipa
