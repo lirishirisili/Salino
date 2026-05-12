@@ -71,29 +71,20 @@ workflows:
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
             ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon
-      - name: Inject CFBundleIconName into archive
-        script: |
-          # Find the Info.plist inside the .xcarchive
-          APP_PATH=$(find "$CM_BUILD_DIR/Salino.xcarchive/Products/Applications" -name "*.app" -maxdepth 1 | head -1)
-          PLIST="$APP_PATH/Info.plist"
-          echo "Patching $PLIST"
-          if /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$PLIST" 2>/dev/null; then
-            echo "CFBundleIconName already present"
-          else
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" "$PLIST"
-            echo "Added CFBundleIconName = AppIcon"
-          fi
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$PLIST"
       - name: Export IPA
         script: |
           xcodebuild -exportArchive \
             -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
             -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
             -exportOptionsPlist "$HOME/export_options.plist"
-      - name: Patch IPA for App Store upload validation
+      - name: Verify code signature before upload
         script: |
-          chmod +x ios/Scripts/patch_ipa_app_store_validation.sh
-          ios/Scripts/patch_ipa_app_store_validation.sh "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa"
+          set -euo pipefail
+          VDIR="$(mktemp -d /tmp/salino-ipa-verify.XXXXXX)"
+          trap 'rm -rf "$VDIR"' EXIT
+          unzip -q "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" -d "$VDIR"
+          APP="$(find "$VDIR/Payload" -maxdepth 1 -name '*.app' | head -1)"
+          codesign --verify --deep --strict --verbose=2 "$APP"
     artifacts:
       - build/ios/ipa/*.ipa
       - "**/*.ipa"
