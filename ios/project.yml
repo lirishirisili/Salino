@@ -64,35 +64,6 @@ targets:
         ENABLE_PREVIEWS: YES
     info:
       path: Resources/Info.plist
-      properties:
-        CFBundleIconName: AppIcon
-        CFBundleDisplayName: Haserli
-        CFBundleDevelopmentRegion: en
-        CFBundleLocalizations:
-          - en
-          - he
-          - ar
-          - ru
-          - es
-          - fr
-          - am
-        CFBundleShortVersionString: "$(MARKETING_VERSION)"
-        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        LSApplicationQueriesSchemes:
-          - google
-          - comgooglemaps
-        CFBundleURLTypes:
-          - CFBundleTypeRole: Editor
-            CFBundleURLSchemes:
-              - "$(GOOGLE_REVERSED_CLIENT_ID)"
-        NSMicrophoneUsageDescription: Voice input lets you add items by speaking.
-        NSSpeechRecognitionUsageDescription: Speech recognition turns spoken item names into shopping list entries.
-        UILaunchScreen:
-          UIColorName: ""
-        UIUserInterfaceStyle: Automatic
-        UIApplicationSupportsIndirectInputEvents: true
-        UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
 
   SalinoTests:
     type: bundle.unit-test
