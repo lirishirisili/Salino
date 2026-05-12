@@ -90,6 +90,10 @@ workflows:
             -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
             -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
             -exportOptionsPlist "$HOME/export_options.plist"
+      - name: Patch IPA for App Store upload validation
+        script: |
+          chmod +x ios/Scripts/patch_ipa_app_store_validation.sh
+          ios/Scripts/patch_ipa_app_store_validation.sh "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa"
     artifacts:
       - build/ios/ipa/*.ipa
       - "**/*.ipa"
