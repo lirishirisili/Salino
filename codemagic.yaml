@@ -6,7 +6,7 @@ workflows:
     environment:
       xcode: latest
       groups:
-        - firebase
+        - app-store-connect
       vars:
         XCODE_WORKSPACE_DIR: ios
     scripts:
@@ -39,7 +39,6 @@ workflows:
       groups:
         - app-store-connect
         - ios-code-signing
-        - firebase
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.salino.sali
