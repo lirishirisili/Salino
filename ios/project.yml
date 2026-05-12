@@ -43,11 +43,16 @@ targets:
       - Services
       - Models
     resources:
-      - path: Resources
-        excludes:
-          - "AppIcon60x60@2x.png"
-          - "AppStoreRequiredIcon120.png"
-          - "GoogleService-Info.plist.example"
+      - path: Resources/en.lproj
+      - path: Resources/he.lproj
+      - path: Resources/ar.lproj
+      - path: Resources/ru.lproj
+      - path: Resources/es.lproj
+      - path: Resources/fr.lproj
+      - path: Resources/am.lproj
+      - path: Resources/Base.lproj
+      - path: Resources/Assets.xcassets
+      - path: Resources/GoogleService-Info.plist
     configFiles:
       Debug: Config/FirebaseSecrets.xcconfig
       Release: Config/FirebaseSecrets.xcconfig
