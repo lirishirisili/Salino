@@ -42,10 +42,12 @@ targets:
       - Remote
       - Services
       - Models
-    resources:
       - path: Resources
+        buildPhase: resources
         excludes:
           - "AppIcon60x60@2x.png"
+          - "Info.plist"
+          - "GoogleService-Info.plist.example"
     configFiles:
       Debug: Config/FirebaseSecrets.xcconfig
       Release: Config/FirebaseSecrets.xcconfig
@@ -67,8 +69,6 @@ targets:
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         TARGETED_DEVICE_FAMILY: "1"
         ENABLE_PREVIEWS: YES
-    info:
-      path: Resources/Info.plist
     # Copy phase alone did not place PNG at .app root in IPA; explicit copy before codesign is reliable.
     postBuildScripts:
       - name: App Store 120px icon at bundle root
