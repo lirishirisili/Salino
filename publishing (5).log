@@ -1,0 +1,97 @@
+== Gathering artifacts ==
+
+== Publishing artifacts ==
+
+Publishing artifact Salino.ipa
+Publishing Salino.ipa to App Store Connect
+> app-store-connect publish --path /Users/builder/clone/build/ios/ipa/Salino.ipa --key-id ******** --issuer-id ******** --private-key @env:APP_STORE_CONNECT_PUBLISHER_PRIVATE_KEY
+
+Publish "/Users/builder/clone/build/ios/ipa/Salino.ipa" to App Store Connect
+App name: Salino
+Bundle identifier: com.salino.sali
+Certificate expires: 2027-05-11T17:25:07.000+0000
+Distribution type: App Store
+Min OS version: 17.0
+Provisioned devices: N/A
+Provisions all devices: No
+Supported platforms: iPhoneOS
+Version code: 1
+Version: 1.0
+
+Upload "/Users/builder/clone/build/ios/ipa/Salino.ipa" to App Store Connect
+Running altool at path '/Applications/Xcode-26.4.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources/altool'...
+
+26.30.4 (173004)
+Running altool at path '/Applications/Xcode-26.4.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources/altool'...
+
+2026-05-12 07:16:15.798 ERROR: [ContentDelivery.Uploader.B9CC28AC0] 
+=======================================
+UPLOAD FAILED with 2 errors
+=======================================
+2026-05-12 07:16:15.802 ERROR: [altool.10183ABB0] ExitFailure (31)
+{
+  "os-version" : "Version 26.4.1 (Build 25E253)",
+  "product-errors" : [
+    {
+      "code" : 90713,
+      "message" : "Missing Info.plist value. A value for the Info.plist key 'CFBundleIconName' is missing in the bundle 'com.salino.sali'. Apps built with iOS 11 or later SDK must supply app icons in an asset catalog and must also provide a value for this Info.plist key. For more information see http://help.apple.com/xcode/mac/current/#/dev10510b1f7.",
+      "underlying-errors" : [
+        {
+          "code" : -19241,
+          "message" : "A server error occurred.",
+          "underlying-errors" : [
+
+          ],
+          "user-info" : {
+            "NSLocalizedDescription" : "A server error occurred.",
+            "code" : "90713",
+            "description" : "Missing Info.plist value. A value for the Info.plist key 'CFBundleIconName' is missing in the bundle 'com.salino.sali'. Apps built with iOS 11 or later SDK must supply app icons in an asset catalog and must also provide a value for this Info.plist key. For more information see http://help.apple.com/xcode/mac/current/#/dev10510b1f7."
+          }
+        }
+      ],
+      "user-info" : {
+        "NSLocalizedDescription" : "Missing Info.plist value. A value for the Info.plist key 'CFBundleIconName' is missing in the bundle 'com.salino.sali'. Apps built with iOS 11 or later SDK must supply app icons in an asset catalog and must also provide a value for this Info.plist key. For more information see http://help.apple.com/xcode/mac/current/#/dev10510b1f7.",
+        "NSLocalizedFailureReason" : "The server’s response was: ‘{\n    code = 90713;\n    description = \"Missing Info.plist value. A value for the Info.plist key 'CFBundleIconName' is missing in the bundle 'com.salino.sali'. Apps built with iOS 11 or later SDK must supply app icons in an asset catalog and must also provide a value for this Info.plist key. For more information see http://help.apple.com/xcode/mac/current/#/dev10510b1f7.\";\n}’.",
+        "NSUnderlyingError" : "Error Domain=IrisAPI Code=-19241 \"A server error occurred.\" UserInfo={code=90713, NSLocalizedDescription=A server error occurred., description=Missing Info.plist value. A value for the Info.plist key 'CFBundleIconName' is missing in the bundle 'com.salino.sali'. Apps built with iOS 11 or later SDK must supply app icons in an asset catalog and must also provide a value for this Info.plist key. For more information see http://help.apple.com/xcode/mac/current/#/dev10510b1f7.}",
+        "iris-code" : "90713"
+      }
+    },
+    {
+      "code" : 90022,
+      "message" : "Missing required icon file. The bundle does not contain an app icon for iPhone / iPod Touch of exactly '120x120' pixels, in .png format for iOS versions >= 10.0. To support older versions of iOS, the icon may be required in the bundle outside of an asset catalog. Make sure the Info.plist file includes appropriate entries referencing the file. See https://developer.apple.com/documentation/bundleresources/information_property_list/user_interface.",
+      "underlying-errors" : [
+        {
+          "code" : -19241,
+          "message" : "A server error occurred.",
+          "underlying-errors" : [
+
+          ],
+          "user-info" : {
+            "NSLocalizedDescription" : "A server error occurred.",
+            "code" : "90022",
+            "description" : "Missing required icon file. The bundle does not contain an app icon for iPhone / iPod Touch of exactly '120x120' pixels, in .png format for iOS versions >= 10.0. To support older versions of iOS, the icon may be required in the bundle outside of an asset catalog. Make sure the Info.plist file includes appropriate entries referencing the file. See https://developer.apple.com/documentation/bundleresources/information_property_list/user_interface."
+          }
+        }
+      ],
+      "user-info" : {
+        "NSLocalizedDescription" : "Missing required icon file. The bundle does not contain an app icon for iPhone / iPod Touch of exactly '120x120' pixels, in .png format for iOS versions >= 10.0. To support older versions of iOS, the icon may be required in the bundle outside of an asset catalog. Make sure the Info.plist file includes appropriate entries referencing the file. See https://developer.apple.com/documentation/bundleresources/information_property_list/user_interface.",
+        "NSLocalizedFailureReason" : "The server’s response was: ‘{\n    code = 90022;\n    description = \"Missing required icon file. The bundle does not contain an app icon for iPhone / iPod Touch of exactly '120x120' pixels, in .png format for iOS versions >= 10.0. To support older versions of iOS, the icon may be required in the bundle outside of an asset catalog. Make sure the Info.plist file includes appropriate entries referencing the file. See https://developer.apple.com/documentation/bundleresources/information_property_list/user_interface.\";\n}’.",
+        "NSUnderlyingError" : "Error Domain=IrisAPI Code=-19241 \"A server error occurred.\" UserInfo={code=90022, NSLocalizedDescription=A server error occurred., description=Missing required icon file. The bundle does not contain an app icon for iPhone / iPod Touch of exactly '120x120' pixels, in .png format for iOS versions >= 10.0. To support older versions of iOS, the icon may be required in the bundle outside of an asset catalog. Make sure the Info.plist file includes appropriate entries referencing the file. See https://developer.apple.com/documentation/bundleresources/information_property_list/user_interface.}",
+        "iris-code" : "90022"
+      }
+    }
+  ],
+  "tool-path" : "/Applications/Xcode-26.4.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources",
+  "tool-version" : "26.30.4 (173004)"
+}
+
+Failed to upload archive at "/Users/builder/clone/build/ios/ipa/Salino.ipa"
+Failed to publish /Users/builder/clone/build/ios/ipa/Salino.ipa
+
+Failed to publish Salino.ipa to App Store Connect.
+
+Build failed :|
+
+
+Publishing failed :|
+Failed to publish Salino.ipa to App Store Connect.

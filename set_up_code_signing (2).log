@@ -1,0 +1,16 @@
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_soi39k_x.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_soi39k_x.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_soi39k_x.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_soi39k_x.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_soi39k_x.keychain-db
+Found 1 Bundle ID matching specified filters: identifier=com.salino.sali, platform=IOS.
+- Salino com.salino.sali (QSWQJV3K83)
+
+Did not find any Signing Certificates matching specified filters: certificateType=DISTRIBUTION,IOS_DISTRIBUTION.
+Did not find any Signing Certificates for given private key
+Creating new Signing Certificate: certificate type: DISTRIBUTION
+POST https://api.appstoreconnect.apple.com/v1/certificates returned 409: An attribute in the provided entity has invalid value - CSR algorithm/size incorrect. Expected: RSA(2048)
+
+
+Build failed :|
+Step 5 script `Set up code signing` exited with status code 1

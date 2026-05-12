@@ -84,9 +84,18 @@ workflows:
           unzip -q "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" -d "$VDIR"
           APP="$(find "$VDIR/Payload" -maxdepth 1 -name '*.app' | head -1)"
           echo "=== CFBundleIconName (must be AppIcon for App Store 90713) ==="
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" 2>/dev/null || echo "(MISSING)"
-          echo "=== Loose PNGs at .app root (90022 check) ==="
+          ICON_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" 2>/dev/null || true)"
+          echo "${ICON_NAME:-"(MISSING)"}"
+          if [[ "${ICON_NAME:-}" != "AppIcon" ]]; then
+            echo "ERROR: Expected CFBundleIconName=AppIcon in signed app Info.plist"
+            exit 1
+          fi
+          echo "=== Loose 120px PNG at .app root (90022 check) ==="
           find "$APP" -maxdepth 1 -name '*.png' -print || true
+          if [[ ! -f "$APP/AppIcon60x60@2x.png" ]]; then
+            echo "ERROR: Missing AppIcon60x60@2x.png (120x120 legacy-named icon for App Store validation)"
+            exit 1
+          fi
           codesign --verify --deep --strict --verbose=2 "$APP"
     artifacts:
       - build/ios/ipa/*.ipa

@@ -1,0 +1,37 @@
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db
+Found 1 Bundle ID matching specified filters: identifier=com.salino.sali, platform=IOS.
+- Salino com.salino.sali (QSWQJV3K83)
+
+Did not find any Signing Certificates matching specified filters: certificateType=DISTRIBUTION,IOS_DISTRIBUTION.
+Did not find any Signing Certificates for given private key
+Creating new Signing Certificate: certificate type: DISTRIBUTION
+Created Signing Certificate UD5L6AWQ9U
+
+Get Profiles for Bundle ID QSWQJV3K83
+Did not find any Profiles for Bundle ID QSWQJV3K83 matching specified filters: profileState=ACTIVE, profileType=IOS_APP_STORE.
+
+Did not find any Profiles that contain Signing Certificate Apple Distribution: Liron Shiryon (UD5L6AWQ9U)
+Did not find any Devices matching specified filters: platform=IOS, status=ENABLED.
+Found 1 Signing Certificate matching specified filters: certificateType=DISTRIBUTION,IOS_DISTRIBUTION.
+Get Bundle ID QSWQJV3K83
+Creating new Profile: name: 'Salino ios_app_store 1778519270', profile type: IOS_APP_STORE, bundle id: QSWQJV3K83, certificates: ['UD5L6AWQ9U']
+Created Profile C6A636Z844
+
+Saved Signing Certificate Apple Distribution: Liron Shiryon (UD5L6AWQ9U) to /Users/builder/Library/Developer/Xcode/UserData/Certificates/DISTRIBUTION_UD5L6AWQ9U_ibxmu1jz.p12
+Saved Profile IOS_APP_STORE Salino ios_app_store 1778519270 (C6A636Z844) to '/Users/builder/Library/MobileDevice/Provisioning Profiles/IOS_APP_STORE_C6A636Z844_octs5w8j.mobileprovision'
+Add certificates to keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db
+Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Certificates/*.p12
+Searching for files matching /Users/builder/Library/MobileDevice/Certificates/*.p12
+Add certificate /Users/builder/Library/Developer/Xcode/UserData/Certificates/DISTRIBUTION_UD5L6AWQ9U_ibxmu1jz.p12 to keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_s_smdccz.keychain-db
+security: SecKeychainItemImport: Unable to decode the provided data.
+1 key imported.
+1 certificate imported.
+Cannot parse a NULL or zero-length data
+
+
+Build failed :|
+Step 5 script `Set up code signing` exited with status code 1

@@ -1,0 +1,15 @@
+Initialize new keychain to store code signing certificates at /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_09ndp3_t.keychain-db
+Create keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_09ndp3_t.keychain-db
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_09ndp3_t.keychain-db timeout to "no timeout"
+Set keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_09ndp3_t.keychain-db to system default keychain
+Unlock keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_09ndp3_t.keychain-db
+Cannot save Signing Certificates without certificate private key
+Add certificates to keychain /Users/builder/Library/codemagic-cli-tools/keychains/11-05-26_09ndp3_t.keychain-db
+Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Certificates/*.p12
+Searching for files matching /Users/builder/Library/MobileDevice/Certificates/*.p12
+Did not find any certificates from specified locations
+ERROR: No provisioning profile found!
+
+
+Build failed :|
+Step 5 script `Set up code signing` exited with status code 1
