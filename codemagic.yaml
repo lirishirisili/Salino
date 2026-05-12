@@ -33,6 +33,20 @@ workflows:
           echo "Found app at: $APP_PATH"
           cd "$(dirname "$APP_PATH")"
           zip -qr "$CM_BUILD_DIR/Salino-simulator.zip" "$(basename "$APP_PATH")"
+      - name: Verify bundle contents
+        script: |
+          APP_PATH=$(find "$CM_BUILD_DIR/derivedData" -name "Salino.app" -type d | head -1)
+          echo "=== .strings files ==="
+          find "$APP_PATH" -name '*.strings' -type f 2>/dev/null || echo 'NONE FOUND'
+          echo "=== .lproj dirs ==="
+          find "$APP_PATH" -name '*.lproj' -type d 2>/dev/null || echo 'NONE FOUND'
+          echo "=== GoogleService-Info.plist ==="
+          find "$APP_PATH" -name 'GoogleService*' 2>/dev/null || echo 'NONE FOUND'
+          echo "=== All top-level files ==="
+          ls -la "$APP_PATH/" 2>/dev/null | head -30
+          echo "=== Copy Bundle Resources phase (pbxproj) ==="
+          grep -c 'Localizable.strings' ios/Salino.xcodeproj/project.pbxproj 2>/dev/null || echo 'NOT FOUND in pbxproj'
+          grep -c 'GoogleService-Info.plist' ios/Salino.xcodeproj/project.pbxproj 2>/dev/null || echo 'NOT FOUND in pbxproj'
     artifacts:
       - Salino-simulator.zip
       - derivedData/**/Build/Products/**/*.app

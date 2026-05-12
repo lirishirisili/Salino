@@ -42,11 +42,11 @@ targets:
       - Remote
       - Services
       - Models
+    resources:
       - path: Resources
-        buildPhase: resources
         excludes:
           - "AppIcon60x60@2x.png"
-          - "Info.plist"
+          - "AppStoreRequiredIcon120.png"
           - "GoogleService-Info.plist.example"
     configFiles:
       Debug: Config/FirebaseSecrets.xcconfig
