@@ -5,6 +5,8 @@ workflows:
     max_build_duration: 60
     environment:
       xcode: latest
+      groups:
+        - firebase
       vars:
         XCODE_WORKSPACE_DIR: ios
     scripts:
@@ -37,6 +39,7 @@ workflows:
       groups:
         - app-store-connect
         - ios-code-signing
+        - firebase
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.salino.sali
