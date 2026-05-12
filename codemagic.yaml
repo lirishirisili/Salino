@@ -84,6 +84,10 @@ workflows:
           trap 'rm -rf "$VDIR"' EXIT
           unzip -q "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" -d "$VDIR"
           APP="$(find "$VDIR/Payload" -maxdepth 1 -name '*.app' | head -1)"
+          echo "=== CFBundleIconName (must be AppIcon for App Store 90713) ==="
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" 2>/dev/null || echo "(MISSING)"
+          echo "=== Loose PNGs at .app root (90022 check) ==="
+          find "$APP" -maxdepth 1 -name '*.png' -print || true
           codesign --verify --deep --strict --verbose=2 "$APP"
     artifacts:
       - build/ios/ipa/*.ipa
