@@ -70,7 +70,9 @@ workflows:
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
-            ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon
+            ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon \
+            INFOPLIST_KEY_CFBundleIconName=AppIcon \
+            INFOPLIST_FILE=Resources/Info.plist
       - name: Export IPA
         script: |
           xcodebuild -exportArchive \

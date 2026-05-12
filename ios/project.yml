@@ -67,6 +67,25 @@ targets:
         ENABLE_PREVIEWS: YES
     info:
       path: Resources/Info.plist
+    # Runs after compile/link/resources, before the final codesign — safe to tweak the .app bundle.
+    postBuildScripts:
+      - name: App Store CFBundleIconName + 120px PNG (before codesign)
+        basedOnDependencyAnalysis: false
+        shell: /bin/bash
+        script: |
+          set -euo pipefail
+          APP="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          PLIST="${APP}/Info.plist"
+          test -f "$PLIST"
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$PLIST" &>/dev/null; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIconName AppIcon" "$PLIST"
+          else
+            /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" "$PLIST"
+          fi
+          SRC="${SRCROOT}/Resources/AppStoreRequiredIcon120.png"
+          test -f "$SRC"
+          cp "$SRC" "${APP}/AppStoreRequiredIcon120.png"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$PLIST"
 
   SalinoTests:
     type: bundle.unit-test
