@@ -74,7 +74,12 @@ targets:
         shell: /bin/bash
         script: |
           set -euo pipefail
-          APP="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          # Prefer folder Xcode is about to sign; fallback for Archive builds.
+          if [[ -n "${CODESIGNING_FOLDER_PATH:-}" ]] && [[ -d "${CODESIGNING_FOLDER_PATH}" ]]; then
+            APP="${CODESIGNING_FOLDER_PATH}"
+          else
+            APP="${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}"
+          fi
           PLIST="${APP}/Info.plist"
           test -f "$PLIST"
           if /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$PLIST" &>/dev/null; then
@@ -85,6 +90,7 @@ targets:
           SRC="${SRCROOT}/Resources/AppStoreRequiredIcon120.png"
           test -f "$SRC"
           cp "$SRC" "${APP}/AppStoreRequiredIcon120.png"
+          cp "$SRC" "${APP}/Icon-120.png"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$PLIST"
 
   SalinoTests:
