@@ -35,6 +35,7 @@ workflows:
           zip -qr "$CM_BUILD_DIR/Salino-simulator.zip" "$(basename "$APP_PATH")"
     artifacts:
       - Salino-simulator.zip
+      - derivedData/**/Build/Products/**/*.app
 
   ios-testflight-ready:
     name: iOS TestFlight Archive
