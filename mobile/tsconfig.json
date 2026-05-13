@@ -1,0 +1,46 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@models/*": [
+        "src/models/*"
+      ],
+      "@hooks/*": [
+        "src/hooks/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@services/*": [
+        "src/services/*"
+      ],
+      "@repositories/*": [
+        "src/repositories/*"
+      ],
+      "@theme/*": [
+        "src/theme/*"
+      ],
+      "@i18n/*": [
+        "src/i18n/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@remote/*": [
+        "src/remote/*"
+      ],
+      "@local/*": [
+        "src/local/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ]
+}

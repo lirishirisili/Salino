@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.env
+.env.*
+!.env.example
+
+# NOTE: Unlike .gitignore, google-services.json + GoogleService-Info.plist
+# MUST be uploaded to the EAS builder so the Android/iOS plugin can embed them
+# into the prebuilt project. They are still ignored by git locally (.gitignore).

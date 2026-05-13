@@ -8,4 +8,13 @@
 .externalNativeBuild
 .cxx
 local.properties
-google-services.json
+
+# IDE / editor caches and personal config
+.cursor/
+.vscode/
+
+# Logs
+*.log
+
+# Stray Firebase config at repo root (the real one lives in mobile/ + app/)
+/google-services.json

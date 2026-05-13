@@ -1,0 +1,92 @@
+{
+  "project_info": {
+    "project_number": "937718857697",
+    "project_id": "salino-aaf86",
+    "storage_bucket": "salino-aaf86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937718857697:android:cd08f6e4de1baba1f3dca0",
+        "android_client_info": {
+          "package_name": "com.salino.liri"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARN6h3Yv66WJh3WyxGODVJDhCBELk_hyg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937718857697:android:de4a8ba93194f01ef3dca0",
+        "android_client_info": {
+          "package_name": "com.salino.sali"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "937718857697-f3oes0l64cn9ngvjb1np6ch6j4ko718n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "ab1b2978cf5d246e4ea9643bee3eab5bfbd927ab"
+          }
+        },
+        {
+          "client_id": "937718857697-t6jrq68hpou76lrogqohasvnor760v0c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "3dcc6b8d58494faede359b203adfaf6231adcc80"
+          }
+        },
+        {
+          "client_id": "937718857697-vsg1oi622jghbio4qau2p2ui8f6b5m7g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "d0b5969e368f9365874fb9d2a2e2c553d600caba"
+          }
+        },
+        {
+          "client_id": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARN6h3Yv66WJh3WyxGODVJDhCBELk_hyg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

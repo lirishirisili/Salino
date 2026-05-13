@@ -1,0 +1,95 @@
+import { MD3LightTheme, MD3DarkTheme, configureFonts } from 'react-native-paper';
+import { Colors } from './colors';
+
+// Mirrors Android SalinoTypography (app/src/main/java/com/salino/sali/ui/theme/Type.kt)
+const fontConfig = {
+  displayLarge: { fontSize: 57, lineHeight: 64, fontWeight: '400' as const },
+  displayMedium: { fontSize: 45, lineHeight: 52, fontWeight: '400' as const },
+  displaySmall: { fontSize: 36, lineHeight: 44, fontWeight: '400' as const },
+  headlineLarge: {
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '700' as const,
+    letterSpacing: -0.3,
+  },
+  headlineMedium: { fontSize: 28, lineHeight: 34, fontWeight: '700' as const },
+  headlineSmall: { fontSize: 24, lineHeight: 32, fontWeight: '700' as const },
+  titleLarge: { fontSize: 22, lineHeight: 28, fontWeight: '600' as const },
+  titleMedium: { fontSize: 18, lineHeight: 24, fontWeight: '600' as const },
+  titleSmall: { fontSize: 15, lineHeight: 20, fontWeight: '600' as const },
+  bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: '500' as const },
+  bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
+  bodySmall: { fontSize: 12, lineHeight: 18, fontWeight: '400' as const },
+  labelLarge: { fontSize: 14, lineHeight: 20, fontWeight: '600' as const },
+  labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: '500' as const },
+  labelSmall: { fontSize: 11, lineHeight: 16, fontWeight: '500' as const },
+};
+
+export const LightTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: Colors.light.primary,
+    onPrimary: Colors.light.onPrimary,
+    primaryContainer: Colors.light.primaryContainer,
+    onPrimaryContainer: Colors.light.onPrimaryContainer,
+    secondary: Colors.light.secondary,
+    onSecondary: Colors.light.onSecondary,
+    secondaryContainer: Colors.light.secondaryContainer,
+    onSecondaryContainer: Colors.light.onSecondaryContainer,
+    tertiary: Colors.light.tertiary,
+    onTertiary: Colors.light.onTertiary,
+    tertiaryContainer: Colors.light.tertiaryContainer,
+    onTertiaryContainer: Colors.light.onTertiaryContainer,
+    background: Colors.light.background,
+    onBackground: Colors.light.onBackground,
+    surface: Colors.light.surface,
+    onSurface: Colors.light.onSurface,
+    surfaceVariant: Colors.light.surfaceVariant,
+    onSurfaceVariant: Colors.light.onSurfaceVariant,
+    outline: Colors.light.outline,
+    outlineVariant: Colors.light.outlineVariant,
+    error: Colors.light.error,
+    onError: Colors.light.onError,
+    errorContainer: Colors.light.errorContainer,
+    onErrorContainer: Colors.light.onErrorContainer,
+  },
+  fonts: configureFonts({ config: fontConfig }),
+  // MD3 default — many Paper components (Dialog, Surface, Card) multiply this
+  // by 7 internally, so 24 here would render Dialogs as 168px-radius ovals.
+  // Component-level corners are controlled explicitly via Layout.* tokens.
+  roundness: 5,
+};
+
+export const DarkTheme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: Colors.dark.primary,
+    onPrimary: Colors.dark.onPrimary,
+    primaryContainer: Colors.dark.primaryContainer,
+    onPrimaryContainer: Colors.dark.onPrimaryContainer,
+    secondary: Colors.dark.secondary,
+    onSecondary: Colors.dark.onSecondary,
+    secondaryContainer: Colors.dark.secondaryContainer,
+    onSecondaryContainer: Colors.dark.onSecondaryContainer,
+    tertiary: Colors.dark.tertiary,
+    onTertiary: Colors.dark.onTertiary,
+    tertiaryContainer: Colors.dark.tertiaryContainer,
+    onTertiaryContainer: Colors.dark.onTertiaryContainer,
+    background: Colors.dark.background,
+    onBackground: Colors.dark.onBackground,
+    surface: Colors.dark.surface,
+    onSurface: Colors.dark.onSurface,
+    surfaceVariant: Colors.dark.surfaceVariant,
+    onSurfaceVariant: Colors.dark.onSurfaceVariant,
+    outline: Colors.dark.outline,
+    outlineVariant: Colors.dark.outlineVariant,
+    error: Colors.dark.error,
+    onError: Colors.dark.onError,
+    errorContainer: Colors.dark.errorContainer,
+    onErrorContainer: Colors.dark.onErrorContainer,
+  },
+  fonts: configureFonts({ config: fontConfig }),
+  roundness: 5,
+};

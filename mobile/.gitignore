@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.env
+.env.*
+!.env.example
+
+# NOTE: google-services.json / GoogleService-Info.plist intentionally NOT ignored.
+# They are required by EAS Build (must be tracked in git). Their contents are
+# safe to commit: API keys are restricted by package name + SHA-1 fingerprint.

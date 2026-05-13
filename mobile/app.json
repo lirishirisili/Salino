@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "Haserli",
+    "slug": "haserli",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "haserli",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F6F9F8",
+      "dark": {
+        "image": "./assets/images/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#111318"
+      }
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.salino.sali",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "NSMicrophoneUsageDescription": "Microphone access is needed for voice input to add items to your shopping list."
+      }
+    },
+    "android": {
+      "package": "com.salino.sali",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#78D1BF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-apple-authentication",
+      "@react-native-google-signin/google-signin",
+      [
+        "./plugins/withAndroidLocaleStrings",
+        {
+          "translations": {
+            "en": "Haserli",
+            "he": "חסרלי",
+            "ar": "حصرلي",
+            "fr": "Haserli",
+            "es": "Haserli",
+            "ru": "Хасерли",
+            "am": "ሃሰርሊ"
+          }
+        }
+      ]
+    ],
+    "locales": {
+      "he": "./src/i18n/locales/he.json",
+      "ar": "./src/i18n/locales/ar.json",
+      "en": "./src/i18n/locales/en.json",
+      "fr": "./src/i18n/locales/fr.json",
+      "es": "./src/i18n/locales/es.json",
+      "ru": "./src/i18n/locales/ru.json",
+      "am": "./src/i18n/locales/am.json"
+    },
+    "extra": {
+      "googleWebClientId": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
+      "router": {},
+      "eas": {
+        "projectId": "14886e07-e712-4577-a8a0-3adcbe8213cc"
+      }
+    },
+    "owner": "lirishiri"
+  }
+}
