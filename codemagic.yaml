@@ -54,6 +54,65 @@ workflows:
           cd "$EXPO_DIR/ios"
           agvtool new-version -all "$BUILD_NUMBER"
 
+      - name: Refresh App ID capabilities & purge stale App Store profiles
+        # Provisioning profiles are a snapshot of the App ID's capabilities
+        # at the moment they were issued. The first time we add a new
+        # entitlement to the app (e.g. `com.apple.developer.applesignin`
+        # from `expo-apple-authentication` + `usesAppleSignIn: true` in
+        # `app.json`) the previously-issued IOS_APP_STORE profile becomes
+        # stale and the next `xcodebuild archive` fails with:
+        #
+        #   Provisioning profile "<name>" doesn't include the
+        #   Sign In with Apple capability.
+        #
+        # This step makes the pipeline self-healing for capability drift:
+        #   1. Resolve the Bundle ID resource ID — the App Store Connect
+        #      API addresses Bundle IDs by an alphanumeric internal ID,
+        #      NOT by the dotted "com.foo.bar" string.
+        #   2. Enable Sign in with Apple on the App ID (idempotent — the
+        #      CLI is tolerant of the capability already being on, but we
+        #      still guard with `||` so the build doesn't abort).
+        #   3. Delete every existing IOS_APP_STORE profile bound to that
+        #      Bundle ID, so the next `fetch-signing-files --create`
+        #      regenerates a profile from the *current* capability set.
+        #
+        # If you add another capability via an Expo plugin in the future
+        # (Push Notifications, Associated Domains, ...), just add another
+        # `--capability` line below — `jq` and the Codemagic CLI are
+        # preinstalled on the macOS image so no extra setup is required.
+        script: |
+          set -euxo pipefail
+
+          BUNDLE_ID_RESOURCE=$(
+            app-store-connect bundle-ids list \
+              --bundle-id-identifier "$BUNDLE_ID" \
+              --strict-match-identifier \
+              --json \
+            | jq -r '.[0].id'
+          )
+
+          if [ -z "$BUNDLE_ID_RESOURCE" ] || [ "$BUNDLE_ID_RESOURCE" = "null" ]; then
+            echo "ERROR: could not resolve Bundle ID resource for $BUNDLE_ID" >&2
+            exit 1
+          fi
+          echo "Resolved Bundle ID resource: $BUNDLE_ID_RESOURCE"
+
+          app-store-connect bundle-ids enable-capabilities \
+            "$BUNDLE_ID_RESOURCE" \
+            --capability "Sign In with Apple" \
+            || echo "Note: enable-capabilities returned non-zero (likely already enabled)"
+
+          app-store-connect bundle-ids profiles \
+            --bundle-ids "$BUNDLE_ID_RESOURCE" \
+            --type IOS_APP_STORE \
+            --json \
+            | jq -r '.[].id' \
+            | while read -r PROFILE_ID; do
+                [ -z "$PROFILE_ID" ] && continue
+                echo "Deleting stale IOS_APP_STORE profile: $PROFILE_ID"
+                app-store-connect profiles delete "$PROFILE_ID" --ignore-not-found
+              done
+
       - name: Fetch & install code signing files
         # Pulls (or creates) an Apple Distribution certificate and an App Store
         # provisioning profile for com.salino.sali via the App Store Connect API.
