@@ -24,7 +24,8 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
-        "NSMicrophoneUsageDescription": "Microphone access is needed for voice input to add items to your shopping list."
+        "NSMicrophoneUsageDescription": "Microphone access is needed for voice input to add items to your shopping list.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
