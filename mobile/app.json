@@ -43,6 +43,7 @@
       "expo-localization",
       "expo-apple-authentication",
       "@react-native-google-signin/google-signin",
+      "./plugins/withGradlePropsTweaks",
       [
         "./plugins/withAndroidLocaleStrings",
         {

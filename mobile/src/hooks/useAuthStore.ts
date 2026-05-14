@@ -33,7 +33,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: () => {
     const unsubscribe = authRepository.observeAuthState(async (user) => {
       if (user) {
-        const profile = await authRepository.getOrCreateUserProfile();
+        // Race the Firestore profile fetch against a timeout. If Firestore is
+        // briefly unreachable we still want to navigate the user into the app
+        // (Firebase Auth already confirmed their identity). Without this, a
+        // single hanging Firestore call would leave the UI stuck on Loading
+        // forever — the exact symptom that "goes away after killing the app".
+        let profile: UserProfile | null = null;
+        try {
+          profile = await Promise.race<UserProfile | null>([
+            authRepository.getOrCreateUserProfile(),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+          ]);
+        } catch (e) {
+          // Swallow: navigation can proceed without a profile; subsequent
+          // screens will retry as needed.
+        }
         set({ user, profile, isSignedIn: true, isLoading: false });
       } else {
         set({ user: null, profile: null, isSignedIn: false, isLoading: false });

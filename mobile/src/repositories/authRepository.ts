@@ -26,7 +26,9 @@ export const authRepository = {
   signInWithGoogle: async (idToken: string): Promise<void> => {
     const credential = GoogleAuthProvider.credential(idToken);
     await signInWithCredential(auth, credential);
-    await authRepository.getOrCreateUserProfile();
+    // Profile creation is handled exactly once by the auth state observer in
+    // useAuthStore.initialize. Doing it again here would duplicate the
+    // Firestore round-trip on the critical sign-in path.
   },
 
   signInWithApple: async (
@@ -54,17 +56,17 @@ export const authRepository = {
         }
       }
     }
-    await authRepository.getOrCreateUserProfile();
+    // Profile creation handled by the auth state observer; see signInWithGoogle.
   },
 
   signInWithEmail: async (email: string, password: string): Promise<void> => {
     await signInWithEmailAndPassword(auth, email, password);
-    await authRepository.getOrCreateUserProfile();
+    // Profile creation handled by the auth state observer; see signInWithGoogle.
   },
 
   registerWithEmail: async (email: string, password: string): Promise<void> => {
     await createUserWithEmailAndPassword(auth, email, password);
-    await authRepository.getOrCreateUserProfile();
+    // Profile creation handled by the auth state observer; see signInWithGoogle.
   },
 
   getOrCreateUserProfile: async (): Promise<UserProfile | null> => {
