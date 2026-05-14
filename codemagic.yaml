@@ -54,27 +54,51 @@ workflows:
           cd "$EXPO_DIR/ios"
           agvtool new-version -all "$BUILD_NUMBER"
 
-      - name: Refresh App ID capabilities & purge stale App Store profiles
-        # Provisioning profiles are a snapshot of the App ID's capabilities
-        # at the moment they were issued. The first time we add a new
-        # entitlement to the app (e.g. `com.apple.developer.applesignin`
-        # from `expo-apple-authentication` + `usesAppleSignIn: true` in
-        # `app.json`) the previously-issued IOS_APP_STORE profile becomes
-        # stale and the next `xcodebuild archive` fails with:
+      - name: Refresh App ID, purge stale profiles & orphan distribution certs
+        # This step makes the iOS pipeline self-healing against two classes
+        # of App Store Connect drift that otherwise force manual cleanup in
+        # the Apple Developer Portal between builds:
         #
-        #   Provisioning profile "<name>" doesn't include the
-        #   Sign In with Apple capability.
+        # (a) Capability drift. Provisioning profiles are a snapshot of the
+        #     App ID's capabilities at the moment they were issued. The
+        #     first time we add a new entitlement to the app (e.g.
+        #     `com.apple.developer.applesignin` from
+        #     `expo-apple-authentication` + `usesAppleSignIn: true` in
+        #     `app.json`) the previously-issued IOS_APP_STORE profile
+        #     becomes stale and the next `xcodebuild archive` fails with
+        #     "Provisioning profile <X> doesn't include the Y capability".
         #
-        # This step makes the pipeline self-healing for capability drift:
-        #   1. Resolve the Bundle ID resource ID — the App Store Connect
-        #      API addresses Bundle IDs by an alphanumeric internal ID,
-        #      NOT by the dotted "com.foo.bar" string.
-        #   2. Enable Sign in with Apple on the App ID (idempotent — the
-        #      CLI is tolerant of the capability already being on, but we
-        #      still guard with `||` so the build doesn't abort).
-        #   3. Delete every existing IOS_APP_STORE profile bound to that
-        #      Bundle ID, so the next `fetch-signing-files --create`
-        #      regenerates a profile from the *current* capability set.
+        # (b) Certificate quota. Apple caps active Distribution
+        #     certificates at 2 per team. Each Codemagic run generates a
+        #     fresh 2048-bit RSA private key (we have nowhere to persist
+        #     it between ephemeral mac_mini instances without bringing the
+        #     user into the loop), which means *no* previously-issued
+        #     Distribution certificate ever matches it. As soon as both
+        #     slots are full, `fetch-signing-files --create` fails with
+        #     HTTP 409 "You already have a current Distribution
+        #     certificate". The only certs we can purge here are the ones
+        #     whose private key we don't have — which is, by construction,
+        #     every existing Distribution certificate.
+        #
+        # Pipeline:
+        #   1. Resolve the Bundle ID resource id (App Store Connect's API
+        #      addresses Bundle IDs by an alphanumeric internal id, not by
+        #      the dotted "com.foo.bar" string).
+        #   2. Enable Sign in with Apple on the App ID (idempotent; the CLI
+        #      is tolerant of the capability already being on, but we guard
+        #      with `||` so a transient failure can't abort the build).
+        #   3. Delete every IOS_APP_STORE provisioning profile bound to
+        #      that Bundle ID, so the next `fetch-signing-files --create`
+        #      regenerates one matching the *current* capability set.
+        #   4. Revoke every DISTRIBUTION / IOS_DISTRIBUTION certificate so
+        #      the next `fetch-signing-files --create` is guaranteed to be
+        #      under Apple's quota.
+        #
+        # SAFETY: revoking a Distribution certificate disables further
+        # *signing* with that key, but it does NOT invalidate binaries
+        # already uploaded to TestFlight or the App Store — existing
+        # installs keep working. Use this workflow as the only producer of
+        # iOS App Store builds for this Bundle ID.
         #
         # If you add another capability via an Expo plugin in the future
         # (Push Notifications, Associated Domains, ...), just add another
@@ -113,6 +137,23 @@ workflows:
                 app-store-connect profiles delete "$PROFILE_ID" --ignore-not-found
               done
 
+          # Free up Distribution certificate slots. We loop the two type
+          # filters separately because the CLI's `--type` argument accepts
+          # one value at a time for `certificates list`; a cert that
+          # somehow appears under both filters is harmless to "double
+          # delete" thanks to `--ignore-not-found`.
+          for CERT_TYPE in DISTRIBUTION IOS_DISTRIBUTION; do
+            app-store-connect certificates list \
+              --type "$CERT_TYPE" \
+              --json \
+              | jq -r '.[].id' \
+              | while read -r CERT_ID; do
+                  [ -z "$CERT_ID" ] && continue
+                  echo "Revoking orphan $CERT_TYPE certificate: $CERT_ID"
+                  app-store-connect certificates delete "$CERT_ID" --ignore-not-found
+                done
+          done
+
       - name: Fetch & install code signing files
         # Pulls (or creates) an Apple Distribution certificate and an App Store
         # provisioning profile for com.salino.sali via the App Store Connect API.
@@ -129,9 +170,10 @@ workflows:
         #
         # Each run generates a fresh 2048-bit RSA key, which causes a new
         # distribution certificate to be issued in App Store Connect. Apple
-        # caps active distribution certs at 3 per team — revoke old ones at
-        # https://developer.apple.com/account/resources/certificates/list
-        # if you ever hit the quota.
+        # caps active Distribution certs at 2 per team, but the previous
+        # "Refresh App ID, purge stale profiles & orphan distribution
+        # certs" step revokes every existing Distribution cert before this
+        # runs, so the slot is always free.
         script: |
           set -euxo pipefail
           keychain initialize
