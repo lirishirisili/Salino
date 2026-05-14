@@ -132,11 +132,24 @@ workflows:
           # the authoritative check is the verification block below that
           # re-reads the capability list and fails the build if "Sign In
           # with Apple" is still missing.
+          #
+          # `--log-api-calls --verbose` dumps the raw HTTP request and
+          # Apple's response into the log. This is essential when the CLI
+          # silently fails: Apple's APPLE_ID_AUTH capability requires the
+          # `settings` field to specify APPLE_ID_AUTH_APP_CONSENT =
+          # PRIMARY_APP_ID, and depending on the CLI version that body
+          # field is not exposed via `--capability`. When the call fails
+          # the response payload tells us *why* — typically a 400 with
+          # "Settings is required when enabling APPLE_ID_AUTH".
+          set +e
           app-store-connect bundle-ids enable-capabilities \
             "$BUNDLE_ID_RESOURCE" \
             --capability "Sign In with Apple" \
-            2>&1 \
-            || echo "Note: enable-capabilities returned non-zero — will verify below"
+            --log-api-calls --verbose \
+            2>&1
+          ENABLE_EXIT=$?
+          set -e
+          echo "enable-capabilities exited with status $ENABLE_EXIT"
 
           echo "--- Capabilities currently enabled on $BUNDLE_ID AFTER enable call ---"
           app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
