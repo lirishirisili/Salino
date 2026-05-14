@@ -121,10 +121,48 @@ workflows:
           fi
           echo "Resolved Bundle ID resource: $BUNDLE_ID_RESOURCE"
 
+          echo "--- Capabilities currently enabled on $BUNDLE_ID BEFORE enable call ---"
+          app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
+            | tee /tmp/caps_before.json
+          echo "---"
+
+          # Try to enable Sign in with Apple. We deliberately swallow
+          # non-zero exit codes here because the CLI may legitimately
+          # report failure when the capability is already on the App ID;
+          # the authoritative check is the verification block below that
+          # re-reads the capability list and fails the build if "Sign In
+          # with Apple" is still missing.
           app-store-connect bundle-ids enable-capabilities \
             "$BUNDLE_ID_RESOURCE" \
             --capability "Sign In with Apple" \
-            || echo "Note: enable-capabilities returned non-zero (likely already enabled)"
+            2>&1 \
+            || echo "Note: enable-capabilities returned non-zero — will verify below"
+
+          echo "--- Capabilities currently enabled on $BUNDLE_ID AFTER enable call ---"
+          app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
+            | tee /tmp/caps_after.json
+          echo "---"
+
+          # Fail loudly if Sign in with Apple still isn't enabled. Apple
+          # and the Codemagic CLI both serialize this capability under
+          # the type token "APPLE_ID_AUTH" (the human-readable label
+          # "Sign In with Apple" is only used as an input alias for
+          # `enable-capabilities`). Use grep over the raw JSON so the
+          # check stays resilient to upstream CLI/API schema tweaks.
+          if ! grep -qE 'APPLE_ID_AUTH|SIGN_IN_WITH_APPLE' /tmp/caps_after.json; then
+            echo "ERROR: Sign in with Apple is NOT enabled on $BUNDLE_ID." >&2
+            echo "       The provisioning profile regenerated below would" >&2
+            echo "       lack the com.apple.developer.applesignin entitlement" >&2
+            echo "       and 'xcodebuild archive' would fail." >&2
+            echo "       Capability list dump above shows the current state." >&2
+            echo "" >&2
+            echo "Manual recovery (one-time, then re-run this workflow):" >&2
+            echo "  1. https://developer.apple.com/account/resources/identifiers/list" >&2
+            echo "  2. Click $BUNDLE_ID" >&2
+            echo "  3. Check 'Sign In with Apple' and Save" >&2
+            exit 1
+          fi
+          echo "OK: Sign in with Apple is enabled on $BUNDLE_ID."
 
           app-store-connect bundle-ids profiles \
             --bundle-ids "$BUNDLE_ID_RESOURCE" \
