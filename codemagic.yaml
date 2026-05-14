@@ -56,13 +56,23 @@ workflows:
 
       - name: Fetch & install code signing files
         # Pulls (or creates) the Apple Distribution certificate and an App Store
-        # provisioning profile for com.salino.sali via App Store Connect API.
+        # provisioning profile for com.salino.sali via the App Store Connect API.
+        #
+        # The Codemagic CLI needs a local PEM private key to associate the
+        # distribution certificate with — without it you get
+        # "Cannot save Signing Certificates without certificate private key".
+        # A fresh 2048-bit RSA key is generated per run; the resulting cert is
+        # uploaded to App Store Connect bound to this key. (Apple allows up to
+        # 3 active distribution certificates per team — revoke old ones in
+        # ASC → Certificates if you ever hit the quota.)
         script: |
           set -euxo pipefail
           keychain initialize
+          openssl genrsa -out /tmp/certificate_key.pem 2048
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --create
+            --create \
+            --certificate-key /tmp/certificate_key.pem
           keychain add-certificates
           xcode-project use-profiles --project "$XCODE_PROJECT"
 
