@@ -27,13 +27,51 @@ npx expo start
 
 ## Build for Production
 
-```bash
-# iOS
-eas build --platform ios
+This is the single source of truth for both Android and iOS — there is no
+separate native iOS / Android project anymore.
 
-# Android
-eas build --platform android
+### Android
+
+Local build (no Mac required):
+
+```bash
+cd mobile/android
+./gradlew assembleRelease -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease
 ```
+
+Output: `mobile/android/app/build/outputs/apk/release/app-release.apk`.
+
+Or via EAS Build cloud:
+
+```bash
+npx eas build --platform android --profile production
+```
+
+### iOS
+
+iOS builds run on Codemagic — no Mac required locally. Configuration lives in
+the repo root `codemagic.yaml` (workflow `ios-testflight`). One click in the
+Codemagic UI runs `expo prebuild`, installs pods, archives, exports the IPA,
+and uploads it to App Store Connect (TestFlight).
+
+Required Codemagic Environment groups (one-time setup, already configured for
+this project):
+
+- `app-store-connect` — App Store Connect API key:
+  `APP_STORE_CONNECT_PRIVATE_KEY`, `_KEY_IDENTIFIER`, `_ISSUER_ID`.
+- `ios-code-signing` — Apple Distribution certificate password (if the cert
+  is password-protected; new certs created by Codemagic CLI are not).
+
+To run a build:
+
+1. Codemagic → Applications → Salino → **Start new build** → workflow
+   **iOS — Expo TestFlight** → **Start**.
+2. ~15–20 min later the IPA is uploaded to App Store Connect.
+3. Wait ~10–30 min for ASC processing, then add testers under TestFlight.
+
+EAS Build is also still configured via `eas.json` if you ever want to use it
+(`npx eas build --platform ios --profile production`), but Codemagic is the
+canonical path for this project.
 
 ## Architecture
 

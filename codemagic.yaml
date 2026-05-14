@@ -1,160 +1,100 @@
 workflows:
-  ios-debug-build:
-    name: iOS Debug Build
-    instance_type: mac_mini_m2
-    max_build_duration: 60
-    environment:
-      xcode: latest
-      groups:
-        - app-store-connect
-      vars:
-        XCODE_WORKSPACE_DIR: ios
-    scripts:
-      - name: Install XcodeGen
-        script: brew install xcodegen || true
-      - name: Prepare Firebase config
-        script: |
-          chmod +x ios/Scripts/setup_firebase_config.sh
-          ios/Scripts/setup_firebase_config.sh
-      - name: Generate Xcode project
-        script: |
-          cd ios
-          xcodegen generate
-      - name: Build unsigned simulator app
-        script: |
-          cd ios
-          xcodebuild build \
-            -scheme Salino \
-            -destination 'platform=iOS Simulator,name=iPhone 17' \
-            -derivedDataPath "$CM_BUILD_DIR/derivedData" \
-            CODE_SIGNING_ALLOWED=NO
-          # Zip the .app for Appetize.io
-          APP_PATH=$(find "$CM_BUILD_DIR/derivedData" -name "Salino.app" -type d | head -1)
-          echo "Found app at: $APP_PATH"
-          cd "$(dirname "$APP_PATH")"
-          zip -qr "$CM_BUILD_DIR/Salino-simulator.zip" "$(basename "$APP_PATH")"
-      - name: Verify bundle contents
-        script: |
-          APP_PATH=$(find "$CM_BUILD_DIR/derivedData" -name "Salino.app" -type d | head -1)
-          echo "=== .strings files ==="
-          find "$APP_PATH" -name '*.strings' -type f 2>/dev/null || echo 'NONE FOUND'
-          echo "=== .lproj dirs ==="
-          find "$APP_PATH" -name '*.lproj' -type d 2>/dev/null || echo 'NONE FOUND'
-          echo "=== GoogleService-Info.plist ==="
-          find "$APP_PATH" -name 'GoogleService*' 2>/dev/null || echo 'NONE FOUND'
-          echo "=== All top-level files ==="
-          ls -la "$APP_PATH/" 2>/dev/null | head -30
-          echo "=== Copy Bundle Resources phase (pbxproj) ==="
-          grep -c 'Localizable.strings' ios/Salino.xcodeproj/project.pbxproj 2>/dev/null || echo 'NOT FOUND in pbxproj'
-          grep -c 'GoogleService-Info.plist' ios/Salino.xcodeproj/project.pbxproj 2>/dev/null || echo 'NOT FOUND in pbxproj'
-    artifacts:
-      - Salino-simulator.zip
-      - derivedData/**/Build/Products/**/*.app
-
-  ios-testflight-ready:
-    name: iOS TestFlight Archive
+  ios-testflight:
+    name: iOS — Expo TestFlight
     instance_type: mac_mini_m2
     max_build_duration: 90
     environment:
       xcode: latest
+      node: 22
+      cocoapods: default
       groups:
+        # Must exist in Codemagic → Teams → Integrations → Environment variables.
+        # Provides APP_STORE_CONNECT_PRIVATE_KEY, _KEY_IDENTIFIER, _ISSUER_ID.
         - app-store-connect
+        # Provides the signing certificate password (if any) for Codemagic CLI.
         - ios-code-signing
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.salino.sali
+      vars:
+        EXPO_DIR: mobile
+        # `expo prebuild` derives these from app.json `expo.name` = "Haserli".
+        XCODE_PROJECT: mobile/ios/Haserli.xcodeproj
+        XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
+        XCODE_SCHEME: Haserli
+        BUNDLE_ID: com.salino.sali
     scripts:
-      - name: Install XcodeGen
-        script: brew install xcodegen || true
-      - name: Prepare Firebase config
+      - name: Install JS dependencies
         script: |
-          chmod +x ios/Scripts/setup_firebase_config.sh
-          ios/Scripts/setup_firebase_config.sh
-      - name: Generate Xcode project
+          set -euxo pipefail
+          cd "$EXPO_DIR"
+          npm ci
+
+      - name: Run expo prebuild for iOS
+        # Generates mobile/ios/ from app.json + plugins. `--clean` ensures the
+        # build never sees stale state from a previous run on the same machine.
         script: |
-          cd ios
-          xcodegen generate
-      - name: Set up code signing
+          set -euxo pipefail
+          cd "$EXPO_DIR"
+          CI=1 npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods
         script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR/ios"
+          pod install --repo-update
+
+      - name: Set CFBundleVersion to Codemagic build number
+        # $BUILD_NUMBER auto-increments across all Codemagic runs of this app,
+        # so each upload to App Store Connect gets a unique value (ASC rejects
+        # duplicates). The marketing version (CFBundleShortVersionString) stays
+        # as defined in mobile/app.json.
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR/ios"
+          agvtool new-version -all "$BUILD_NUMBER"
+
+      - name: Fetch & install code signing files
+        # Pulls (or creates) the Apple Distribution certificate and an App Store
+        # provisioning profile for com.salino.sali via App Store Connect API.
+        script: |
+          set -euxo pipefail
           keychain initialize
-          openssl genrsa -out /tmp/certificate_key.pem 2048
-          app-store-connect fetch-signing-files "com.salino.sali" \
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --create \
-            --certificate-key /tmp/certificate_key.pem
+            --create
           keychain add-certificates
-          cd ios
-          xcode-project use-profiles --project Salino.xcodeproj
-      - name: Patch Info.plist for App Store validation
-        script: |
-          chmod +x ios/Scripts/patch_app_store_bundle_plist.sh
-          ios/Scripts/patch_app_store_bundle_plist.sh
+          xcode-project use-profiles --project "$XCODE_PROJECT"
+
       - name: Archive
         script: |
-          cd ios
+          set -euxo pipefail
           xcodebuild archive \
-            -project Salino.xcodeproj \
-            -scheme Salino \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
             -configuration Release \
-            -destination "generic/platform=iOS" \
-            -archivePath "$CM_BUILD_DIR/Salino.xcarchive"
+            -destination 'generic/platform=iOS' \
+            -archivePath "$CM_BUILD_DIR/build.xcarchive" \
+            CODE_SIGN_STYLE=Manual
+
       - name: Export IPA
         script: |
+          set -euxo pipefail
           xcodebuild -exportArchive \
-            -archivePath "$CM_BUILD_DIR/Salino.xcarchive" \
+            -archivePath "$CM_BUILD_DIR/build.xcarchive" \
             -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
             -exportOptionsPlist "$HOME/export_options.plist"
-      - name: Verify code signature before upload
-        script: |
-          set -euo pipefail
-          VDIR="$(mktemp -d /tmp/salino-ipa-verify.XXXXXX)"
-          trap 'rm -rf "$VDIR"' EXIT
-          unzip -q "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" -d "$VDIR"
-          APP="$(find "$VDIR/Payload" -maxdepth 1 -name '*.app' | head -1)"
-          echo "=== Checking CFBundleIconName ==="
-          ICON_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" 2>/dev/null || true)"
-          echo "CFBundleIconName: ${ICON_NAME:-MISSING}"
-          if [[ "${ICON_NAME:-}" != "AppIcon" ]]; then
-            echo ">>> CFBundleIconName missing — injecting into IPA"
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" "$APP/Info.plist" 2>/dev/null || \
-            /usr/libexec/PlistBuddy -c "Set :CFBundleIconName AppIcon" "$APP/Info.plist"
-            # Also add CFBundleIcons for legacy validation
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIcons dict" "$APP/Info.plist" 2>/dev/null || true
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon dict" "$APP/Info.plist" 2>/dev/null || true
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName string AppIcon" "$APP/Info.plist" 2>/dev/null || true
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles array" "$APP/Info.plist" 2>/dev/null || true
-            /usr/libexec/PlistBuddy -c "Add :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles:0 string AppIcon60x60" "$APP/Info.plist" 2>/dev/null || true
-            # Re-sign the app after plist modification
-            IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Distribution" | head -1 | awk -F'"' '{print $2}')
-            echo "Re-signing with: $IDENTITY"
-            codesign --force --sign "$IDENTITY" --preserve-metadata=entitlements "$APP"
-            # Repackage IPA
-            cd "$VDIR"
-            rm -f "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa"
-            zip -qr "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" Payload
-            echo "IPA repackaged with CFBundleIconName"
-          fi
-          echo "=== Checking 120px icon ==="
-          find "$APP" -maxdepth 1 -name 'AppIcon*' -print || true
-          echo "=== Final verification ==="
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist"
-      - name: Upload to App Store Connect
-        script: |
-          printf '%s\n' "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" \
-            --apiKey "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            2>&1 || {
-              echo "altool upload failed, trying xcrun notarytool submit..."
-              xcrun notarytool submit "$CM_BUILD_DIR/build/ios/ipa/Salino.ipa" \
-                --key /tmp/AuthKey.p8 \
-                --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-                --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
-                --wait
-            }
+
     artifacts:
-      - build/ios/ipa/*.ipa
-      - "**/*.ipa"
+      - $CM_BUILD_DIR/build/ios/ipa/*.ipa
+      - $CM_BUILD_DIR/build.xcarchive
       - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      # Codemagic handles the App Store Connect upload natively. The build
+      # appears on TestFlight ~10–30 minutes after `BUILD SUCCESSFUL`.
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
