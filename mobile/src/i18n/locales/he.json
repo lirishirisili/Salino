@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "שינוי שפה",
-  "settings_language_change_message": "האפליקציה תופעל מחדש כדי להחיל את השפה החדשה. להמשיך?"
+  "settings_language_change_message": "האפליקציה תופעל מחדש כדי להחיל את השפה החדשה. להמשיך?",
+  "settings_privacy_policy": "מדיניות פרטיות",
+  "settings_privacy_open_error": "לא ניתן לפתוח את קישור מדיניות הפרטיות.",
+  "settings_delete_account": "מחיקת חשבון",
+  "settings_delete_account_confirm": "פעולה זו תמחק לצמיתות את החשבון והפרופיל שלך. אם אתה החבר היחיד בבית, גם רשימת הקניות המשותפת תימחק. אחרת, שאר החברים ישמרו את הרשימה. לא ניתן לבטל.",
+  "settings_delete_account_error": "לא הצלחנו למחוק את החשבון. נסה שוב.",
+  "settings_delete_account_requires_recent_login": "מסיבות אבטחה, התנתק, התחבר מחדש ואז נסה למחוק את החשבון."
 }

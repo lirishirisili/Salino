@@ -8,6 +8,7 @@ interface ActivityState {
   isLoading: boolean;
 
   subscribe: (householdId: string) => () => void;
+  reset: () => void;
 }
 
 export const useActivityStore = create<ActivityState>((set) => ({
@@ -23,4 +24,6 @@ export const useActivityStore = create<ActivityState>((set) => ({
     );
     return () => unsub();
   },
+
+  reset: () => set({ logs: [], isLoading: true }),
 }));

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { User } from 'firebase/auth';
 import { authRepository } from '../repositories';
 import { UserProfile } from '../models';
+import { resetSessionState } from '../session/resetSession';
+import { useHouseholdStore } from './useHouseholdStore';
 
 interface AuthState {
   user: User | null;
@@ -20,7 +22,18 @@ interface AuthState {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
+}
+
+let previousAuthUid: string | null = null;
+
+function applyProfileToHouseholdStore(profile: UserProfile | null): void {
+  if (profile?.activeHouseholdId) {
+    useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId);
+  } else {
+    useHouseholdStore.getState().reset();
+  }
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -32,26 +45,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: () => {
     const unsubscribe = authRepository.observeAuthState(async (user) => {
-      if (user) {
-        // Race the Firestore profile fetch against a timeout. If Firestore is
-        // briefly unreachable we still want to navigate the user into the app
-        // (Firebase Auth already confirmed their identity). Without this, a
-        // single hanging Firestore call would leave the UI stuck on Loading
-        // forever — the exact symptom that "goes away after killing the app".
-        let profile: UserProfile | null = null;
-        try {
-          profile = await Promise.race<UserProfile | null>([
-            authRepository.getOrCreateUserProfile(),
-            new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
-          ]);
-        } catch (e) {
-          // Swallow: navigation can proceed without a profile; subsequent
-          // screens will retry as needed.
-        }
-        set({ user, profile, isSignedIn: true, isLoading: false });
-      } else {
+      if (!user) {
+        previousAuthUid = null;
+        await resetSessionState();
         set({ user: null, profile: null, isSignedIn: false, isLoading: false });
+        return;
       }
+
+      if (previousAuthUid !== user.uid) {
+        await resetSessionState();
+      }
+      previousAuthUid = user.uid;
+
+      set({ isLoading: true, isSignedIn: true, user });
+
+      let profile: UserProfile | null = null;
+      try {
+        profile = await Promise.race<UserProfile | null>([
+          authRepository.getOrCreateUserProfile(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+        ]);
+      } catch {
+        profile = null;
+      }
+
+      applyProfileToHouseholdStore(profile);
+      set({ user, profile, isSignedIn: true, isLoading: false });
     });
     return unsubscribe;
   },
@@ -94,7 +113,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     await authRepository.signOut();
+    previousAuthUid = null;
     set({ user: null, profile: null, isSignedIn: false });
+  },
+
+  deleteAccount: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      await authRepository.deleteAccount();
+      previousAuthUid = null;
+      set({ user: null, profile: null, isSignedIn: false, isLoading: false });
+    } catch (e: any) {
+      const code = e?.code as string | undefined;
+      const errorKey =
+        code === 'auth/requires-recent-login'
+          ? 'settings_delete_account_requires_recent_login'
+          : 'settings_delete_account_error';
+      set({ error: errorKey, isLoading: false });
+      throw e;
+    }
   },
 
   clearError: () => set({ error: null }),

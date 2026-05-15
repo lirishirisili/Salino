@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "تغيير اللغة",
-  "settings_language_change_message": "سيتم إعادة تشغيل التطبيق لتطبيق اللغة الجديدة. متابعة؟"
+  "settings_language_change_message": "سيتم إعادة تشغيل التطبيق لتطبيق اللغة الجديدة. متابعة؟",
+  "settings_privacy_policy": "سياسة الخصوصية",
+  "settings_privacy_open_error": "تعذّر فتح رابط سياسة الخصوصية.",
+  "settings_delete_account": "حذف الحساب",
+  "settings_delete_account_confirm": "سيحذف هذا حسابك وملفك الشخصي نهائياً. إذا كنت العضو الوحيد في البيت، تُحذف القائمة المشتركة أيضاً. وإلا يبقى الباقون على القائمة. لا يمكن التراجع.",
+  "settings_delete_account_error": "تعذّر حذف الحساب. حاول مرة أخرى.",
+  "settings_delete_account_requires_recent_login": "لأسباب أمنية، سجّل الخروج ثم الدخول مرة أخرى ثم احذف الحساب."
 }

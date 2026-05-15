@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -10,7 +13,8 @@ import { Text, TextInput } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useHouseholdStore } from '../src/hooks';
+import { useAuthStore, useHouseholdStore } from '../src/hooks';
+import { PRIVACY_POLICY_URL } from '../src/constants/legal';
 import {
   BrandLogo,
   SalinoGradientBackground,
@@ -24,6 +28,7 @@ export default function HouseholdSetupScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const { createHousehold, joinHousehold, isLoading, error, clearError } = useHouseholdStore();
+  const { signOut, deleteAccount } = useAuthStore();
 
   const [tab, setTab] = useState(0);
   const [householdName, setHouseholdName] = useState('');
@@ -192,7 +197,72 @@ export default function HouseholdSetupScreen() {
                 />
               </View>
             )}
-            <View style={{ height: 32 }} />
+            <View style={{ height: 24 }} />
+            <Pressable
+              onPress={() => {
+                Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                  Alert.alert('', t('settings_privacy_open_error'));
+                });
+              }}
+              style={{ paddingVertical: 8 }}
+            >
+              <Text
+                style={[
+                  Typography.bodySmall,
+                  { color: colors.primary, textAlign: 'center' } as any,
+                ]}
+              >
+                {t('settings_privacy_policy')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Alert.alert(t('settings_delete_account'), t('settings_delete_account_confirm'), [
+                  { text: t('cancel'), style: 'cancel' },
+                  {
+                    text: t('settings_delete_account'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await deleteAccount();
+                        router.replace('/auth');
+                      } catch {
+                        const key =
+                          useAuthStore.getState().error ?? 'settings_delete_account_error';
+                        Alert.alert('', t(key));
+                      }
+                    },
+                  },
+                ]);
+              }}
+              style={{ paddingVertical: 8 }}
+            >
+              <Text
+                style={[
+                  Typography.bodySmall,
+                  { color: colors.error, textAlign: 'center', fontWeight: '600' } as any,
+                ]}
+              >
+                {t('settings_delete_account')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={async () => {
+                await signOut();
+                router.replace('/auth');
+              }}
+              style={{ paddingVertical: 8 }}
+            >
+              <Text
+                style={[
+                  Typography.bodySmall,
+                  { color: colors.onSurfaceVariant, textAlign: 'center' } as any,
+                ]}
+              >
+                {t('settings_sign_out')}
+              </Text>
+            </Pressable>
+            <View style={{ height: 16 }} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

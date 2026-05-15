@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "ቋንቋ ቀይር",
-  "settings_language_change_message": "አዲሱን ቋንቋ ለመተግበር መተግበሪያው ይጀምራል። ይቀጥሉ?"
+  "settings_language_change_message": "አዲሱን ቋንቋ ለመተግበር መተግበሪያው ይጀምራል። ይቀጥሉ?",
+  "settings_privacy_policy": "የግላዊነት ፖሊሲ",
+  "settings_privacy_open_error": "የግላዊነት ፖሊሲ አገናኝ መከፈት አልተቻለም።",
+  "settings_delete_account": "መለያ ሰርዝ",
+  "settings_delete_account_confirm": "ይህ መለያዎን እና መገለጫዎን ለዘለዓለም ይሰርዛል። ብቸኛው አባል ከሆኑ የጋራ ዝርዝሩም ይሰረዛል። ካልሆኑ ሌሎች አባላት ዝርዝሩን ይይዛሉ። መመለስ አይቻልም።",
+  "settings_delete_account_error": "መለያ መሰረዝ አልተሳካም። እንደገና ይሞክሩ።",
+  "settings_delete_account_requires_recent_login": "ለደህንነት ይውጡ፣ እንደገና ይግቡ፣ ከዚያ መለያውን ይሰርዙ።"
 }

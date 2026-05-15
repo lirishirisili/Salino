@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -27,6 +28,7 @@ import {
   SalinoPrimaryButton,
 } from '../src/components';
 import { BorderRadius, Layout, Typography, useIsDark, useThemeColors } from '../src/theme';
+import { PRIVACY_POLICY_URL } from '../src/constants/legal';
 
 function generateRawNonce(length = 32): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
@@ -362,6 +364,24 @@ export default function AuthScreen() {
                       ]}
                     >
                       {isRegister ? t('auth_has_account_sign_in') : t('auth_no_account_register')}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                        Alert.alert('', t('settings_privacy_open_error'));
+                      });
+                    }}
+                    style={{ marginTop: 4, padding: 8 }}
+                  >
+                    <Text
+                      style={[
+                        Typography.bodySmall,
+                        { color: colors.onSurfaceVariant, textAlign: 'center' } as any,
+                      ]}
+                    >
+                      {t('settings_privacy_policy')}
                     </Text>
                   </Pressable>
                 </>

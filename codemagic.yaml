@@ -23,6 +23,8 @@ workflows:
         XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
         XCODE_SCHEME: Haserli
         BUNDLE_ID: com.salino.sali
+        SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataSimulator
+        APPETIZE_ZIP: $CM_BUILD_DIR/Haserli-simulator-appetize.zip
     scripts:
       - name: Install JS dependencies
         script: |
@@ -257,8 +259,38 @@ workflows:
             -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
             -exportOptionsPlist "$HOME/export_options.plist"
 
+      # Appetize.io needs a Simulator .app zip — the IPA above is device-only.
+      - name: Build iOS Simulator zip for Appetize
+        script: |
+          set -euxo pipefail
+          xcodebuild build \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath "$SIMULATOR_DERIVED_DATA" \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO
+
+          APP_PATH=$(
+            find "$SIMULATOR_DERIVED_DATA" -type d -name "*.app" -path "*iphonesimulator*" \
+              | head -1
+          )
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Could not find Simulator .app bundle" >&2
+            find "$SIMULATOR_DERIVED_DATA" -name "*.app" >&2 || true
+            exit 1
+          fi
+          echo "Packaging for Appetize: $APP_PATH"
+          APP_NAME=$(basename "$APP_PATH")
+          cd "$(dirname "$APP_PATH")"
+          rm -f "$APPETIZE_ZIP"
+          zip -ry "$APPETIZE_ZIP" "$APP_NAME"
+          ls -la "$APPETIZE_ZIP"
+
     artifacts:
       - $CM_BUILD_DIR/build/ios/ipa/*.ipa
+      - $CM_BUILD_DIR/Haserli-simulator-appetize.zip
       - $CM_BUILD_DIR/build.xcarchive
       - /tmp/xcodebuild_logs/*.log
 
@@ -270,3 +302,70 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
+
+  # Appetize.io requires an iOS *Simulator* build (.app inside a .zip).
+  # The TestFlight workflow above produces a device IPA — that will NOT run
+  # on Appetize ("App is not a Simulator build"). Use this workflow instead.
+  ios-simulator-appetize:
+    name: iOS — Simulator (Appetize)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: latest
+      node: 22
+      cocoapods: default
+      vars:
+        EXPO_DIR: mobile
+        XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
+        XCODE_SCHEME: Haserli
+        SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataSimulator
+        APPETIZE_ZIP: $CM_BUILD_DIR/Haserli-simulator-appetize.zip
+    scripts:
+      - name: Install JS dependencies
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR"
+          npm ci
+
+      - name: Run expo prebuild for iOS
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR"
+          CI=1 npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR/ios"
+          pod install --repo-update
+
+      - name: Build for iOS Simulator and zip for Appetize
+        script: |
+          set -euxo pipefail
+          xcodebuild build \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath "$SIMULATOR_DERIVED_DATA" \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO
+
+          APP_PATH=$(
+            find "$SIMULATOR_DERIVED_DATA" -type d -name "*.app" -path "*iphonesimulator*" \
+              | head -1
+          )
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Could not find Simulator .app bundle under $SIMULATOR_DERIVED_DATA" >&2
+            find "$SIMULATOR_DERIVED_DATA" -name "*.app" >&2 || true
+            exit 1
+          fi
+          echo "Packaging: $APP_PATH"
+          APP_NAME=$(basename "$APP_PATH")
+          cd "$(dirname "$APP_PATH")"
+          rm -f "$APPETIZE_ZIP"
+          zip -ry "$APPETIZE_ZIP" "$APP_NAME"
+          ls -la "$APPETIZE_ZIP"
+
+    artifacts:
+      - $CM_BUILD_DIR/Haserli-simulator-appetize.zip

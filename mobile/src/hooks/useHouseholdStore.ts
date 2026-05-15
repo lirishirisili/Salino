@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Household, HouseholdMember } from '../models';
 import { householdRepository } from '../repositories';
-import { localGetActiveHouseholdId } from '../local/storage';
+import { useShoppingStore } from './useShoppingStore';
 import { Unsubscribe } from 'firebase/firestore';
 
 interface HouseholdState {
@@ -11,7 +11,9 @@ interface HouseholdState {
   isLoading: boolean;
   error: string | null;
 
-  loadActiveHousehold: () => Promise<void>;
+  /** Authoritative household id from Firestore profile — never trust stale memory. */
+  setActiveHouseholdFromProfile: (householdId: string) => void;
+  reset: () => void;
   createHousehold: (name: string) => Promise<void>;
   joinHousehold: (inviteCode: string) => Promise<void>;
   subscribe: (householdId: string) => () => void;
@@ -27,11 +29,19 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  loadActiveHousehold: async () => {
-    const id = await localGetActiveHouseholdId();
-    if (id) {
-      set({ activeHouseholdId: id });
-    }
+  setActiveHouseholdFromProfile: (householdId: string) => {
+    set({ activeHouseholdId: householdId, household: null, members: [] });
+    void useShoppingStore.getState().preloadFromCache(householdId);
+  },
+
+  reset: () => {
+    set({
+      household: null,
+      members: [],
+      activeHouseholdId: null,
+      isLoading: false,
+      error: null,
+    });
   },
 
   createHousehold: async (name: string) => {
@@ -39,6 +49,7 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
     try {
       const household = await householdRepository.createHousehold(name);
       set({ household, activeHouseholdId: household.id, isLoading: false });
+      void useShoppingStore.getState().preloadFromCache(household.id);
     } catch (e: any) {
       set({ error: 'household_error_generic', isLoading: false });
     }
@@ -49,6 +60,7 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
     try {
       const household = await householdRepository.joinHousehold(inviteCode);
       set({ household, activeHouseholdId: household.id, isLoading: false });
+      void useShoppingStore.getState().preloadFromCache(household.id);
     } catch (e: any) {
       const errorKey = e.message === 'INVALID_CODE' ? 'household_error_invalid_code' : 'household_error_generic';
       set({ error: errorKey, isLoading: false });

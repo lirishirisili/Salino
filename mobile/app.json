@@ -21,6 +21,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.salino.sali",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
@@ -43,7 +44,12 @@
       "expo-router",
       "expo-localization",
       "expo-apple-authentication",
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.937718857697-6ui8hs9m3vo4sdr2irippl26r39c18sh"
+        }
+      ],
       "./plugins/withGradlePropsTweaks",
       [
         "./plugins/withAndroidLocaleStrings",

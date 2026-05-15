@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -12,6 +13,7 @@ import {
   Timestamp,
   Unsubscribe,
   writeBatch,
+  type CollectionReference,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { ShoppingItem, Household, HouseholdMember, ActivityLog, RecurringItem } from '../models';
@@ -191,6 +193,15 @@ export const firestoreLeaveHousehold = async (householdId: string, userId: strin
   await deleteDoc(ref);
 };
 
+export const firestoreIsHouseholdMember = async (
+  householdId: string,
+  userId: string
+): Promise<boolean> => {
+  const ref = doc(db, 'households', householdId, 'members', userId);
+  const snap = await getDoc(ref);
+  return snap.exists();
+};
+
 export const firestoreUpdateHouseholdName = async (householdId: string, name: string) => {
   const ref = doc(db, 'households', householdId);
   await updateDoc(ref, { name });
@@ -207,6 +218,35 @@ export const firestoreGetUser = async (userId: string) => {
 export const firestoreSetUser = async (userId: string, data: Record<string, unknown>) => {
   const ref = doc(db, 'users', userId);
   await setDoc(ref, data, { merge: true });
+};
+
+export const firestoreDeleteUser = async (userId: string) => {
+  await deleteDoc(doc(db, 'users', userId));
+};
+
+export const firestoreGetMemberCount = async (householdId: string): Promise<number> => {
+  const snap = await getDocs(membersCol(householdId));
+  return snap.size;
+};
+
+async function deleteCollection(ref: CollectionReference): Promise<void> {
+  const snap = await getDocs(ref);
+  if (snap.empty) return;
+  const batch = writeBatch(db);
+  snap.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+  if (snap.size >= 500) {
+    await deleteCollection(ref);
+  }
+}
+
+/** Removes household document and all subcollections (items, members, activity, recurring). */
+export const firestoreDeleteHousehold = async (householdId: string): Promise<void> => {
+  await deleteCollection(itemsCol(householdId));
+  await deleteCollection(membersCol(householdId));
+  await deleteCollection(activityCol(householdId));
+  await deleteCollection(recurringCol(householdId));
+  await deleteDoc(doc(db, 'households', householdId));
 };
 
 // Find household by invite code

@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "Changer la langue",
-  "settings_language_change_message": "L'application redémarrera pour appliquer la nouvelle langue. Continuer ?"
+  "settings_language_change_message": "L'application redémarrera pour appliquer la nouvelle langue. Continuer ?",
+  "settings_privacy_policy": "Politique de confidentialité",
+  "settings_privacy_open_error": "Impossible d'ouvrir le lien de la politique de confidentialité.",
+  "settings_delete_account": "Supprimer le compte",
+  "settings_delete_account_confirm": "Cela supprime définitivement votre compte et votre profil. Si vous êtes le seul membre du foyer, la liste partagée est aussi supprimée. Sinon, les autres membres la conservent. Action irréversible.",
+  "settings_delete_account_error": "Impossible de supprimer le compte. Réessayez.",
+  "settings_delete_account_requires_recent_login": "Pour des raisons de sécurité, déconnectez-vous, reconnectez-vous, puis supprimez le compte."
 }

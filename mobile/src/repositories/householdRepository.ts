@@ -56,7 +56,7 @@ export const householdRepository = {
     await firestoreCreateHousehold(household, member);
     await localSetHousehold(household);
     await localSetMembers(household.id, [member]);
-    await localSetActiveHouseholdId(household.id);
+    await localSetActiveHouseholdId(uid, household.id);
     await firestoreSetUser(uid, { activeHouseholdId: household.id });
 
     return household;
@@ -80,7 +80,7 @@ export const householdRepository = {
 
     await firestoreJoinHousehold(found.id, member);
     await localSetHousehold(found);
-    await localSetActiveHouseholdId(found.id);
+    await localSetActiveHouseholdId(uid, found.id);
     await firestoreSetUser(uid, { activeHouseholdId: found.id });
 
     return found;
@@ -120,7 +120,7 @@ export const householdRepository = {
     const uid = auth.currentUser!.uid;
     await firestoreLeaveHousehold(householdId, uid);
     await localClearHouseholdData(householdId);
-    await localClearActiveHousehold();
+    await localClearActiveHousehold(uid);
     await firestoreSetUser(uid, { activeHouseholdId: null });
   },
 

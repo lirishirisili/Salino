@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "Change Language",
-  "settings_language_change_message": "The app will restart to apply the new language. Continue?"
+  "settings_language_change_message": "The app will restart to apply the new language. Continue?",
+  "settings_privacy_policy": "Privacy Policy",
+  "settings_privacy_open_error": "Couldn't open the privacy policy link.",
+  "settings_delete_account": "Delete account",
+  "settings_delete_account_confirm": "This permanently deletes your account and profile. If you're the only household member, your shared list is deleted too. Otherwise, other members keep the list. This can't be undone.",
+  "settings_delete_account_error": "Couldn't delete your account. Try again.",
+  "settings_delete_account_requires_recent_login": "For security, sign out, sign in again, then delete your account."
 }

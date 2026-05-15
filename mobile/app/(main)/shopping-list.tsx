@@ -19,6 +19,7 @@ import {
   BrandLogo,
   EmptyState,
   HeroSuggestionsCard,
+  LoadingIndicator,
   SalinoGradientBackground,
   SalinoSectionTitle,
   SalinoWebAppBarTitle,
@@ -43,6 +44,8 @@ export default function ShoppingListScreen() {
     markAsBought,
     markAsActive,
     deleteItem,
+    hasReceivedRemoteSnapshot,
+    isLoading,
   } = useShoppingStore();
 
   const [boughtExpanded, setBoughtExpanded] = useState(false);
@@ -145,7 +148,10 @@ export default function ShoppingListScreen() {
     </View>
   );
 
-  const isEmpty = filteredActive.length === 0 && boughtItems.length === 0;
+  const hasAnyItems = activeItems.length > 0 || boughtItems.length > 0;
+  const showInitialLoading = !hasReceivedRemoteSnapshot && !hasAnyItems && isLoading;
+  const isEmpty =
+    hasReceivedRemoteSnapshot && filteredActive.length === 0 && boughtItems.length === 0;
 
   return (
     <SalinoGradientBackground>
@@ -155,7 +161,19 @@ export default function ShoppingListScreen() {
         title={t('shopping_list_title')}
         badge={t('shopping_list_live_badge')}
       />
-      {isEmpty && suggestions.length === 0 ? (
+      {showInitialLoading ? (
+        <View style={styles.loadingWrap}>
+          <LoadingIndicator />
+          <Text
+            style={[
+              Typography.bodyMedium,
+              { color: colors.onSurfaceVariant, marginTop: 12, textAlign: 'center' } as any,
+            ]}
+          >
+            {t('loading')}
+          </Text>
+        </View>
+      ) : isEmpty && suggestions.length === 0 ? (
         <View
           style={{
             flex: 1,
@@ -401,6 +419,12 @@ function FabButton({
 }
 
 const styles = StyleSheet.create({
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 80,
+  },
   curveWrap: {
     width: '100%',
     overflow: 'hidden',

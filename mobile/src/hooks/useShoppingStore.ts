@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { ShoppingItem, ItemStatus, SuggestionItem, RecurringItem } from '../models';
+import { ShoppingItem, RecurringItem, SuggestionItem } from '../models';
 import { shoppingRepository, recurringRepository } from '../repositories';
-import { buildSuggestions } from '../services/suggestionEngine';
+import { localGetRecurring } from '../local/storage';
+import { buildShoppingListState } from './shoppingListState';
 import { Unsubscribe } from 'firebase/firestore';
 
 interface ShoppingListState {
@@ -12,8 +13,12 @@ interface ShoppingListState {
   recurringItems: RecurringItem[];
   searchQuery: string;
   selectedCategory: string | null;
+  /** True until first Firestore snapshot (or error) for the current household. */
+  hasReceivedRemoteSnapshot: boolean;
   isLoading: boolean;
+  subscribedHouseholdId: string | null;
 
+  preloadFromCache: (householdId: string) => Promise<void>;
   subscribe: (householdId: string) => () => void;
   addItem: (householdId: string, item: Parameters<typeof shoppingRepository.addItem>[1]) => Promise<ShoppingItem>;
   updateItem: (householdId: string, item: ShoppingItem) => Promise<void>;
@@ -23,6 +28,15 @@ interface ShoppingListState {
   toggleFavorite: (householdId: string, item: ShoppingItem) => Promise<void>;
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string | null) => void;
+  reset: () => void;
+}
+
+async function readCachedList(householdId: string) {
+  const [items, recurringItems] = await Promise.all([
+    shoppingRepository.getLocalItems(householdId),
+    localGetRecurring(householdId),
+  ]);
+  return { items, recurringItems };
 }
 
 export const useShoppingStore = create<ShoppingListState>((set, get) => ({
@@ -33,30 +47,103 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   recurringItems: [],
   searchQuery: '',
   selectedCategory: null,
+  hasReceivedRemoteSnapshot: false,
   isLoading: true,
+  subscribedHouseholdId: null,
+
+  preloadFromCache: async (householdId: string) => {
+    try {
+      const { items, recurringItems } = await readCachedList(householdId);
+      if (items.length === 0) return;
+      set({
+        subscribedHouseholdId: householdId,
+        ...buildShoppingListState(items, recurringItems),
+        isLoading: false,
+      });
+    } catch {
+      // Non-fatal — Firestore listener will populate.
+    }
+  },
 
   subscribe: (householdId: string) => {
+    const switchingHousehold = get().subscribedHouseholdId !== householdId;
+
+    if (switchingHousehold) {
+      set({
+        subscribedHouseholdId: householdId,
+        hasReceivedRemoteSnapshot: false,
+        isLoading: true,
+        items: [],
+        activeItems: [],
+        boughtItems: [],
+        suggestions: [],
+        recurringItems: [],
+        searchQuery: get().searchQuery,
+        selectedCategory: get().selectedCategory,
+      });
+    } else {
+      set({
+        subscribedHouseholdId: householdId,
+        hasReceivedRemoteSnapshot: false,
+        isLoading: get().items.length === 0,
+      });
+    }
+
+    let cancelled = false;
+
+    const applyRemote = (items: ShoppingItem[]) => {
+      if (cancelled || get().subscribedHouseholdId !== householdId) return;
+      const recurringItems = get().recurringItems;
+      set({
+        ...buildShoppingListState(items, recurringItems),
+        isLoading: false,
+        hasReceivedRemoteSnapshot: true,
+      });
+    };
+
+    void (async () => {
+      try {
+        const { items, recurringItems } = await readCachedList(householdId);
+        if (cancelled || get().subscribedHouseholdId !== householdId) return;
+        if (items.length > 0) {
+          set({
+            ...buildShoppingListState(items, recurringItems),
+            isLoading: false,
+          });
+        }
+      } catch {
+        // Firestore will follow.
+      }
+    })();
+
     const unsubs: Unsubscribe[] = [];
 
     unsubs.push(
-      shoppingRepository.subscribeToItems(householdId, (items) => {
-        const activeItems = items.filter((i) => i.status === ItemStatus.ACTIVE);
-        const boughtItems = items.filter((i) => i.status === ItemStatus.BOUGHT);
-        const { recurringItems } = get();
-        const suggestions = buildSuggestions(activeItems, boughtItems, recurringItems);
-        set({ items, activeItems, boughtItems, suggestions, isLoading: false });
-      })
+      shoppingRepository.subscribeToItems(
+        householdId,
+        applyRemote,
+        () => {
+          if (cancelled || get().subscribedHouseholdId !== householdId) return;
+          set({ isLoading: false, hasReceivedRemoteSnapshot: true });
+        }
+      )
     );
 
     unsubs.push(
       recurringRepository.subscribeToRecurringItems(householdId, (recurringItems) => {
-        const { activeItems, boughtItems } = get();
-        const suggestions = buildSuggestions(activeItems, boughtItems, recurringItems);
-        set({ recurringItems, suggestions });
+        if (cancelled || get().subscribedHouseholdId !== householdId) return;
+        const { items } = get();
+        set({
+          recurringItems,
+          ...buildShoppingListState(items, recurringItems),
+        });
       })
     );
 
-    return () => unsubs.forEach((u) => u());
+    return () => {
+      cancelled = true;
+      unsubs.forEach((u) => u());
+    };
   },
 
   addItem: async (householdId, item) => {
@@ -87,4 +174,18 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
 
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedCategory: (category) => set({ selectedCategory: category }),
+
+  reset: () =>
+    set({
+      items: [],
+      activeItems: [],
+      boughtItems: [],
+      suggestions: [],
+      recurringItems: [],
+      searchQuery: '',
+      selectedCategory: null,
+      hasReceivedRemoteSnapshot: false,
+      isLoading: true,
+      subscribedHouseholdId: null,
+    }),
 }));

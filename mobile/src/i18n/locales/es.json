@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "Cambiar idioma",
-  "settings_language_change_message": "La app se reiniciará para aplicar el nuevo idioma. ¿Continuar?"
+  "settings_language_change_message": "La app se reiniciará para aplicar el nuevo idioma. ¿Continuar?",
+  "settings_privacy_policy": "Política de privacidad",
+  "settings_privacy_open_error": "No se pudo abrir el enlace de la política de privacidad.",
+  "settings_delete_account": "Eliminar cuenta",
+  "settings_delete_account_confirm": "Esto elimina permanentemente tu cuenta y perfil. Si eres el único miembro del hogar, también se elimina la lista compartida. Si no, los demás la conservan. No se puede deshacer.",
+  "settings_delete_account_error": "No se pudo eliminar la cuenta. Inténtalo de nuevo.",
+  "settings_delete_account_requires_recent_login": "Por seguridad, cierra sesión, vuelve a entrar y luego elimina la cuenta."
 }

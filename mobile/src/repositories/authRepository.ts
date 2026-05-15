@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  deleteUser,
   onAuthStateChanged,
   updateProfile,
   GoogleAuthProvider,
@@ -10,8 +11,21 @@ import {
   User,
 } from 'firebase/auth';
 import { auth } from '../remote/firebase';
-import { firestoreGetUser, firestoreSetUser } from '../remote/firestoreService';
-import { localClearAll, localSetActiveHouseholdId } from '../local/storage';
+import {
+  firestoreGetUser,
+  firestoreSetUser,
+  firestoreDeleteUser,
+  firestoreGetMemberCount,
+  firestoreDeleteHousehold,
+  firestoreLeaveHousehold,
+  firestoreIsHouseholdMember,
+} from '../remote/firestoreService';
+import {
+  localSetActiveHouseholdId,
+  localClearHouseholdData,
+  localClearActiveHousehold,
+} from '../local/storage';
+import { resetSessionState } from '../session/resetSession';
 import { UserProfile } from '../models';
 
 export const authRepository = {
@@ -75,10 +89,20 @@ export const authRepository = {
 
     const existing = await firestoreGetUser(user.uid);
     if (existing) {
-      if (existing.activeHouseholdId) {
-        await localSetActiveHouseholdId(existing.activeHouseholdId as string);
+      let activeHouseholdId = (existing.activeHouseholdId as string | null) ?? null;
+      if (activeHouseholdId) {
+        const isMember = await firestoreIsHouseholdMember(activeHouseholdId, user.uid);
+        if (!isMember) {
+          activeHouseholdId = null;
+          await firestoreSetUser(user.uid, { activeHouseholdId: null });
+        } else {
+          await localSetActiveHouseholdId(user.uid, activeHouseholdId);
+        }
       }
-      return existing as unknown as UserProfile;
+      return {
+        ...(existing as unknown as UserProfile),
+        activeHouseholdId,
+      };
     }
 
     const profile: UserProfile = {
@@ -95,12 +119,38 @@ export const authRepository = {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
     await firestoreSetUser(uid, { activeHouseholdId: householdId });
-    await localSetActiveHouseholdId(householdId);
+    await localSetActiveHouseholdId(uid, householdId);
   },
 
   signOut: async (): Promise<void> => {
-    await localClearAll();
+    await resetSessionState();
     await firebaseSignOut(auth);
+  },
+
+  deleteAccount: async (): Promise<void> => {
+    const user = auth.currentUser;
+    if (!user) {
+      throw Object.assign(new Error('Not signed in'), { code: 'auth/not-signed-in' });
+    }
+
+    const profile = await firestoreGetUser(user.uid);
+    const householdId =
+      (profile?.activeHouseholdId as string | null | undefined) ?? null;
+
+    if (householdId) {
+      const memberCount = await firestoreGetMemberCount(householdId);
+      if (memberCount <= 1) {
+        await firestoreDeleteHousehold(householdId);
+      } else {
+        await firestoreLeaveHousehold(householdId, user.uid);
+      }
+      await localClearHouseholdData(householdId);
+      await localClearActiveHousehold(user.uid);
+    }
+
+    await firestoreDeleteUser(user.uid);
+    await resetSessionState();
+    await deleteUser(user);
   },
 
   getDisplayName: (): string => {

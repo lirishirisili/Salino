@@ -7,7 +7,9 @@ const KEYS = {
   MEMBERS: (hId: string) => `@members_${hId}`,
   ACTIVITY: (hId: string) => `@activity_${hId}`,
   RECURRING: (hId: string) => `@recurring_${hId}`,
-  ACTIVE_HOUSEHOLD: '@active_household_id',
+  /** @deprecated Global key — cleared on read; use per-user key below. */
+  LEGACY_ACTIVE_HOUSEHOLD: '@active_household_id',
+  ACTIVE_HOUSEHOLD: (userId: string) => `@active_household_${userId}`,
   PENDING_OPS: (hId: string) => `@pending_ops_${hId}`,
 };
 
@@ -116,17 +118,27 @@ export const localUpsertRecurring = async (householdId: string, item: RecurringI
   await localSetRecurring(householdId, items);
 };
 
-// Active Household
-export const localGetActiveHouseholdId = async (): Promise<string | null> => {
-  return AsyncStorage.getItem(KEYS.ACTIVE_HOUSEHOLD);
+// Active household — scoped per Firebase uid so accounts cannot leak into each other.
+export const localGetActiveHouseholdId = async (userId: string): Promise<string | null> => {
+  const scoped = await AsyncStorage.getItem(KEYS.ACTIVE_HOUSEHOLD(userId));
+  if (scoped) return scoped;
+  const legacy = await AsyncStorage.getItem(KEYS.LEGACY_ACTIVE_HOUSEHOLD);
+  if (legacy) {
+    await AsyncStorage.removeItem(KEYS.LEGACY_ACTIVE_HOUSEHOLD);
+  }
+  return null;
 };
 
-export const localSetActiveHouseholdId = async (id: string): Promise<void> => {
-  await AsyncStorage.setItem(KEYS.ACTIVE_HOUSEHOLD, id);
+export const localSetActiveHouseholdId = async (userId: string, id: string): Promise<void> => {
+  await AsyncStorage.removeItem(KEYS.LEGACY_ACTIVE_HOUSEHOLD);
+  await AsyncStorage.setItem(KEYS.ACTIVE_HOUSEHOLD(userId), id);
 };
 
-export const localClearActiveHousehold = async (): Promise<void> => {
-  await AsyncStorage.removeItem(KEYS.ACTIVE_HOUSEHOLD);
+export const localClearActiveHousehold = async (userId: string): Promise<void> => {
+  await AsyncStorage.multiRemove([
+    KEYS.ACTIVE_HOUSEHOLD(userId),
+    KEYS.LEGACY_ACTIVE_HOUSEHOLD,
+  ]);
 };
 
 // Pending Sync Operations

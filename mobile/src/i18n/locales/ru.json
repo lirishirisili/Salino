@@ -185,5 +185,11 @@
   "language_ru": "Русский",
   "language_am": "አማርኛ",
   "settings_language_change_title": "Сменить язык",
-  "settings_language_change_message": "Приложение перезапустится для применения нового языка. Продолжить?"
+  "settings_language_change_message": "Приложение перезапустится для применения нового языка. Продолжить?",
+  "settings_privacy_policy": "Политика конфиденциальности",
+  "settings_privacy_open_error": "Не удалось открыть ссылку на политику конфиденциальности.",
+  "settings_delete_account": "Удалить аккаунт",
+  "settings_delete_account_confirm": "Это навсегда удалит ваш аккаунт и профиль. Если вы единственный участник дома, общий список тоже удалится. Иначе список останется у других. Отменить нельзя.",
+  "settings_delete_account_error": "Не удалось удалить аккаунт. Попробуйте снова.",
+  "settings_delete_account_requires_recent_login": "В целях безопасности выйдите, войдите снова, затем удалите аккаунт."
 }

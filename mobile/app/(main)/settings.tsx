@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   DevSettings,
   I18nManager,
+  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -24,12 +26,13 @@ import {
   SalinoWebAppBarTitle,
 } from '../../src/components';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
+import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const { signOut, profile } = useAuthStore();
+  const { signOut, deleteAccount, profile, isLoading: authLoading } = useAuthStore();
   const {
     household,
     members,
@@ -41,7 +44,15 @@ export default function SettingsScreen() {
   const [showSignOut, setShowSignOut] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
   const [showLanguage, setShowLanguage] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [newName, setNewName] = useState(household?.name || '');
+
+  const openPrivacyPolicy = () => {
+    Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+      Alert.alert('', t('settings_privacy_open_error'));
+    });
+  };
 
   const handleCopy = () => {
     Alert.alert('', t('household_invite_code_copied'));
@@ -64,6 +75,20 @@ export default function SettingsScreen() {
     setShowSignOut(false);
     await signOut();
     router.replace('/auth');
+  };
+
+  const handleDeleteAccount = async () => {
+    setShowDeleteAccount(false);
+    setDeletingAccount(true);
+    try {
+      await deleteAccount();
+      router.replace('/auth');
+    } catch {
+      const errorKey = useAuthStore.getState().error ?? 'settings_delete_account_error';
+      Alert.alert('', t(errorKey));
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   const handleSaveName = async () => {
@@ -233,8 +258,24 @@ export default function SettingsScreen() {
             )}
             <Divider />
             <Pressable
+              onPress={openPrivacyPolicy}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 10 }}
+            >
+              <MaterialCommunityIcons
+                name="shield-account-outline"
+                size={20}
+                color={colors.onSurfaceVariant}
+              />
+              <Text style={[Typography.bodyLarge, { flex: 1, color: colors.primary } as any]}>
+                {t('settings_privacy_policy')}
+              </Text>
+              <MaterialCommunityIcons name="open-in-new" size={18} color={colors.onSurfaceVariant} />
+            </Pressable>
+            <Divider />
+            <Pressable
               onPress={() => setShowSignOut(true)}
-              style={{ paddingVertical: 12 }}
+              disabled={deletingAccount || authLoading}
+              style={{ paddingVertical: 12, opacity: deletingAccount ? 0.5 : 1 }}
             >
               <Text
                 style={[
@@ -243,6 +284,31 @@ export default function SettingsScreen() {
                 ]}
               >
                 {t('settings_sign_out')}
+              </Text>
+            </Pressable>
+            <Divider />
+            <Pressable
+              onPress={() => setShowDeleteAccount(true)}
+              disabled={deletingAccount || authLoading}
+              style={{
+                paddingVertical: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                opacity: deletingAccount ? 0.5 : 1,
+              }}
+            >
+              {deletingAccount ? (
+                <ActivityIndicator size="small" color={colors.error} />
+              ) : null}
+              <Text
+                style={[
+                  Typography.labelLarge,
+                  { color: colors.error, fontWeight: '600', textAlign: 'center' } as any,
+                ]}
+              >
+                {t('settings_delete_account')}
               </Text>
             </Pressable>
           </SalinoSurfaceCard>
@@ -293,6 +359,19 @@ export default function SettingsScreen() {
           <Dialog.Actions>
             <Button onPress={() => setShowSignOut(false)}>{t('no')}</Button>
             <Button onPress={handleSignOut} textColor={colors.error}>{t('yes')}</Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={showDeleteAccount} onDismiss={() => setShowDeleteAccount(false)}>
+          <Dialog.Title>{t('settings_delete_account')}</Dialog.Title>
+          <Dialog.Content>
+            <Text>{t('settings_delete_account_confirm')}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowDeleteAccount(false)}>{t('cancel')}</Button>
+            <Button onPress={handleDeleteAccount} textColor={colors.error}>
+              {t('settings_delete_account')}
+            </Button>
           </Dialog.Actions>
         </Dialog>
 
