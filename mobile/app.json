@@ -68,6 +68,7 @@
     ],
     "extra": {
       "googleWebClientId": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
+      "googleIosClientId": "937718857697-6ui8hs9m3vo4sdr2irippl26r39c18sh.apps.googleusercontent.com",
       "router": {},
       "eas": {
         "projectId": "14886e07-e712-4577-a8a0-3adcbe8213cc"

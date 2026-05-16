@@ -42,6 +42,8 @@ function generateRawNonce(length = 32): string {
 
 const GOOGLE_WEB_CLIENT_ID: string | undefined = (Constants.expoConfig?.extra as any)
   ?.googleWebClientId;
+const GOOGLE_IOS_CLIENT_ID: string | undefined = (Constants.expoConfig?.extra as any)
+  ?.googleIosClientId;
 
 // `@react-native-google-signin/google-signin` requires a native module that is not
 // bundled into Expo Go. We detect the runtime environment via expo-constants so we
@@ -57,6 +59,7 @@ function ensureGoogleConfigured() {
   if (!GOOGLE_WEB_CLIENT_ID) return;
   GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
     offlineAccess: false,
   });
   googleConfigured = true;
@@ -73,7 +76,7 @@ export default function AuthScreen() {
     signInWithGoogle,
     signInWithApple,
     error,
-    isLoading,
+    isSubmitting,
     clearError,
   } = useAuthStore();
 
@@ -155,12 +158,20 @@ export default function AuthScreen() {
         Alert.alert(t('auth_sign_in_apple'), t('auth_error_generic'));
         return;
       }
-      await signInWithApple(credential.identityToken, rawNonce, credential.fullName ?? null);
+      await signInWithApple(
+        credential.identityToken,
+        rawNonce,
+        credential.fullName ?? null
+      );
     } catch (e: any) {
       if (e?.code === 'ERR_REQUEST_CANCELED' || e?.code === 'ERR_CANCELED') {
         return;
       }
-      Alert.alert(t('auth_sign_in_apple'), e?.message ?? t('auth_error_generic'));
+      const storeError = useAuthStore.getState().error;
+      Alert.alert(
+        t('auth_sign_in_apple'),
+        storeError ? t(storeError) : e?.message ?? t('auth_error_apple_failed')
+      );
     }
   };
 
@@ -230,20 +241,7 @@ export default function AuthScreen() {
                 </Text>
               )}
 
-              {isLoading ? (
-                <View style={{ alignItems: 'center', marginVertical: 16 }}>
-                  <ActivityIndicator color={colors.primary} />
-                  <Text
-                    style={[
-                      Typography.bodyMedium,
-                      { color: colors.onSurfaceVariant, marginTop: 12 } as any,
-                    ]}
-                  >
-                    {t('auth_signing_in')}
-                  </Text>
-                </View>
-              ) : (
-                <>
+              <>
                   <Pressable
                     onPress={handleGoogleSignIn}
                     style={({ pressed }) => [
@@ -346,8 +344,10 @@ export default function AuthScreen() {
                   <SalinoPrimaryButton
                     text={isRegister ? t('auth_register_email') : t('auth_sign_in_email')}
                     onPress={handleEmailAuth}
-                    enabled={!!email.trim() && password.length >= 6}
-                    loading={isLoading}
+                    enabled={
+                      !isSubmitting && !!email.trim() && password.length >= 6
+                    }
+                    loading={isSubmitting}
                   />
 
                   <Pressable
@@ -384,8 +384,7 @@ export default function AuthScreen() {
                       {t('settings_privacy_policy')}
                     </Text>
                   </Pressable>
-                </>
-              )}
+              </>
             </View>
           </View>
         </ScrollView>

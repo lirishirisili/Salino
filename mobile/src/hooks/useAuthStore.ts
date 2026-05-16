@@ -9,6 +9,8 @@ interface AuthState {
   user: User | null;
   profile: UserProfile | null;
   isLoading: boolean;
+  /** True while a sign-in/register action is in flight (not app bootstrap). */
+  isSubmitting: boolean;
   error: string | null;
   isSignedIn: boolean;
 
@@ -40,6 +42,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   isLoading: true,
+  isSubmitting: false,
   error: null,
   isSignedIn: false,
 
@@ -48,7 +51,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!user) {
         previousAuthUid = null;
         await resetSessionState();
-        set({ user: null, profile: null, isSignedIn: false, isLoading: false });
+        set({
+          user: null,
+          profile: null,
+          isSignedIn: false,
+          isLoading: false,
+          isSubmitting: false,
+        });
         return;
       }
 
@@ -57,7 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       previousAuthUid = user.uid;
 
-      set({ isLoading: true, isSignedIn: true, user });
+      set({ isLoading: true, isSubmitting: true, isSignedIn: true, user });
 
       let profile: UserProfile | null = null;
       try {
@@ -70,44 +79,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       applyProfileToHouseholdStore(profile);
-      set({ user, profile, isSignedIn: true, isLoading: false });
+      set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
     });
     return unsubscribe;
   },
 
   signInWithGoogle: async (idToken: string) => {
-    set({ isLoading: true, error: null });
+    set({ isSubmitting: true, error: null });
     try {
       await authRepository.signInWithGoogle(idToken);
     } catch (e: any) {
-      set({ error: mapAuthError(e.code), isLoading: false });
+      set({ error: mapAuthError(e), isSubmitting: false });
     }
   },
 
   signInWithApple: async (identityToken, rawNonce, fullName) => {
-    set({ isLoading: true, error: null });
+    set({ isSubmitting: true, error: null });
     try {
       await authRepository.signInWithApple(identityToken, rawNonce, fullName);
-    } catch (e: any) {
-      set({ error: mapAuthError(e.code), isLoading: false });
+    } catch (e: unknown) {
+      set({ error: mapAppleAuthError(e), isSubmitting: false });
+      throw e;
     }
   },
 
   signInWithEmail: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
+    set({ isSubmitting: true, error: null });
     try {
       await authRepository.signInWithEmail(email, password);
     } catch (e: any) {
-      set({ error: mapAuthError(e.code), isLoading: false });
+      set({ error: mapAuthError(e), isSubmitting: false });
     }
   },
 
   registerWithEmail: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
+    set({ isSubmitting: true, error: null });
     try {
       await authRepository.registerWithEmail(email, password);
     } catch (e: any) {
-      set({ error: mapAuthError(e.code), isLoading: false });
+      set({ error: mapAuthError(e), isSubmitting: false });
     }
   },
 
@@ -137,10 +147,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearError: () => set({ error: null }),
 }));
 
-function mapAuthError(code: string): string {
+function mapAppleAuthError(error: unknown): string {
+  const code = (error as { code?: string })?.code;
+  if (__DEV__) {
+    console.warn('[auth][apple]', code, error);
+  }
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/invalid-oauth-provider-token':
+      return 'auth_error_apple_firebase';
+    case 'auth/network-request-failed':
+      return 'auth_error_network';
+    case 'auth/operation-not-allowed':
+      return 'auth_error_operation_not_allowed';
+    default:
+      return 'auth_error_apple_failed';
+  }
+}
+
+function mapAuthError(error: unknown): string {
+  const code =
+    (error as { code?: string })?.code ??
+    (typeof error === 'string' ? error : undefined);
+  if (__DEV__ && code) {
+    console.warn('[auth]', code, error);
+  }
   switch (code) {
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
+    case 'auth/invalid-login-credentials':
       return 'auth_error_invalid_credentials';
     case 'auth/user-not-found':
       return 'auth_error_user_not_found';
@@ -152,6 +187,13 @@ function mapAuthError(code: string): string {
       return 'auth_error_weak_password';
     case 'auth/too-many-requests':
       return 'auth_error_too_many_requests';
+    case 'auth/network-request-failed':
+      return 'auth_error_network';
+    case 'auth/operation-not-allowed':
+      return 'auth_error_operation_not_allowed';
+    case 'auth/invalid-api-key':
+    case 'auth/app-not-authorized':
+      return 'auth_error_config';
     default:
       return 'auth_error_generic';
   }
