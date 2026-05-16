@@ -407,12 +407,15 @@ workflows:
           pod install --repo-update
 
       - name: Build Simulator .app for App Preview
+        # Debug expects a running Metro packager (red screen in App Preview).
+        # Release runs Expo's export:embed step and ships JS inside the .app.
         script: |
           set -euxo pipefail
+          export CI=1
           xcodebuild build \
             -workspace "$XCODE_WORKSPACE" \
             -scheme "$XCODE_SCHEME" \
-            -configuration Debug \
+            -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath "$SIMULATOR_DERIVED_DATA" \
             CODE_SIGN_IDENTITY="" \
@@ -427,6 +430,11 @@ workflows:
           if [ -z "$APP_PATH" ]; then
             echo "ERROR: Could not find Simulator .app under $SIMULATOR_DERIVED_DATA" >&2
             find "$SIMULATOR_DERIVED_DATA" -name "*.app" >&2 || true
+            exit 1
+          fi
+          if ! find "$APP_PATH" \( -name '*.jsbundle' -o -name '*.hbc' \) -print -quit | grep -q .; then
+            echo "ERROR: No embedded JS bundle in $APP_PATH (App Preview cannot reach Metro)" >&2
+            find "$APP_PATH" -maxdepth 3 -type f >&2 | head -40
             exit 1
           fi
           echo "Simulator app: $APP_PATH"
