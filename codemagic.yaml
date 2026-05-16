@@ -369,3 +369,73 @@ workflows:
 
     artifacts:
       - $CM_BUILD_DIR/Haserli-simulator-appetize.zip
+
+  # Codemagic App Preview → Quick launch needs an unsigned Simulator .app
+  # artifact (see docs.codemagic.io/yaml-testing/app-preview). This is NOT
+  # the Appetize zip workflow above — publish the .app bundle itself.
+  ios-simulator-app-preview:
+    name: iOS — Simulator (App Preview)
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      xcode: latest
+      node: 22
+      cocoapods: default
+      vars:
+        EXPO_DIR: mobile
+        XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
+        XCODE_SCHEME: Haserli
+        SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataAppPreview
+        APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
+    scripts:
+      - name: Install JS dependencies
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR"
+          npm ci
+
+      - name: Run expo prebuild for iOS
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR"
+          CI=1 npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods
+        script: |
+          set -euxo pipefail
+          cd "$EXPO_DIR/ios"
+          pod install --repo-update
+
+      - name: Build Simulator .app for App Preview
+        script: |
+          set -euxo pipefail
+          xcodebuild build \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath "$SIMULATOR_DERIVED_DATA" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO
+
+          APP_PATH=$(
+            find "$SIMULATOR_DERIVED_DATA/Build/Products" -type d -name "*.app" -path "*iphonesimulator*" \
+              | head -1
+          )
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Could not find Simulator .app under $SIMULATOR_DERIVED_DATA" >&2
+            find "$SIMULATOR_DERIVED_DATA" -name "*.app" >&2 || true
+            exit 1
+          fi
+          echo "Simulator app: $APP_PATH"
+          mkdir -p "$APP_PREVIEW_DIR"
+          APP_NAME=$(basename "$APP_PATH")
+          rm -rf "$APP_PREVIEW_DIR/$APP_NAME"
+          cp -R "$APP_PATH" "$APP_PREVIEW_DIR/"
+          ls -la "$APP_PREVIEW_DIR"
+
+    artifacts:
+      - $CM_BUILD_DIR/app-preview/**/*.app
+      - $SIMULATOR_DERIVED_DATA/Build/Products/**/*-iphonesimulator/*.app
