@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="חסרלי - רשימת קניות משותפת בזמן אמת לזוגות, משפחות ושותפים. הורידו לאייפון או לאנדרואיד." />
+  <meta name="theme-color" content="#0D9488" />
+  <title>חסרלי - הורדת האפליקציה</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <style>
+    :root {
+      --primary: #0d9488;
+      --background: #f6f9f8;
+      --on-surface: #161e1c;
+      --on-surface-variant: #4b5b56;
+      --glow-mint: rgba(45, 212, 168, 0.27);
+      --glow-peach: rgba(255, 153, 102, 0.27);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      min-height: 100dvh;
+      min-height: 100svh;
+      color: var(--on-surface);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background:
+        radial-gradient(38% 30% at -10% -2%, var(--glow-mint) 0%, transparent 65%),
+        radial-gradient(36% 28% at 110% 4%, var(--glow-peach) 0%, transparent 65%),
+        linear-gradient(180deg, var(--background) 0%, #edf5f2 50%, var(--background) 100%);
+      padding: 24px 16px;
+    }
+    .card {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 24px 22px 26px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(241,253,252,.97));
+      border: 1px solid rgba(13, 148, 136, 0.12);
+      box-shadow: 0 14px 34px rgba(2, 6, 23, 0.1);
+      text-align: right;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: rgba(13, 148, 136, 0.12);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .app-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .tagline {
+      font-size: 13px;
+      color: var(--on-surface-variant);
+      margin-top: 2px;
+    }
+    h1 {
+      margin-top: 18px;
+      font-size: 22px;
+      line-height: 1.3;
+    }
+    .about {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 15px;
+      color: var(--on-surface-variant);
+    }
+    .screens-showcase {
+      margin-top: 14px;
+      margin-inline: -4px;
+    }
+    .screens-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 12px;
+      opacity: 0.9;
+    }
+    .screens-row-viewport {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 2px 8px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+      overscroll-behavior-x: contain;
+    }
+    .screens-row-viewport::-webkit-scrollbar {
+      display: none;
+    }
+    .screens-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: clamp(8px, 2.5vw, 14px);
+      width: max-content;
+      max-width: none;
+      margin-inline: auto;
+      overflow: visible;
+    }
+    .screen-shot {
+      flex: 0 0 auto;
+      width: clamp(164px, 44vw, 256px);
+      margin: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid rgba(13, 148, 136, 0.1);
+      box-shadow:
+        0 4px 14px rgba(16, 52, 45, 0.06),
+        0 12px 28px rgba(16, 52, 45, 0.08);
+      scroll-snap-align: center;
+      transform: translateY(6px) rotate(0deg);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .screen-shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: top;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+    .screen-shot--hero {
+      width: clamp(180px, 48vw, 284px);
+      transform: translateY(-3px);
+      box-shadow:
+        0 6px 18px rgba(16, 52, 45, 0.08),
+        0 18px 40px rgba(13, 148, 136, 0.12);
+      border-color: rgba(13, 148, 136, 0.16);
+      z-index: 1;
+    }
+    .screen-shot--tilt-start {
+      transform: translateY(10px) rotate(-2.5deg);
+    }
+    .screen-shot--tilt-end {
+      transform: translateY(10px) rotate(2.5deg);
+    }
+    @media (hover: hover) {
+      .screen-shot:hover {
+        transform: translateY(2px);
+        box-shadow: 0 14px 32px rgba(16, 52, 45, 0.12);
+      }
+      .screen-shot--hero:hover {
+        transform: translateY(-8px);
+      }
+      .screen-shot--tilt-start:hover {
+        transform: translateY(4px) rotate(-1deg);
+      }
+      .screen-shot--tilt-end:hover {
+        transform: translateY(4px) rotate(1deg);
+      }
+    }
+    .stores {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .store-badge {
+      display: block;
+      line-height: 0;
+      transition: opacity 0.15s ease;
+    }
+    .store-badge:hover {
+      opacity: 0.88;
+    }
+    .store-badge img {
+      display: block;
+      height: 60px;
+      width: auto;
+    }
+    .store-badge--google img {
+      height: 60px;
+      transform: scale(1.32);
+      transform-origin: center center;
+    }
+    @media (max-width: 480px) {
+      h1 { font-size: 20px; }
+      .about { font-size: 14px; }
+      .store-badge img { height: 53px; }
+      .store-badge--google img {
+        height: 53px;
+        transform: scale(1.32);
+      }
+      .screen-shot { width: clamp(152px, 40vw, 224px); }
+      .screen-shot--hero { width: clamp(168px, 44vw, 248px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">
+      <div class="logo-wrap">
+        <img src="favicon.png" alt="חסרלי" width="56" height="56" />
+      </div>
+      <div>
+        <div class="app-name">חסרלי</div>
+        <p class="tagline">רשימה משותפת, קניות בלי בלגן</p>
+      </div>
+    </div>
+
+    <h1>חסרלי - רשימת קניות משותפת לבית</h1>
+
+    <div class="about">
+      <p>
+        חסרלי היא אפליקציה חכמה ופשוטה לניהול רשימת קניות משותפת בזמן אמת, שמתאימה לזוגות, משפחות ושותפים.
+      </p>
+      <p>
+        האפליקציה עוזרת לעדכן יחד את הרשימה, לזכור מה חסר בבית, ולחסוך בלבול וכפילויות בקניות.
+      </p>
+      <p>
+        לאפליקציה יש גם מצב סופר שבו היא מסדרת לכם את רשימת הקניות לפי קטגוריות לקנייה נוחה בסופר.
+      </p>
+    </div>
+
+    <div class="stores">
+      <a
+        class="store-badge store-badge--apple"
+        href="https://apps.apple.com/il/app/%D7%97%D7%A1%D7%A8%D7%9C%D7%99-%D7%A8%D7%A9%D7%99%D7%9E%D7%AA-%D7%A7%D7%A0%D7%99%D7%95%D7%AA/id6768352555?l=he"
+        title="הורידו מ-App Store"
+      >
+        <img src="assets/app-store-badge.svg" alt="הורידו ב-App Store" />
+      </a>
+      <a
+        class="store-badge store-badge--google"
+        href="https://play.google.com/store/apps/details?id=com.salino.sali&amp;hl=he"
+        title="הורידו מ-Google Play"
+      >
+        <img src="assets/google-play-badge.png" alt="הורידו ב-Google Play" />
+      </a>
+    </div>
+
+    <section class="screens-showcase" aria-label="תצוגות מהאפליקציה">
+      <p class="screens-label">כך זה נראה באפליקציה</p>
+      <div class="screens-row-viewport">
+        <div class="screens-row">
+        <figure class="screen-shot screen-shot--tilt-start">
+          <img src="assets/screenshots/screen-add.png" alt="מסך הוספת פריט לרשימה" loading="lazy" decoding="async" />
+        </figure>
+        <figure class="screen-shot screen-shot--hero">
+          <img src="assets/screenshots/screen-list.png" alt="רשימת קניות משותפת שמתעדכנת בזמן אמת" loading="lazy" decoding="async" />
+        </figure>
+        <figure class="screen-shot screen-shot--tilt-end">
+          <img src="assets/screenshots/screen-supermarket.png" alt="מצב סופר — רשימה לפי קטגוריות" loading="lazy" decoding="async" />
+        </figure>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="assets/screens-horizontal-scroll.js?v=5" defer></script>
+</body>
+</html>

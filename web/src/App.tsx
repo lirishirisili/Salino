@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthScreen from './screens/AuthScreen';
+import AppDownloadScreen from './screens/AppDownloadScreen';
 import HouseholdSetupScreen from './screens/HouseholdSetupScreen';
 import ShoppingListScreen from './screens/ShoppingListScreen';
 import AddItemScreen from './screens/AddItemScreen';
@@ -12,6 +13,15 @@ import SettingsScreen from './screens/SettingsScreen';
 import './index.css';
 
 function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/download" element={<AppDownloadScreen />} />
+      <Route path="/*" element={<MainAppRoutes />} />
+    </Routes>
+  );
+}
+
+function MainAppRoutes() {
   const { user, loading } = useAuth();
 
   if (loading) {

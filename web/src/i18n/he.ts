@@ -41,10 +41,14 @@ const he = {
   android_download_play_label: 'Google Play',
   android_download_title: 'חסרלי - רשימת קניות משותפת לבית',
   android_download_subtitle: 'הוסיפו מוצרים שנגמרו, שתפו עם בני הבית בזמן אמת והשתמשו במצב סופר מסודר לפי קטגוריות.',
+  app_download_about_1: 'חסרלי היא אפליקציה חכמה ופשוטה לניהול רשימת קניות משותפת בזמן אמת, שמתאימה לזוגות, משפחות ושותפים.',
+  app_download_about_2: 'האפליקציה עוזרת לעדכן יחד את הרשימה, לזכור מה חסר בבית, ולחסוך בלבול וכפילויות בקניות.',
+  app_download_about_3: 'לאפליקציה יש גם מצב סופר שבו היא מסדרת לכם את רשימת הקניות לפי קטגוריות לקנייה נוחה בסופר.',
   android_download_bullet_1: 'גישה מהירה ישירות ממסך הבית',
   android_download_bullet_2: 'ביצועים טובים יותר וחוויית מסך מלא',
   android_download_bullet_3: 'מצב סופר נוח יותר לשימוש שוטף',
   android_download_cta: 'להורדה מ-Google Play',
+  ios_download_cta: 'להורדה מ-App Store',
   android_download_continue_web: 'להמשיך לאתר במקום האפליקציה',
 
   // Household Setup

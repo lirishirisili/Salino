@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../i18n/index';
 import { mapAuthErrorToStringKey } from '../services/authErrorMapper';
+import AppDownloadCard from '../components/AppDownloadCard';
 
 const ANDROID_WEB_CONTINUE_KEY = 'salino_android_web_continue';
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.salino.sali&hl=he';
 
 export default function AuthScreen() {
   const { t } = useI18n();
@@ -61,39 +61,8 @@ export default function AuthScreen() {
 
   if (showAndroidDownloadPrompt) {
     return (
-      <div className="screen android-download-screen">
-        <div className="card android-download-card">
-          <div className="android-download-brand">
-            <div className="android-download-logo-wrap">
-              <img src="/favicon.png" alt={t('app_name')} className="android-download-logo" />
-            </div>
-            <div>
-              <div className="android-download-appname">{t('app_name')}</div>
-              <div className="android-download-badge" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path fill="#00D1FF" d="M3 2l10.5 10L3 22z" />
-                  <path fill="#00E676" d="M3 2l13 7-2.5 2.5z" />
-                  <path fill="#FFEA00" d="M16 9l3.5 2-3.5 2-2.5-2.5z" />
-                  <path fill="#FF3D00" d="M3 22l13-7-2.5-2.5z" />
-                </svg>
-                <span>{t('android_download_play_label')}</span>
-              </div>
-            </div>
-          </div>
-          <h2 className="android-download-title">{t('android_download_title')}</h2>
-          <p className="android-download-subtitle">{t('android_download_subtitle')}</p>
-          <ul className="android-download-list">
-            <li>{t('android_download_bullet_1')}</li>
-            <li>{t('android_download_bullet_2')}</li>
-            <li>{t('android_download_bullet_3')}</li>
-          </ul>
-          <a className="btn-primary android-download-btn" href={PLAY_STORE_URL}>
-            {t('android_download_cta')}
-          </a>
-          <button className="android-download-continue" onClick={continueToWeb}>
-            {t('android_download_continue_web')}
-          </button>
-        </div>
+      <div className="screen app-download-screen">
+        <AppDownloadCard showContinueWeb onContinueWeb={continueToWeb} />
       </div>
     );
   }
