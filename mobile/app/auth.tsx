@@ -76,6 +76,7 @@ export default function AuthScreen() {
     registerWithEmail,
     signInWithGoogle,
     signInWithApple,
+    sendPasswordReset,
     error,
     isSubmitting,
     clearError,
@@ -190,6 +191,19 @@ export default function AuthScreen() {
     } else {
       setPasswordError(null);
       await signInWithEmail(email.trim(), password);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      Alert.alert(t('auth_forgot_password'), t('auth_forgot_password_enter_email'));
+      return;
+    }
+    await sendPasswordReset(trimmed);
+    const storeError = useAuthStore.getState().error;
+    if (!storeError) {
+      Alert.alert(t('auth_forgot_password'), t('auth_forgot_password_sent'));
     }
   };
 
@@ -358,6 +372,19 @@ export default function AuthScreen() {
                     >
                       {t(passwordError)}
                     </Text>
+                  )}
+
+                  {!isRegister && (
+                    <Pressable onPress={handleForgotPassword} style={{ marginTop: 8 }}>
+                      <Text
+                        style={[
+                          Typography.bodySmall,
+                          { color: colors.primary } as any,
+                        ]}
+                      >
+                        {t('auth_forgot_password')}
+                      </Text>
+                    </Pressable>
                   )}
 
                   <View style={{ height: 16 }} />

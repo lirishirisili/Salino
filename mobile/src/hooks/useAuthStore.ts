@@ -23,6 +23,9 @@ interface AuthState {
   ) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, password: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  checkEmailVerified: () => Promise<boolean>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   clearError: () => void;
@@ -119,6 +122,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e: any) {
       set({ error: mapAuthError(e), isSubmitting: false });
     }
+  },
+
+  sendPasswordReset: async (email: string) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      await authRepository.sendPasswordReset(email);
+    } catch (e: any) {
+      set({ error: mapAuthError(e), isSubmitting: false });
+    }
+    set({ isSubmitting: false });
+  },
+
+  resendVerificationEmail: async () => {
+    try {
+      await authRepository.sendVerificationEmail();
+    } catch {
+      // Silently ignore — Firebase rate-limits this anyway.
+    }
+  },
+
+  checkEmailVerified: async (): Promise<boolean> => {
+    await authRepository.reloadUser();
+    return authRepository.isEmailVerified();
   },
 
   signOut: async () => {

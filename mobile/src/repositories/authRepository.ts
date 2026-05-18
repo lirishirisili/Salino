@@ -6,6 +6,8 @@ import {
   deleteUser,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
+  sendEmailVerification,
   GoogleAuthProvider,
   OAuthProvider,
   User,
@@ -79,8 +81,28 @@ export const authRepository = {
   },
 
   registerWithEmail: async (email: string, password: string): Promise<void> => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(user);
     // Profile creation handled by the auth state observer; see signInWithGoogle.
+  },
+
+  sendVerificationEmail: async (): Promise<void> => {
+    const user = auth.currentUser;
+    if (user && !user.emailVerified) {
+      await sendEmailVerification(user);
+    }
+  },
+
+  reloadUser: async (): Promise<void> => {
+    await auth.currentUser?.reload();
+  },
+
+  isEmailVerified: (): boolean => {
+    return auth.currentUser?.emailVerified ?? false;
+  },
+
+  sendPasswordReset: async (email: string): Promise<void> => {
+    await sendPasswordResetEmail(auth, email);
   },
 
   getOrCreateUserProfile: async (): Promise<UserProfile | null> => {
