@@ -10,24 +10,26 @@ const RTL_BOOT_RELOAD_KEY = '@rtl_boot_reload_attempted';
  */
 export async function applyBootRtl(desiredRTL: boolean): Promise<boolean> {
   if (I18nManager.isRTL === desiredRTL) {
+    await AsyncStorage.removeItem(RTL_BOOT_RELOAD_KEY);
     return false;
   }
 
   I18nManager.allowRTL(true);
   I18nManager.forceRTL(desiredRTL);
 
+  const alreadyReloaded = await AsyncStorage.getItem(RTL_BOOT_RELOAD_KEY);
+  if (alreadyReloaded) {
+    // RTL did not stick after reload (common in debug) — continue boot instead of looping.
+    return false;
+  }
+
+  await AsyncStorage.setItem(RTL_BOOT_RELOAD_KEY, '1');
+
   if (__DEV__) {
     DevSettings.reload();
     return true;
   }
 
-  const alreadyReloaded = await AsyncStorage.getItem(RTL_BOOT_RELOAD_KEY);
-  if (alreadyReloaded) {
-    // Avoid infinite reload loop when expo-updates is disabled or reload is a no-op.
-    return false;
-  }
-
-  await AsyncStorage.setItem(RTL_BOOT_RELOAD_KEY, '1');
   try {
     await Updates.reloadAsync();
     return true;

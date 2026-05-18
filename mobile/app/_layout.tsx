@@ -36,7 +36,24 @@ export default function RootLayout() {
         const language = await resolveBootLanguage();
         const desiredRTL = isRTL(language);
         const reloaded = await applyBootRtl(desiredRTL);
-        if (reloaded || cancelled) {
+        if (cancelled) {
+          return;
+        }
+        if (reloaded) {
+          // Reload was triggered for RTL; if it is a no-op, finish boot after a short wait.
+          setTimeout(() => {
+            void (async () => {
+              if (cancelled) return;
+              try {
+                await initI18n();
+              } catch (e) {
+                console.error('Boot init error after RTL reload:', e);
+              }
+              if (!cancelled) {
+                setI18nReady(true);
+              }
+            })();
+          }, 2500);
           return;
         }
         await initI18n();
