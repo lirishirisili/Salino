@@ -12,6 +12,7 @@ import javax.inject.Inject
 
 sealed class SplashDestination {
     data object Auth : SplashDestination()
+    data object VerifyEmail : SplashDestination()
     data object HouseholdSetup : SplashDestination()
     data object ShoppingList : SplashDestination()
 }
@@ -32,6 +33,12 @@ class SplashViewModel @Inject constructor(
         viewModelScope.launch {
             if (!authRepository.isSignedIn) {
                 _destination.value = SplashDestination.Auth
+                return@launch
+            }
+
+            // Gate: email/password users must verify their email
+            if (authRepository.isPasswordProvider && !authRepository.isEmailVerified) {
+                _destination.value = SplashDestination.VerifyEmail
                 return@launch
             }
 

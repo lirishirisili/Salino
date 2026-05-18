@@ -18,12 +18,33 @@
     <string name="auth_email_label">אימייל</string>
     <string name="auth_email_hint">your@email.com</string>
     <string name="auth_password_label">סיסמה</string>
-    <string name="auth_password_hint">לפחות 6 תווים</string>
+    <string name="auth_password_hint">8+ תווים, אותיות ומספרים</string>
     <string name="auth_no_account_register">אין לך חשבון? הרשמה</string>
     <string name="auth_has_account_sign_in">כבר יש לך חשבון? התחברות</string>
     <string name="auth_or">או</string>
     <string name="auth_signing_in">מתחבר…</string>
+    <string name="auth_forgot_password">שכחתי סיסמה?</string>
+    <string name="auth_forgot_password_sent">נשלח אימייל לאיפוס סיסמה. בדקו את תיבת הדואר.</string>
     <string name="auth_error_generic">משהו השתבש. נסו שוב.</string>
+    <string name="auth_error_invalid_credentials">אימייל או סיסמה שגויים.</string>
+    <string name="auth_error_user_not_found">לא נמצא חשבון עם האימייל הזה.</string>
+    <string name="auth_error_invalid_email">נא להזין כתובת אימייל תקינה.</string>
+    <string name="auth_error_email_in_use">האימייל הזה כבר בשימוש.</string>
+    <string name="auth_error_weak_password">הסיסמה חלשה מדי.</string>
+    <string name="auth_error_password_too_short">הסיסמה חייבת להכיל לפחות 8 תווים.</string>
+    <string name="auth_error_password_needs_letter">הסיסמה חייבת להכיל לפחות אות אחת.</string>
+    <string name="auth_error_password_needs_number">הסיסמה חייבת להכיל לפחות מספר אחד.</string>
+    <string name="auth_error_too_many_requests">יותר מדי ניסיונות. נסו שוב מאוחר יותר.</string>
+    <string name="auth_error_google_cancelled">ההתחברות עם Google בוטלה.</string>
+    <string name="auth_error_google_failed">ההתחברות עם Google נכשלה. נסו שוב.</string>
+
+    <!-- Verify Email -->
+    <string name="verify_email_title">אימות האימייל שלך</string>
+    <string name="verify_email_description">שלחנו קישור אימות ל-%1$s. פתחו את הקישור כדי להמשיך.</string>
+    <string name="verify_email_check_button">אימתתי</string>
+    <string name="verify_email_resend">שליחה חוזרת של אימייל אימות</string>
+    <string name="verify_email_resend_cooldown">שליחה חוזרת בעוד %1$d שנ׳</string>
+    <string name="verify_email_sign_out">התחברות עם חשבון אחר</string>
 
     <!-- Household Setup -->
     <string name="household_setup_title">הקמת בית</string>

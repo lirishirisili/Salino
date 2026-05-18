@@ -3,6 +3,7 @@
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Auth : Screen("auth")
+    data object VerifyEmail : Screen("verify_email")
     data object HouseholdSetup : Screen("household_setup")
     data object ShoppingList : Screen("shopping_list")
     data object SupermarketMode : Screen("supermarket_mode")

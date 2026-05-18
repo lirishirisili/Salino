@@ -58,10 +58,12 @@ import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoWebTokens
 import com.salino.sali.ui.components.salinoWebOutlinedFieldColors
+import com.salino.sali.util.PasswordError
 
 @Composable
 fun AuthScreen(
     onAuthSuccess: (hasHousehold: Boolean) -> Unit,
+    onNavigateToVerifyEmail: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -96,8 +98,10 @@ fun AuthScreen(
         }
     }
 
-    LaunchedEffect(uiState.isAuthenticated) {
-        if (uiState.isAuthenticated) {
+    LaunchedEffect(uiState.isAuthenticated, uiState.needsEmailVerification) {
+        if (uiState.needsEmailVerification) {
+            onNavigateToVerifyEmail()
+        } else if (uiState.isAuthenticated) {
             onAuthSuccess(uiState.hasHousehold)
         }
     }
@@ -253,7 +257,46 @@ fun AuthScreen(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
-                        colors = salinoWebOutlinedFieldColors()
+                        colors = salinoWebOutlinedFieldColors(),
+                        isError = uiState.passwordError != null
+                    )
+
+                    if (uiState.passwordError != null) {
+                        Text(
+                            text = stringResource(
+                                when (uiState.passwordError) {
+                                    PasswordError.TOO_SHORT -> R.string.auth_error_password_too_short
+                                    PasswordError.NEEDS_LETTER -> R.string.auth_error_password_needs_letter
+                                    PasswordError.NEEDS_NUMBER -> R.string.auth_error_password_needs_number
+                                    else -> R.string.auth_error_generic
+                                }
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    if (!registerMode) {
+                        TextButton(
+                            onClick = { viewModel.sendPasswordReset(email) },
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.auth_forgot_password),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+
+                if (uiState.resetEmailSent) {
+                    Text(
+                        text = stringResource(R.string.auth_forgot_password_sent),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = contentWidth.padding(vertical = 8.dp)
                     )
                 }
 
@@ -271,7 +314,7 @@ fun AuthScreen(
                             register = registerMode
                         )
                     },
-                    enabled = email.isNotBlank() && password.length >= 6,
+                    enabled = email.isNotBlank() && password.length >= if (registerMode) 8 else 6,
                     modifier = contentWidth
                 )
 

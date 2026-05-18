@@ -13,8 +13,36 @@
     <string name="auth_welcome_title">مرحباً بك في Haserli</string>
     <string name="auth_welcome_subtitle">قائمة التسوّق المشتركة</string>
     <string name="auth_sign_in_google">تسجيل الدخول بحساب Google</string>
+    <string name="auth_sign_in_email">تسجيل الدخول بالبريد</string>
+    <string name="auth_register_email">إنشاء حساب بالبريد</string>
+    <string name="auth_email_label">البريد الإلكتروني</string>
+    <string name="auth_email_hint">your@email.com</string>
+    <string name="auth_password_label">كلمة المرور</string>
+    <string name="auth_password_hint">8+ أحرف، حروف وأرقام</string>
+    <string name="auth_no_account_register">ليس لديك حساب؟ سجّل</string>
+    <string name="auth_has_account_sign_in">لديك حساب؟ سجّل الدخول</string>
+    <string name="auth_or">أو</string>
     <string name="auth_signing_in">جارٍ تسجيل الدخول…</string>
+    <string name="auth_forgot_password">نسيت كلمة المرور؟</string>
+    <string name="auth_forgot_password_sent">تم إرسال بريد إعادة تعيين كلمة المرور. تحقّق من بريدك.</string>
     <string name="auth_error_generic">حدث خطأ ما. حاول مرة أخرى.</string>
+    <string name="auth_error_invalid_credentials">البريد أو كلمة المرور غير صحيحة.</string>
+    <string name="auth_error_user_not_found">لا يوجد حساب بهذا البريد.</string>
+    <string name="auth_error_invalid_email">أدخل بريداً إلكترونياً صالحاً.</string>
+    <string name="auth_error_email_in_use">هذا البريد مستخدم بالفعل.</string>
+    <string name="auth_error_weak_password">كلمة المرور ضعيفة جداً.</string>
+    <string name="auth_error_password_too_short">يجب أن تكون كلمة المرور 8 أحرف على الأقل.</string>
+    <string name="auth_error_password_needs_letter">يجب أن تحتوي كلمة المرور على حرف واحد على الأقل.</string>
+    <string name="auth_error_password_needs_number">يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.</string>
+    <string name="auth_error_too_many_requests">محاولات كثيرة. حاول لاحقاً.</string>
+
+    <!-- Verify Email -->
+    <string name="verify_email_title">تحقق من بريدك الإلكتروني</string>
+    <string name="verify_email_description">أرسلنا رابط تحقق إلى %1$s. افتح الرابط للمتابعة.</string>
+    <string name="verify_email_check_button">لقد تحققت</string>
+    <string name="verify_email_resend">إعادة إرسال بريد التحقق</string>
+    <string name="verify_email_resend_cooldown">إعادة الإرسال خلال %1$d ث</string>
+    <string name="verify_email_sign_out">تسجيل الدخول بحساب آخر</string>
 
     <!-- Household Setup -->
     <string name="household_setup_title">إعداد البيت</string>

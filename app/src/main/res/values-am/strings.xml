@@ -13,8 +13,36 @@
     <string name="auth_welcome_title">ወደ Haserli እንኳን በደህና መጡ</string>
     <string name="auth_welcome_subtitle">የጋራ ግዢ ዝርዝርዎ</string>
     <string name="auth_sign_in_google">በ Google ይግቡ</string>
+    <string name="auth_sign_in_email">በኢሜይል ይግቡ</string>
+    <string name="auth_register_email">በኢሜይል ይመዝገቡ</string>
+    <string name="auth_email_label">ኢሜይል</string>
+    <string name="auth_email_hint">your@email.com</string>
+    <string name="auth_password_label">የይለፍ ቃል</string>
+    <string name="auth_password_hint">8+ ቁምፊዎች፣ ፊደሎች እና ቁጥሮች</string>
+    <string name="auth_no_account_register">መለያ የለዎትም? ይመዝገቡ</string>
+    <string name="auth_has_account_sign_in">መለያ አለዎት? ይግቡ</string>
+    <string name="auth_or">ወይም</string>
     <string name="auth_signing_in">በመግባት ላይ…</string>
+    <string name="auth_forgot_password">የይለፍ ቃል ረሱ?</string>
+    <string name="auth_forgot_password_sent">የይለፍ ቃል ማስጀመሪያ ኢሜይል ተልኳል። ገቢ መልዕክትዎን ያረጋግጡ።</string>
     <string name="auth_error_generic">ችግር ተፈጥሯል። እንደገና ይሞክሩ።</string>
+    <string name="auth_error_invalid_credentials">ኢሜይል ወይም የይለፍ ቃል ስህተት ነው።</string>
+    <string name="auth_error_user_not_found">በዚህ ኢሜይል መለያ አልተገኘም።</string>
+    <string name="auth_error_invalid_email">ትክክለኛ ኢሜይል ያስገቡ።</string>
+    <string name="auth_error_email_in_use">ይህ ኢሜይል ቀድሞ ጥቅም ላይ ነው።</string>
+    <string name="auth_error_weak_password">የይለፍ ቃሉ በጣም ደካማ ነው።</string>
+    <string name="auth_error_password_too_short">የይለፍ ቃል ቢያንስ 8 ቁምፊዎች መሆን አለበት።</string>
+    <string name="auth_error_password_needs_letter">የይለፍ ቃል ቢያንስ አንድ ፊደል መያዝ አለበት።</string>
+    <string name="auth_error_password_needs_number">የይለፍ ቃል ቢያንስ አንድ ቁጥር መያዝ አለበት።</string>
+    <string name="auth_error_too_many_requests">በጣም ብዙ ሙከራዎች። ቆይተው ይሞክሩ።</string>
+
+    <!-- Verify Email -->
+    <string name="verify_email_title">ኢሜልዎን ያረጋግጡ</string>
+    <string name="verify_email_description">ወደ %1$s የማረጋገጫ ሊንክ ልከናል። ለመቀጠል ሊንኩን ይክፈቱ።</string>
+    <string name="verify_email_check_button">አረጋግጫለሁ</string>
+    <string name="verify_email_resend">የማረጋገጫ ኢሜል ዳግም ላክ</string>
+    <string name="verify_email_resend_cooldown">ዳግም መላክ በ %1$d ሰ</string>
+    <string name="verify_email_sign_out">በሌላ አካውንት ግባ</string>
 
     <!-- Household Setup -->
     <string name="household_setup_title">ቤትዎን ያዋቅሩ</string>

@@ -29,6 +29,7 @@ import com.salino.sali.ui.components.SalinoWebTokens
 @Composable
 fun SplashScreen(
     onNavigateToAuth: () -> Unit,
+    onNavigateToVerifyEmail: () -> Unit,
     onNavigateToHouseholdSetup: () -> Unit,
     onNavigateToShoppingList: () -> Unit,
     viewModel: SplashViewModel = hiltViewModel()
@@ -38,6 +39,7 @@ fun SplashScreen(
     LaunchedEffect(destination) {
         when (destination) {
             SplashDestination.Auth -> onNavigateToAuth()
+            SplashDestination.VerifyEmail -> onNavigateToVerifyEmail()
             SplashDestination.HouseholdSetup -> onNavigateToHouseholdSetup()
             SplashDestination.ShoppingList -> onNavigateToShoppingList()
             null -> {}

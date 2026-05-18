@@ -16,6 +16,7 @@ import com.salino.sali.ui.screens.settings.SettingsScreen
 import com.salino.sali.ui.screens.shoppinglist.ShoppingListScreen
 import com.salino.sali.ui.screens.splash.SplashScreen
 import com.salino.sali.ui.screens.supermarket.SupermarketModeScreen
+import com.salino.sali.ui.screens.verifyemail.VerifyEmailScreen
 import com.salino.sali.util.Constants
 
 @Composable
@@ -28,6 +29,11 @@ fun SalinoNavGraph(navController: NavHostController) {
             SplashScreen(
                 onNavigateToAuth = {
                     navController.navigate(Screen.Auth.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVerifyEmail = {
+                    navController.navigate(Screen.VerifyEmail.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
@@ -54,6 +60,31 @@ fun SalinoNavGraph(navController: NavHostController) {
                     }
                     navController.navigate(destination) {
                         popUpTo(Screen.Auth.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVerifyEmail = {
+                    navController.navigate(Screen.VerifyEmail.route) {
+                        popUpTo(Screen.Auth.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.VerifyEmail.route) {
+            VerifyEmailScreen(
+                onVerified = { hasHousehold ->
+                    val destination = if (hasHousehold) {
+                        Screen.ShoppingList.route
+                    } else {
+                        Screen.HouseholdSetup.route
+                    }
+                    navController.navigate(destination) {
+                        popUpTo(Screen.VerifyEmail.route) { inclusive = true }
+                    }
+                },
+                onSignOut = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(Screen.VerifyEmail.route) { inclusive = true }
                     }
                 }
             )

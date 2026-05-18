@@ -18,20 +18,33 @@
     <string name="auth_email_label">Email</string>
     <string name="auth_email_hint">you@email.com</string>
     <string name="auth_password_label">Password</string>
-    <string name="auth_password_hint">At least 6 characters</string>
+    <string name="auth_password_hint">8+ characters, letters &amp; numbers</string>
     <string name="auth_no_account_register">Don\'t have an account? Register</string>
     <string name="auth_has_account_sign_in">Already have an account? Sign in</string>
     <string name="auth_or">OR</string>
     <string name="auth_signing_in">Signing in…</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_forgot_password_sent">Password reset email sent. Check your inbox.</string>
     <string name="auth_error_generic">Something went wrong. Try again.</string>
     <string name="auth_error_invalid_credentials">Incorrect email or password.</string>
     <string name="auth_error_user_not_found">No account found for this email.</string>
     <string name="auth_error_invalid_email">Please enter a valid email address.</string>
     <string name="auth_error_email_in_use">This email is already in use.</string>
-    <string name="auth_error_weak_password">Password is too weak (minimum 6 characters).</string>
+    <string name="auth_error_weak_password">Password is too weak.</string>
+    <string name="auth_error_password_too_short">Password must be at least 8 characters.</string>
+    <string name="auth_error_password_needs_letter">Password must contain at least one letter.</string>
+    <string name="auth_error_password_needs_number">Password must contain at least one number.</string>
     <string name="auth_error_too_many_requests">Too many attempts. Try again later.</string>
     <string name="auth_error_google_cancelled">Google sign-in was cancelled.</string>
     <string name="auth_error_google_failed">Google sign-in failed. Please try again.</string>
+
+    <!-- Verify Email -->
+    <string name="verify_email_title">Verify your email</string>
+    <string name="verify_email_description">We sent a verification link to %1$s. Please open the link to continue.</string>
+    <string name="verify_email_check_button">I\'ve verified</string>
+    <string name="verify_email_resend">Resend verification email</string>
+    <string name="verify_email_resend_cooldown">Resend in %1$d s</string>
+    <string name="verify_email_sign_out">Sign in with a different account</string>
 
     <!-- Household Setup -->
     <string name="household_setup_title">Set up your household</string>

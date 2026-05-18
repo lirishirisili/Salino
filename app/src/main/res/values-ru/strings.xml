@@ -13,8 +13,36 @@
     <string name="auth_welcome_title">Добро пожаловать в Haserli</string>
     <string name="auth_welcome_subtitle">Ваш общий список покупок</string>
     <string name="auth_sign_in_google">Войти через Google</string>
+    <string name="auth_sign_in_email">Войти по e-mail</string>
+    <string name="auth_register_email">Зарегистрироваться по e-mail</string>
+    <string name="auth_email_label">E-mail</string>
+    <string name="auth_email_hint">you@email.com</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_password_hint">8+ символов, буквы и цифры</string>
+    <string name="auth_no_account_register">Нет аккаунта? Зарегистрируйтесь</string>
+    <string name="auth_has_account_sign_in">Уже есть аккаунт? Войдите</string>
+    <string name="auth_or">ИЛИ</string>
     <string name="auth_signing_in">Вход…</string>
+    <string name="auth_forgot_password">Забыли пароль?</string>
+    <string name="auth_forgot_password_sent">Письмо для сброса пароля отправлено. Проверьте почту.</string>
     <string name="auth_error_generic">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="auth_error_invalid_credentials">Неверный e-mail или пароль.</string>
+    <string name="auth_error_user_not_found">Аккаунт с таким e-mail не найден.</string>
+    <string name="auth_error_invalid_email">Введите корректный e-mail.</string>
+    <string name="auth_error_email_in_use">Этот e-mail уже используется.</string>
+    <string name="auth_error_weak_password">Пароль слишком слабый.</string>
+    <string name="auth_error_password_too_short">Пароль должен содержать минимум 8 символов.</string>
+    <string name="auth_error_password_needs_letter">Пароль должен содержать хотя бы одну букву.</string>
+    <string name="auth_error_password_needs_number">Пароль должен содержать хотя бы одну цифру.</string>
+    <string name="auth_error_too_many_requests">Слишком много попыток. Попробуйте позже.</string>
+
+    <!-- Verify Email -->
+    <string name="verify_email_title">Подтвердите email</string>
+    <string name="verify_email_description">Мы отправили ссылку для подтверждения на %1$s. Откройте ссылку, чтобы продолжить.</string>
+    <string name="verify_email_check_button">Я подтвердил</string>
+    <string name="verify_email_resend">Отправить письмо повторно</string>
+    <string name="verify_email_resend_cooldown">Повторная отправка через %1$d сек</string>
+    <string name="verify_email_sign_out">Войти с другим аккаунтом</string>
 
     <!-- Household Setup -->
     <string name="household_setup_title">Настройка дома</string>

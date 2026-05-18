@@ -4,6 +4,7 @@ import { authRepository } from '../repositories';
 import { UserProfile } from '../models';
 import { resetSessionState } from '../session/resetSession';
 import { useHouseholdStore } from './useHouseholdStore';
+import { localGetActiveHouseholdId } from '../local/storage';
 
 interface AuthState {
   user: User | null;
@@ -33,15 +34,6 @@ interface AuthState {
 
 let previousAuthUid: string | null = null;
 
-function applyProfileToHouseholdStore(profile: UserProfile | null): Promise<void> {
-  if (profile?.activeHouseholdId) {
-    return useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId);
-  } else {
-    useHouseholdStore.getState().reset();
-    return Promise.resolve();
-  }
-}
-
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
@@ -70,8 +62,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       previousAuthUid = user.uid;
 
-      set({ isLoading: true, isSubmitting: true, isSignedIn: true, user });
+      set({ isSignedIn: true, user });
 
+      // FAST PATH: read cached householdId from local storage and preload items
+      // before waiting for network. This makes cold start near-instant.
+      let fastPathDone = false;
+      try {
+        const cachedHouseholdId = await localGetActiveHouseholdId(user.uid);
+        if (cachedHouseholdId) {
+          await useHouseholdStore.getState().setActiveHouseholdFromProfile(cachedHouseholdId);
+          fastPathDone = true;
+          set({ isLoading: false, isSubmitting: false });
+        }
+      } catch {
+        // Fast path failed — fall through to network path.
+      }
+
+      if (!fastPathDone) {
+        set({ isLoading: true, isSubmitting: true });
+      }
+
+      // BACKGROUND: verify profile from Firestore (creates if needed)
       let profile: UserProfile | null = null;
       try {
         profile = await Promise.race<UserProfile | null>([
@@ -82,11 +93,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         profile = null;
       }
 
-      applyProfileToHouseholdStore(profile).then(() => {
-        set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
-      }).catch(() => {
-        set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
-      });
+      // If household changed on the server, update
+      if (profile?.activeHouseholdId) {
+        const currentHouseholdId = useHouseholdStore.getState().activeHouseholdId;
+        if (currentHouseholdId !== profile.activeHouseholdId) {
+          await useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId);
+        }
+      } else if (!profile?.activeHouseholdId && fastPathDone) {
+        // Server says no household but we loaded one from cache — reset
+        useHouseholdStore.getState().reset();
+      }
+
+      set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
     });
     return unsubscribe;
   },

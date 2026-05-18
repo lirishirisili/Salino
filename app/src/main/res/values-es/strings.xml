@@ -13,8 +13,36 @@
     <string name="auth_welcome_title">Bienvenido a Haserli</string>
     <string name="auth_welcome_subtitle">Tu lista de compras compartida</string>
     <string name="auth_sign_in_google">Iniciar sesión con Google</string>
+    <string name="auth_sign_in_email">Iniciar sesión con correo</string>
+    <string name="auth_register_email">Registrarse con correo</string>
+    <string name="auth_email_label">Correo electrónico</string>
+    <string name="auth_email_hint">tu@email.com</string>
+    <string name="auth_password_label">Contraseña</string>
+    <string name="auth_password_hint">8+ caracteres, letras y números</string>
+    <string name="auth_no_account_register">¿No tienes cuenta? Regístrate</string>
+    <string name="auth_has_account_sign_in">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="auth_or">O</string>
     <string name="auth_signing_in">Iniciando sesión…</string>
+    <string name="auth_forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="auth_forgot_password_sent">Se envió un correo para restablecer la contraseña. Revisa tu bandeja.</string>
     <string name="auth_error_generic">Algo salió mal. Inténtalo de nuevo.</string>
+    <string name="auth_error_invalid_credentials">Correo o contraseña incorrectos.</string>
+    <string name="auth_error_user_not_found">No se encontró una cuenta con este correo.</string>
+    <string name="auth_error_invalid_email">Ingresa una dirección de correo válida.</string>
+    <string name="auth_error_email_in_use">Este correo ya está en uso.</string>
+    <string name="auth_error_weak_password">La contraseña es muy débil.</string>
+    <string name="auth_error_password_too_short">La contraseña debe tener al menos 8 caracteres.</string>
+    <string name="auth_error_password_needs_letter">La contraseña debe contener al menos una letra.</string>
+    <string name="auth_error_password_needs_number">La contraseña debe contener al menos un número.</string>
+    <string name="auth_error_too_many_requests">Demasiados intentos. Inténtalo más tarde.</string>
+
+    <!-- Verify Email -->
+    <string name="verify_email_title">Verifica tu correo</string>
+    <string name="verify_email_description">Enviamos un enlace de verificación a %1$s. Abre el enlace para continuar.</string>
+    <string name="verify_email_check_button">Ya verifiqué</string>
+    <string name="verify_email_resend">Reenviar correo de verificación</string>
+    <string name="verify_email_resend_cooldown">Reenviar en %1$d s</string>
+    <string name="verify_email_sign_out">Iniciar sesión con otra cuenta</string>
 
     <!-- Household Setup -->
     <string name="household_setup_title">Configura tu hogar</string>

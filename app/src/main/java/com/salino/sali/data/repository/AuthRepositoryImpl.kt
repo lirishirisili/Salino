@@ -46,6 +46,15 @@ class AuthRepositoryImpl @Inject constructor(
 
 
 
+    override val isEmailVerified: Boolean
+        get() = auth.currentUser?.isEmailVerified == true
+
+    override val currentUserEmail: String?
+        get() = auth.currentUser?.email
+
+    override val isPasswordProvider: Boolean
+        get() = auth.currentUser?.providerData?.any { it.providerId == "password" } == true
+
     override val currentUserId: String?
 
         get() = auth.currentUser?.uid
@@ -130,6 +139,8 @@ class AuthRepositoryImpl @Inject constructor(
 
         auth.createUserWithEmailAndPassword(email, password).await()
 
+        auth.currentUser?.sendEmailVerification()?.await()
+
         getOrCreateUserProfile().getOrThrow()
 
     }
@@ -187,6 +198,34 @@ class AuthRepositoryImpl @Inject constructor(
         }
 
         auth.signOut()
+
+    }
+
+
+
+    override suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
+
+        auth.sendPasswordResetEmail(email).await()
+
+    }
+
+
+
+    override suspend fun sendVerificationEmail(): Result<Unit> = runCatching {
+
+        auth.currentUser?.sendEmailVerification()?.await()
+
+            ?: throw IllegalStateException("No user signed in")
+
+    }
+
+
+
+    override suspend fun reloadUser(): Boolean {
+
+        auth.currentUser?.reload()?.await()
+
+        return auth.currentUser?.isEmailVerified == true
 
     }
 

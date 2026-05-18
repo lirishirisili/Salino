@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router';
-import { useAuthStore } from '../src/hooks';
+import { useAuthStore, useHouseholdStore } from '../src/hooks';
 import { LoadingScreen } from '../src/components';
 
 export default function Index() {
@@ -7,6 +7,7 @@ export default function Index() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const profile = useAuthStore((s) => s.profile);
   const user = useAuthStore((s) => s.user);
+  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
 
   if (!isSignedIn) {
     return <Redirect href="/auth" />;
@@ -21,7 +22,7 @@ export default function Index() {
     return <Redirect href="/verify-email" />;
   }
 
-  if (profile?.activeHouseholdId) {
+  if (activeHouseholdId || profile?.activeHouseholdId) {
     return <Redirect href="/(main)/shopping-list" />;
   }
 
