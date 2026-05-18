@@ -13,6 +13,7 @@ import {
   User,
 } from 'firebase/auth';
 import { auth } from '../remote/firebase';
+import i18n from 'i18next';
 import {
   firestoreGetUser,
   firestoreSetUser,
@@ -29,6 +30,11 @@ import {
 } from '../local/storage';
 import { resetSessionState } from '../session/resetSession';
 import { UserProfile } from '../models';
+
+/** Sync Firebase Auth language with the app's current i18n language. */
+function syncAuthLanguage(): void {
+  auth.languageCode = i18n.language || 'en';
+}
 
 export const authRepository = {
   getCurrentUserId: (): string | null => auth.currentUser?.uid ?? null,
@@ -81,12 +87,14 @@ export const authRepository = {
   },
 
   registerWithEmail: async (email: string, password: string): Promise<void> => {
+    syncAuthLanguage();
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await sendEmailVerification(user);
     // Profile creation handled by the auth state observer; see signInWithGoogle.
   },
 
   sendVerificationEmail: async (): Promise<void> => {
+    syncAuthLanguage();
     const user = auth.currentUser;
     if (user && !user.emailVerified) {
       await sendEmailVerification(user);
@@ -102,6 +110,7 @@ export const authRepository = {
   },
 
   sendPasswordReset: async (email: string): Promise<void> => {
+    syncAuthLanguage();
     await sendPasswordResetEmail(auth, email);
   },
 
