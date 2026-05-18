@@ -105,6 +105,7 @@ fun SupermarketModeScreen(
     val notFoundLabel = stringResource(R.string.supermarket_mode_item_not_found)
     var showFinishDialog by remember { mutableStateOf(false) }
     var isBoughtSectionExpanded by remember { mutableStateOf(true) }
+    var bannerAdVisible by remember { mutableStateOf(false) }
 
     // Undo snackbar for bought items
     LaunchedEffect(uiState.lastBoughtItem) {
@@ -152,7 +153,9 @@ fun SupermarketModeScreen(
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier.padding(bottom = 120.dp)
+                modifier = Modifier.padding(
+                    bottom = if (bannerAdVisible) 120.dp else 72.dp,
+                ),
             )
         },
         bottomBar = {
@@ -167,7 +170,10 @@ fun SupermarketModeScreen(
                         }
                     },
                 )
-                BottomBannerAd()
+                BottomBannerAd(
+                    collapseWhenFailed = true,
+                    onAdVisible = { bannerAdVisible = it },
+                )
             }
         }
     ) { padding ->
