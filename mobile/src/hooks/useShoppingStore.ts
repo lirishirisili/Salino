@@ -54,14 +54,19 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   preloadFromCache: async (householdId: string) => {
     try {
       const { items, recurringItems } = await readCachedList(householdId);
-      if (items.length === 0) return;
+      if (items.length === 0) {
+        // Mark household so subscribe() won't treat it as a switch
+        set({ subscribedHouseholdId: householdId, isLoading: false });
+        return;
+      }
       set({
         subscribedHouseholdId: householdId,
         ...buildShoppingListState(items, recurringItems),
         isLoading: false,
       });
     } catch {
-      // Non-fatal — Firestore listener will populate.
+      // Still mark household even on error
+      set({ subscribedHouseholdId: householdId, isLoading: false });
     }
   },
 
@@ -82,10 +87,11 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
         selectedCategory: get().selectedCategory,
       });
     } else {
+      // Same household — keep existing items visible, don't show spinner
       set({
         subscribedHouseholdId: householdId,
         hasReceivedRemoteSnapshot: false,
-        isLoading: get().items.length === 0,
+        isLoading: false,
       });
     }
 
@@ -101,20 +107,23 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
       });
     };
 
-    void (async () => {
-      try {
-        const { items, recurringItems } = await readCachedList(householdId);
-        if (cancelled || get().subscribedHouseholdId !== householdId) return;
-        if (items.length > 0) {
-          set({
-            ...buildShoppingListState(items, recurringItems),
-            isLoading: false,
-          });
+    // Only read cache if we don't already have items for this household
+    if (switchingHousehold || get().items.length === 0) {
+      void (async () => {
+        try {
+          const { items, recurringItems } = await readCachedList(householdId);
+          if (cancelled || get().subscribedHouseholdId !== householdId) return;
+          if (items.length > 0) {
+            set({
+              ...buildShoppingListState(items, recurringItems),
+              isLoading: false,
+            });
+          }
+        } catch {
+          // Firestore will follow.
         }
-      } catch {
-        // Firestore will follow.
-      }
-    })();
+      })();
+    }
 
     const unsubs: Unsubscribe[] = [];
 

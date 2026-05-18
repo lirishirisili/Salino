@@ -12,7 +12,7 @@ interface HouseholdState {
   error: string | null;
 
   /** Authoritative household id from Firestore profile — never trust stale memory. */
-  setActiveHouseholdFromProfile: (householdId: string) => void;
+  setActiveHouseholdFromProfile: (householdId: string) => Promise<void>;
   reset: () => void;
   createHousehold: (name: string) => Promise<void>;
   joinHousehold: (inviteCode: string) => Promise<void>;
@@ -29,9 +29,9 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  setActiveHouseholdFromProfile: (householdId: string) => {
+  setActiveHouseholdFromProfile: async (householdId: string) => {
     set({ activeHouseholdId: householdId, household: null, members: [] });
-    void useShoppingStore.getState().preloadFromCache(householdId);
+    await useShoppingStore.getState().preloadFromCache(householdId);
   },
 
   reset: () => {

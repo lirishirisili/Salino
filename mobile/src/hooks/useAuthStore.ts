@@ -33,11 +33,12 @@ interface AuthState {
 
 let previousAuthUid: string | null = null;
 
-function applyProfileToHouseholdStore(profile: UserProfile | null): void {
+function applyProfileToHouseholdStore(profile: UserProfile | null): Promise<void> {
   if (profile?.activeHouseholdId) {
-    useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId);
+    return useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId);
   } else {
     useHouseholdStore.getState().reset();
+    return Promise.resolve();
   }
 }
 
@@ -81,8 +82,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         profile = null;
       }
 
-      applyProfileToHouseholdStore(profile);
-      set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
+      applyProfileToHouseholdStore(profile).then(() => {
+        set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
+      }).catch(() => {
+        set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
+      });
     });
     return unsubscribe;
   },

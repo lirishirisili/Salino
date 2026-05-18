@@ -30,75 +30,59 @@ export default function RootLayout() {
 
   useEffect(() => {
     let cancelled = false;
+    let authUnsubscribe: (() => void) | undefined;
+    let authTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    // Start auth listener immediately (in parallel with i18n boot)
+    try {
+      authUnsubscribe = initialize();
+      authTimeout = setTimeout(() => {
+        const state = useAuthStore.getState();
+        if (state.isLoading) {
+          useAuthStore.setState({ isLoading: false, isSignedIn: false });
+        }
+      }, 8000);
+    } catch (e: unknown) {
+      console.error('Auth init error:', e);
+      useAuthStore.setState({ isLoading: false });
+    }
 
     (async () => {
       try {
         const language = await resolveBootLanguage();
         const desiredRTL = isRTL(language);
         const reloaded = await applyBootRtl(desiredRTL);
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
         if (reloaded) {
-          // Reload was triggered for RTL; if it is a no-op, finish boot after a short wait.
+          // Reload was triggered for RTL; finish boot after a short wait.
           setTimeout(() => {
             void (async () => {
               if (cancelled) return;
-              try {
-                await initI18n();
-              } catch (e) {
-                console.error('Boot init error after RTL reload:', e);
-              }
-              if (!cancelled) {
-                setI18nReady(true);
-              }
+              try { await initI18n(); } catch (e) { console.error('Boot init error after RTL reload:', e); }
+              if (!cancelled) setI18nReady(true);
             })();
           }, 2500);
           return;
         }
         await initI18n();
-        if (!cancelled) {
-          setI18nReady(true);
-        }
+        if (!cancelled) setI18nReady(true);
       } catch (e) {
         console.error('Boot init error:', e);
-        if (!cancelled) {
-          setI18nReady(true);
-        }
+        if (!cancelled) setI18nReady(true);
       }
     })();
 
     const failsafe = setTimeout(() => {
-      if (!cancelled) {
-        setI18nReady(true);
-      }
+      if (!cancelled) setI18nReady(true);
     }, 12_000);
 
     return () => {
       cancelled = true;
       clearTimeout(failsafe);
+      if (authTimeout) clearTimeout(authTimeout);
+      if (authUnsubscribe) authUnsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (!i18nReady) return;
-    try {
-      const unsubscribe = initialize();
-      const timeout = setTimeout(() => {
-        const state = useAuthStore.getState();
-        if (state.isLoading) {
-          useAuthStore.setState({ isLoading: false, isSignedIn: false });
-        }
-      }, 5000);
-      return () => {
-        clearTimeout(timeout);
-        unsubscribe();
-      };
-    } catch (e: unknown) {
-      console.error('Auth init error:', e);
-      useAuthStore.setState({ isLoading: false });
-    }
-  }, [i18nReady]);
 
   useEffect(() => {
     if (i18nReady) {
