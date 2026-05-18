@@ -29,6 +29,7 @@ import {
 } from '../src/components';
 import { BorderRadius, Layout, Typography, useIsDark, useThemeColors } from '../src/theme';
 import { PRIVACY_POLICY_URL } from '../src/constants/legal';
+import { validatePassword } from '../src/utils/passwordValidation';
 
 function generateRawNonce(length = 32): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
@@ -83,6 +84,7 @@ export default function AuthScreen() {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
 
   useEffect(() => {
@@ -178,8 +180,15 @@ export default function AuthScreen() {
   const handleEmailAuth = async () => {
     if (!email.trim() || password.length < 6) return;
     if (isRegister) {
+      const result = validatePassword(password);
+      if (!result.valid) {
+        setPasswordError(result.errorKey);
+        return;
+      }
+      setPasswordError(null);
       await registerWithEmail(email.trim(), password);
     } else {
+      setPasswordError(null);
       await signInWithEmail(email.trim(), password);
     }
   };
@@ -330,6 +339,7 @@ export default function AuthScreen() {
                     value={password}
                     onChangeText={(v) => {
                       setPassword(v);
+                      setPasswordError(null);
                       clearError();
                     }}
                     placeholder={t('auth_password_hint')}
@@ -338,6 +348,17 @@ export default function AuthScreen() {
                     outlineStyle={{ borderRadius: Layout.inputCorner, borderWidth: 1 }}
                     style={styles.input}
                   />
+
+                  {isRegister && passwordError && (
+                    <Text
+                      style={[
+                        Typography.bodySmall,
+                        { color: colors.error, marginTop: 4 } as any,
+                      ]}
+                    >
+                      {t(passwordError)}
+                    </Text>
+                  )}
 
                   <View style={{ height: 16 }} />
 
@@ -353,6 +374,7 @@ export default function AuthScreen() {
                   <Pressable
                     onPress={() => {
                       setIsRegister(!isRegister);
+                      setPasswordError(null);
                       clearError();
                     }}
                     style={{ marginTop: 8, padding: 12 }}
