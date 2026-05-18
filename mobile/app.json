@@ -73,7 +73,8 @@
           "userTrackingUsageDescription": "Used to deliver more relevant ads."
         }
       ],
-      "./plugins/withAdMobAndroidManifest"
+      "./plugins/withAdMobAndroidManifest",
+      "expo-tracking-transparency"
     ],
     "extra": {
       "googleWebClientId": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
