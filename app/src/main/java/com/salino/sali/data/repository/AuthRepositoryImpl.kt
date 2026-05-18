@@ -26,6 +26,7 @@ import kotlinx.coroutines.tasks.await
 
 import kotlinx.coroutines.withContext
 
+import java.util.Locale
 import javax.inject.Inject
 
 import javax.inject.Singleton
@@ -139,6 +140,8 @@ class AuthRepositoryImpl @Inject constructor(
 
         auth.createUserWithEmailAndPassword(email, password).await()
 
+        syncAuthLanguage()
+
         auth.currentUser?.sendEmailVerification()?.await()
 
         getOrCreateUserProfile().getOrThrow()
@@ -205,6 +208,8 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
 
+        syncAuthLanguage()
+
         auth.sendPasswordResetEmail(email).await()
 
     }
@@ -213,9 +218,17 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun sendVerificationEmail(): Result<Unit> = runCatching {
 
+        syncAuthLanguage()
+
         auth.currentUser?.sendEmailVerification()?.await()
 
             ?: throw IllegalStateException("No user signed in")
+
+    }
+
+    private fun syncAuthLanguage() {
+
+        auth.setLanguageCode(Locale.getDefault().language)
 
     }
 
