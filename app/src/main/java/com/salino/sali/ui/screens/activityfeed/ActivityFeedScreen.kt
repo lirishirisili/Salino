@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.salino.sali.R
 import com.salino.sali.data.model.ActivityLog
 import com.salino.sali.data.model.ActivityType
+import com.salino.sali.ui.components.BottomBannerAd
 import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
@@ -54,7 +55,8 @@ fun ActivityFeedScreen(
                     onBack = onNavigateBack,
                     backContentDescription = stringResource(R.string.cancel)
                 )
-            }
+            },
+            bottomBar = { BottomBannerAd() },
         ) { padding ->
             when {
                 uiState.isLoading -> LoadingIndicator(modifier = Modifier.padding(padding))

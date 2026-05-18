@@ -168,7 +168,10 @@ export default function SupermarketModeScreen() {
         <AllDoneBanner />
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: insets.bottom + 96 }}
+          contentContainerStyle={{
+            paddingHorizontal: 12,
+            paddingBottom: insets.bottom + 96,
+          }}
         >
           {grouped.length === 0 && sessionBought.length === 0 ? (
             <EmptyState

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
-import { DevSettings, I18nManager, LogBox, useColorScheme } from 'react-native';
-import * as Updates from 'expo-updates';
+import { I18nManager, LogBox, useColorScheme } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -10,23 +10,12 @@ import { LightTheme, DarkTheme } from '../src/theme';
 import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore } from '../src/hooks';
 import { LoadingScreen, SalinoGradientBackground } from '../src/components';
+import { initMobileAds } from '../src/services/initMobileAds';
+import { applyBootRtl } from '../src/boot/applyBootRtl';
 
 LogBox.ignoreLogs(['Setting a timer']);
 
-// Reload the JS bundle so that I18nManager.forceRTL() actually takes effect on
-// already-rendered RN views. Without this, the first launch in Hebrew renders
-// LTR until the user navigates away from the initial screen and back.
-const reloadForRTL = async () => {
-  if (__DEV__) {
-    DevSettings.reload();
-    return;
-  }
-  try {
-    await Updates.reloadAsync();
-  } catch {
-    DevSettings.reload();
-  }
-};
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -36,24 +25,42 @@ export default function RootLayout() {
   const isLoading = useAuthStore((s) => s.isLoading);
 
   useEffect(() => {
+    initMobileAds();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       try {
-        // First decide if a hard JS reload is required to align RTL state.
         const language = await resolveBootLanguage();
         const desiredRTL = isRTL(language);
-        if (I18nManager.isRTL !== desiredRTL) {
-          I18nManager.allowRTL(desiredRTL);
-          I18nManager.forceRTL(desiredRTL);
-          await reloadForRTL();
-          return; // App is reloading; skip further setup.
+        const reloaded = await applyBootRtl(desiredRTL);
+        if (reloaded || cancelled) {
+          return;
         }
         await initI18n();
-        setI18nReady(true);
+        if (!cancelled) {
+          setI18nReady(true);
+        }
       } catch (e) {
-        console.error('i18n init error:', e);
-        setI18nReady(true);
+        console.error('Boot init error:', e);
+        if (!cancelled) {
+          setI18nReady(true);
+        }
       }
     })();
+
+    const failsafe = setTimeout(() => {
+      if (!cancelled) {
+        setI18nReady(true);
+      }
+    }, 12_000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(failsafe);
+    };
   }, []);
 
   useEffect(() => {
@@ -70,17 +77,23 @@ export default function RootLayout() {
         clearTimeout(timeout);
         unsubscribe();
       };
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Auth init error:', e);
       useAuthStore.setState({ isLoading: false });
     }
   }, [i18nReady]);
 
+  useEffect(() => {
+    if (i18nReady) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [i18nReady]);
+
   if (!i18nReady || isLoading) {
     return (
-      <SafeAreaProvider>
+      <SafeAreaProvider style={{ flex: 1 }}>
         <PaperProvider theme={paperTheme}>
-          <SalinoGradientBackground>
+          <SalinoGradientBackground style={{ flex: 1 }}>
             <LoadingScreen />
           </SalinoGradientBackground>
         </PaperProvider>

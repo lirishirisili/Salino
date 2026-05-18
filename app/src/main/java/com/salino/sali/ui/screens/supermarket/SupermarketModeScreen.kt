@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -81,6 +82,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.salino.sali.R
 import com.salino.sali.data.model.ItemCategory
 import com.salino.sali.data.model.ShoppingItem
+import com.salino.sali.ui.components.BottomBannerAd
 import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.util.formatQuantity
@@ -150,20 +152,23 @@ fun SupermarketModeScreen(
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier.padding(bottom = 72.dp)
+                modifier = Modifier.padding(bottom = 120.dp)
             )
         },
         bottomBar = {
-            SupermarketBottomBar(
-                onAddItem = onNavigateToAddItem,
-                onFinish = {
-                    if (uiState.remainingCount == 0 || uiState.allDone) {
-                        onNavigateBack()
-                    } else {
-                        showFinishDialog = true
-                    }
-                }
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SupermarketBottomBar(
+                    onAddItem = onNavigateToAddItem,
+                    onFinish = {
+                        if (uiState.remainingCount == 0 || uiState.allDone) {
+                            onNavigateBack()
+                        } else {
+                            showFinishDialog = true
+                        }
+                    },
+                )
+                BottomBannerAd()
+            }
         }
     ) { padding ->
         Column(

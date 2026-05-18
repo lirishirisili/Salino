@@ -154,7 +154,7 @@ export default function ShoppingListScreen() {
     hasReceivedRemoteSnapshot && filteredActive.length === 0 && boughtItems.length === 0;
 
   return (
-    <SalinoGradientBackground>
+    <SalinoGradientBackground style={{ flex: 1 }}>
       <CurvedTopBar
         isHebrew={isHebrew}
         isDark={isDark}
@@ -206,23 +206,25 @@ export default function ShoppingListScreen() {
         />
       )}
 
-      <View
-        style={[styles.fabRow, { paddingBottom: insets.bottom + 12 }]}
-        pointerEvents="box-none"
-      >
-        <FabButton
-          icon="store"
-          label={t('supermarket_mode_short')}
-          color={AccentColors.fabSupermarketBg}
-          onPress={() => router.push('/(main)/supermarket-mode')}
-        />
-        <FabButton
-          icon="plus"
-          label={t('item_add')}
-          color={AccentColors.fabAddBg}
-          onPress={() => router.push('/(main)/add-item')}
-        />
-      </View>
+      {!showInitialLoading && (
+        <View
+          style={[styles.fabRow, { paddingBottom: insets.bottom + 12 }]}
+          pointerEvents="box-none"
+        >
+          <FabButton
+            icon="store"
+            label={t('supermarket_mode_short')}
+            color={AccentColors.fabSupermarketBg}
+            onPress={() => router.push('/(main)/supermarket-mode')}
+          />
+          <FabButton
+            icon="plus"
+            label={t('item_add')}
+            color={AccentColors.fabAddBg}
+            onPress={() => router.push('/(main)/add-item')}
+          />
+        </View>
+      )}
     </SalinoGradientBackground>
   );
 }
@@ -423,7 +425,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 80,
   },
   curveWrap: {
     width: '100%',

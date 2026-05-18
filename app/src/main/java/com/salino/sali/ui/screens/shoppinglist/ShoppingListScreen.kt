@@ -41,6 +41,7 @@ import com.salino.sali.R
 import com.salino.sali.data.model.ItemCategory
 import com.salino.sali.data.model.ShoppingItem
 import com.salino.sali.data.model.SuggestionItem
+import com.salino.sali.ui.components.BottomBannerAd
 import com.salino.sali.ui.components.BrandLogo
 import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
@@ -78,6 +79,7 @@ fun ShoppingListScreen(
         Scaffold(
             containerColor = Color.Transparent,
             floatingActionButtonPosition = FabPosition.Center,
+            bottomBar = { BottomBannerAd() },
             topBar = {
                 val topBarCurveColor = if (isDark) Color(0xFF181B22) else Color(0xFFFCFBF2)
                 Column(

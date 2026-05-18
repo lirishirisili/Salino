@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -21,6 +22,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Salino">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-1194823418071986~13363777409" />
+
+        <!-- Disable auto-init so setRequestConfiguration runs before initialize (avoids startup crashes / mis-ordering). -->
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            android:authorities="${applicationId}.mobileadsinitprovider"
+            android:exported="false"
+            tools:node="remove" />
 
         <activity
             android:name=".MainActivity"

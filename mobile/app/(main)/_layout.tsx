@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import { MainAdBannerHost } from '../../src/components/ads';
 import { useHouseholdStore, useShoppingStore, useActivityStore } from '../../src/hooks';
 
 export default function MainLayout() {
@@ -19,20 +20,22 @@ export default function MainLayout() {
   }, [activeHouseholdId]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: 'transparent' },
-        animation: 'slide_from_right',
-      }}
-    >
-      <Stack.Screen name="shopping-list" />
-      <Stack.Screen name="add-item" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="edit-item" />
-      <Stack.Screen name="history" />
-      <Stack.Screen name="activity" />
-      <Stack.Screen name="supermarket-mode" />
-      <Stack.Screen name="settings" />
-    </Stack>
+    <MainAdBannerHost>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' },
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="shopping-list" />
+        <Stack.Screen name="add-item" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="edit-item" />
+        <Stack.Screen name="history" />
+        <Stack.Screen name="activity" />
+        <Stack.Screen name="supermarket-mode" />
+        <Stack.Screen name="settings" />
+      </Stack>
+    </MainAdBannerHost>
   );
 }
