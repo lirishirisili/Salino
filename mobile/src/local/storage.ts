@@ -175,7 +175,9 @@ export const localClearHouseholdData = async (householdId: string): Promise<void
 // Clear everything on sign out
 export const localClearAll = async (): Promise<void> => {
   const keys = await AsyncStorage.getAllKeys();
-  const appKeys = keys.filter((k) => k.startsWith('@'));
+  const appKeys = keys.filter(
+    (k) => k.startsWith('@') && !k.startsWith('@onboarding_')
+  );
   if (appKeys.length > 0) {
     await AsyncStorage.multiRemove(appKeys);
   }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -15,6 +15,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { onboardingRepository } from '../../src/repositories';
+import { ShoppingListOnboardingFlow } from '../../src/components/onboarding';
 import {
   BrandLogo,
   EmptyState,
@@ -49,7 +51,26 @@ export default function ShoppingListScreen() {
   } = useShoppingStore();
 
   const [boughtExpanded, setBoughtExpanded] = useState(false);
+  const [showShoppingListGuide, setShowShoppingListGuide] = useState(false);
   const isHebrew = i18n.language === 'he';
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const show = await onboardingRepository.shouldShowShoppingListGuide();
+      if (!cancelled && show) {
+        setShowShoppingListGuide(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const dismissShoppingListGuide = async () => {
+    await onboardingRepository.markShoppingListGuideSeen();
+    setShowShoppingListGuide(false);
+  };
 
   const filteredActive = useMemo(() => {
     if (!selectedCategory) return activeItems;
@@ -155,6 +176,9 @@ export default function ShoppingListScreen() {
 
   return (
     <SalinoGradientBackground style={{ flex: 1 }}>
+      {showShoppingListGuide ? (
+        <ShoppingListOnboardingFlow onComplete={dismissShoppingListGuide} />
+      ) : null}
       <CurvedTopBar
         isHebrew={isHebrew}
         isDark={isDark}

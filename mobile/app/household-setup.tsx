@@ -15,13 +15,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuthStore, useHouseholdStore } from '../src/hooks';
 import { PRIVACY_POLICY_URL } from '../src/constants/legal';
+import { onboardingRepository } from '../src/repositories';
 import {
   BrandLogo,
   SalinoGradientBackground,
   SalinoPrimaryButton,
   SalinoWebSegmentedTabs,
 } from '../src/components';
+import {
+  HouseholdCreatedOnboardingFlow,
+  HouseholdJoinedOnboardingFlow,
+} from '../src/components/onboarding';
 import { Layout, Typography, useThemeColors } from '../src/theme';
+
+type SetupGuide = 'none' | 'created' | 'joined';
 
 export default function HouseholdSetupScreen() {
   const { t } = useTranslation();
@@ -33,18 +40,73 @@ export default function HouseholdSetupScreen() {
   const [tab, setTab] = useState(0);
   const [householdName, setHouseholdName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [activeGuide, setActiveGuide] = useState<SetupGuide>('none');
+  const [createdInviteCode, setCreatedInviteCode] = useState<string | null>(null);
+
+  const goToShoppingList = () => {
+    router.replace('/(main)/shopping-list');
+  };
 
   const handleCreate = async () => {
     if (!householdName.trim()) return;
     await createHousehold(householdName.trim());
-    router.replace('/(main)/shopping-list');
+    const { household, error: storeError } = useHouseholdStore.getState();
+    if (storeError || !household) return;
+
+    const showGuide = await onboardingRepository.shouldShowHouseholdCreatedGuide();
+    if (showGuide) {
+      setCreatedInviteCode(household.inviteCode);
+      setActiveGuide('created');
+    } else {
+      goToShoppingList();
+    }
   };
 
   const handleJoin = async () => {
     if (inviteCode.length < 6) return;
     await joinHousehold(inviteCode.trim());
-    router.replace('/(main)/shopping-list');
+    const { error: storeError } = useHouseholdStore.getState();
+    if (storeError) return;
+
+    const showWelcome = await onboardingRepository.shouldShowJoinWelcome();
+    if (showWelcome) {
+      setActiveGuide('joined');
+    } else {
+      goToShoppingList();
+    }
   };
+
+  const completeCreatedGuide = async () => {
+    await onboardingRepository.markHouseholdCreatedGuideSeen();
+    setActiveGuide('none');
+    setCreatedInviteCode(null);
+    goToShoppingList();
+  };
+
+  const completeJoinedGuide = async () => {
+    await onboardingRepository.markJoinWelcomeSeen();
+    setActiveGuide('none');
+    goToShoppingList();
+  };
+
+  if (activeGuide === 'created' && createdInviteCode) {
+    return (
+      <SalinoGradientBackground>
+        <HouseholdCreatedOnboardingFlow
+          inviteCode={createdInviteCode}
+          onComplete={completeCreatedGuide}
+        />
+      </SalinoGradientBackground>
+    );
+  }
+
+  if (activeGuide === 'joined') {
+    return (
+      <SalinoGradientBackground>
+        <HouseholdJoinedOnboardingFlow onComplete={completeJoinedGuide} />
+      </SalinoGradientBackground>
+    );
+  }
 
   const errorText = error ? t(error) : null;
 

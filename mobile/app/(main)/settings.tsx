@@ -17,7 +17,9 @@ import * as Updates from 'expo-updates';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { useAuthStore, useHouseholdStore } from '../../src/hooks';
+import { onboardingRepository } from '../../src/repositories';
 import { changeLanguage, SUPPORTED_LANGUAGES, isRTL } from '../../src/i18n';
 import {
   BrandLogo,
@@ -54,7 +56,9 @@ export default function SettingsScreen() {
     });
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
+    if (!household?.inviteCode) return;
+    await Clipboard.setStringAsync(household.inviteCode);
     Alert.alert('', t('household_invite_code_copied'));
   };
 
@@ -67,6 +71,7 @@ export default function SettingsScreen() {
 
   const handleLeave = async () => {
     setShowLeave(false);
+    await onboardingRepository.resetHouseholdOnboarding();
     await leaveHousehold();
     router.replace('/household-setup');
   };

@@ -10,6 +10,7 @@ import com.salino.sali.data.model.ShoppingItem
 import com.salino.sali.data.model.SuggestionItem
 import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
+import com.salino.sali.domain.repository.OnboardingRepository
 import com.salino.sali.domain.repository.ShoppingRepository
 import com.salino.sali.domain.repository.SuggestionsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +32,8 @@ data class ShoppingListState(
     val searchQuery: String = "",
     val selectedCategory: ItemCategory? = null,
     val currentUserId: String = "",
-    val currentUserName: String = ""
+    val currentUserName: String = "",
+    val showShoppingListGuide: Boolean = false
 )
 
 @HiltViewModel
@@ -39,7 +41,8 @@ class ShoppingListViewModel @Inject constructor(
     private val shoppingRepository: ShoppingRepository,
     private val authRepository: AuthRepository,
     private val suggestionsRepository: SuggestionsRepository,
-    private val activityRepository: ActivityRepository
+    private val activityRepository: ActivityRepository,
+    private val onboardingRepository: OnboardingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ShoppingListState())
@@ -71,9 +74,11 @@ class ShoppingListViewModel @Inject constructor(
             }
 
             householdId = user.activeHouseholdId
+            val showGuide = onboardingRepository.shouldShowShoppingListGuide()
             _uiState.value = _uiState.value.copy(
                 currentUserId = user.id,
-                currentUserName = user.displayName
+                currentUserName = user.displayName,
+                showShoppingListGuide = showGuide
             )
 
             // Observe active items
@@ -99,6 +104,13 @@ class ShoppingListViewModel @Inject constructor(
             // Force fresh Firestore listeners after sign-in to pick up
             // the latest auth token and avoid stale/empty results.
             shoppingRepository.forceRefreshSync(householdId)
+        }
+    }
+
+    fun dismissShoppingListGuide() {
+        viewModelScope.launch {
+            onboardingRepository.markShoppingListGuideSeen()
+            _uiState.update { it.copy(showShoppingListGuide = false) }
         }
     }
 

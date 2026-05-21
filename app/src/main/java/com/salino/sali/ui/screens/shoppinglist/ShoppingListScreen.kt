@@ -51,6 +51,7 @@ import com.salino.sali.ui.components.SalinoWebAppBarTitle
 import com.salino.sali.ui.components.SalinoWebTokens
 import com.salino.sali.ui.components.ShoppingItemsGroupCard
 import com.salino.sali.ui.components.salinoWebMaxWidth
+import com.salino.sali.ui.components.onboarding.ShoppingListOnboardingFlow
 import com.salino.sali.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,6 +75,12 @@ fun ShoppingListScreen(
     val tintActivityLight = Color(0xFFF18E6A)
     val isDark = isSystemInDarkTheme()
     val isHebrew = configuration.locales[0]?.language in setOf("he", "iw")
+
+    if (uiState.showShoppingListGuide) {
+        ShoppingListOnboardingFlow(
+            onComplete = { viewModel.dismissShoppingListGuide() }
+        )
+    }
 
     SalinoGradientBackground {
         Scaffold(

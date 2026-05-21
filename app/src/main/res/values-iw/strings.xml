@@ -227,4 +227,26 @@
     <string name="language_am">አማርኛ</string>
     <string name="settings_language_change_title">שינוי שפה</string>
     <string name="settings_language_change_message">האפליקציה תופעל מחדש כדי להחיל את השפה החדשה. להמשיך?</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">הבא</string>
+    <string name="onboarding_skip">דלג לעכשיו</string>
+    <string name="onboarding_get_started">הבנתי, בואו נתחיל</string>
+    <string name="onboarding_step_counter">שלב %1$d מתוך %2$d</string>
+    <string name="onboarding_created_title">הבית שלכם מוכן</string>
+    <string name="onboarding_created_body">יצרתם רשימת קניות משותפת לכל מי שגר איתכם. כל פריט שמוסיפים מופיע לכולם בזמן אמת.</string>
+    <string name="onboarding_invite_step_title">קוד ההזמנה שלכם</string>
+    <string name="onboarding_invite_step_body">עם הקוד הזה אחרים יכולים להצטרף לבית. העתיקו או שתפו — הם ידביקו את הקוד ב״הצטרפות לבית״.</string>
+    <string name="onboarding_share_step_title">הזמינו את מי שגר איתכם</string>
+    <string name="onboarding_share_step_body">שלחו את הקוד לבן/בת הזוג, לילדים, לשותף לדירה או לכל מי שצריך לראות את הרשימה. בחסרלי בוחרים ״הצטרפות לבית״ ומזינים את הקוד. אפשר תמיד למצוא את הקוד שוב בהגדרות.</string>
+    <string name="onboarding_join_title">ברוכים הבאים לבית</string>
+    <string name="onboarding_join_body">הצטרפתם! אתם חולקים את אותה רשימת קניות עם כולם בבית — מוסיפים פריטים, מסמנים מה נקנה, והכול מסתנכרן.</string>
+    <string name="onboarding_list_add_title">מוסיפים מה שחסר</string>
+    <string name="onboarding_list_add_body">לחצו על כפתור ההוספה הכתום כדי לשים משהו ברשימה. נגמר חלב? מוסיפים בשנייה.</string>
+    <string name="onboarding_list_sync_title">כולם רואים את אותה רשימה</string>
+    <string name="onboarding_list_sync_body">כשמישהו מוסיף או קונה פריט, זה מתעדכן לכולם בבית מיד — בלי לשלוח הודעות.</string>
+    <string name="onboarding_list_settings_title">בית וקוד הזמנה</string>
+    <string name="onboarding_list_settings_body">בהגדרות (אייקון גלגל שיניים) רואים מי בבית, מעתיקים או משתפים את קוד ההזמנה, ומשנים את שם הבית.</string>
+    <string name="onboarding_list_extras_title">מצב קניות ועוד</string>
+    <string name="onboarding_list_extras_body">מצב חנות בזמן הקניות, פעילות לראות מי עשה מה, והיסטוריה לקניות קודמות. אתם מוכנים!</string>
 </resources>
