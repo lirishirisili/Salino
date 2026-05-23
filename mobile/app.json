@@ -85,8 +85,7 @@
             "googleServicesFile": "./google-services.json"
           }
         }
-      ],
-      "@react-native-firebase/analytics"
+      ]
     ],
     "extra": {
       "googleWebClientId": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
