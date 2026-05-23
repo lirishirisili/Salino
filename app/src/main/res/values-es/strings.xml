@@ -225,4 +225,26 @@
     <string name="language_am">አማርኛ</string>
     <string name="settings_language_change_title">Cambiar idioma</string>
     <string name="settings_language_change_message">La aplicación se reiniciará para aplicar el nuevo idioma. ¿Continuar?</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Siguiente</string>
+    <string name="onboarding_skip">Saltar por ahora</string>
+    <string name="onboarding_get_started">Entendido, vamos</string>
+    <string name="onboarding_step_counter">Paso %1$d de %2$d</string>
+    <string name="onboarding_created_title">Tu hogar está listo</string>
+    <string name="onboarding_created_body">Creaste una lista de compras compartida para todos en casa. Todo lo que agregues aparece para todos en tiempo real.</string>
+    <string name="onboarding_invite_step_title">Tu código de invitación</string>
+    <string name="onboarding_invite_step_body">Con este código otros pueden unirse a tu hogar. Cópialo o compártelo — lo pegarán en «Unirse a un hogar».</string>
+    <string name="onboarding_share_step_title">Invita a quienes viven contigo</string>
+    <string name="onboarding_share_step_body">Envía el código a tu pareja, hijos, compañero de piso o cualquiera que necesite ver la lista. El código siempre está en Ajustes.</string>
+    <string name="onboarding_join_title">Bienvenido al hogar</string>
+    <string name="onboarding_join_body">¡Estás dentro! Comparten la misma lista — agreguen artículos, marquen lo comprado, todo se sincroniza.</string>
+    <string name="onboarding_list_add_title">Agrega aquí</string>
+    <string name="onboarding_list_add_body">Toca este botón para agregar lo que sea a la lista. Rápido y fácil.</string>
+    <string name="onboarding_list_sync_title">Sincronización en tiempo real</string>
+    <string name="onboarding_list_sync_body">Todo se actualiza al instante para todos en el hogar.</string>
+    <string name="onboarding_list_settings_title">Tus ajustes</string>
+    <string name="onboarding_list_settings_body">Administra miembros, código de invitación y nombre del hogar.</string>
+    <string name="onboarding_list_extras_title">Modo compras</string>
+    <string name="onboarding_list_extras_body">Toca aquí en la tienda — ¡marca artículos mientras compras!</string>
 </resources>

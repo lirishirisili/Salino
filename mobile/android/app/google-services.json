@@ -58,6 +58,30 @@
           }
         },
         {
+          "client_id": "937718857697-mumtkakl43tjpsa7a3erhu2bb2iuq6fe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "937718857697-pivuv83nfbjd9v5ab1rv7alfaps6n610.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "a2817c31a524c2e49fde68bb197dc2a8033782a3"
+          }
+        },
+        {
+          "client_id": "937718857697-qo5uuphpcock7d38l8bhv1cc9a7082dq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "4f7936b8c42efc7255af25b54904365b2cdde280"
+          }
+        },
+        {
           "client_id": "937718857697-t6jrq68hpou76lrogqohasvnor760v0c.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -222,12 +222,12 @@
   "onboarding_share_step_body": "שלחו את הקוד לבן/בת הזוג, לילדים, לשותף לדירה או לכל מי שצריך לראות את הרשימה. בחסרלי בוחרים ״הצטרפות לבית״ ומזינים את הקוד. אפשר תמיד למצוא את הקוד שוב בהגדרות.",
   "onboarding_join_title": "ברוכים הבאים לבית",
   "onboarding_join_body": "הצטרפתם! אתם חולקים את אותה רשימת קניות עם כולם בבית — מוסיפים פריטים, מסמנים מה נקנה, והכול מסתנכרן.",
-  "onboarding_list_add_title": "מוסיפים מה שחסר",
-  "onboarding_list_add_body": "לחצו על כפתור ההוספה הכתום כדי לשים משהו ברשימה. נגמר חלב? מוסיפים בשנייה.",
-  "onboarding_list_sync_title": "כולם רואים את אותה רשימה",
-  "onboarding_list_sync_body": "כשמישהו מוסיף או קונה פריט, זה מתעדכן לכולם בבית מיד — בלי לשלוח הודעות.",
-  "onboarding_list_settings_title": "בית וקוד הזמנה",
-  "onboarding_list_settings_body": "בהגדרות (אייקון גלגל שיניים) רואים מי בבית, מעתיקים או משתפים את קוד ההזמנה, ומשנים את שם הבית.",
-  "onboarding_list_extras_title": "מצב קניות ועוד",
-  "onboarding_list_extras_body": "מצב חנות בזמן הקניות, פעילות לראות מי עשה מה, והיסטוריה לקניות קודמות. אתם מוכנים!"
+  "onboarding_list_add_title": "מוסיפים כאן",
+  "onboarding_list_add_body": "לחצו על הכפתור הזה כדי להוסיף פריט לרשימה. מהיר וקל.",
+  "onboarding_list_sync_title": "סנכרון בזמן אמת",
+  "onboarding_list_sync_body": "הכול מתעדכן מיד לכל מי שבבית.",
+  "onboarding_list_settings_title": "ההגדרות שלכם",
+  "onboarding_list_settings_body": "ניהול חברים, קוד הזמנה, ושם הבית.",
+  "onboarding_list_extras_title": "מצב קניות",
+  "onboarding_list_extras_body": "לחצו כאן בחנות — מסמנים פריטים תוך כדי קנייה!"
 }

@@ -5,12 +5,21 @@ import android.util.Log
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
+import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class SalinoApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        try {
+            FirebaseAnalytics.getInstance(this).apply {
+                setAnalyticsCollectionEnabled(true)
+                logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Firebase Analytics init failed", e)
+        }
         try {
             if (BuildConfig.DEBUG) {
                 MobileAds.setRequestConfiguration(

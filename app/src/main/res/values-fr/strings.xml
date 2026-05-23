@@ -225,4 +225,26 @@
     <string name="language_am">አማርኛ</string>
     <string name="settings_language_change_title">Changer la langue</string>
     <string name="settings_language_change_message">L\'application redémarrera pour appliquer la nouvelle langue. Continuer ?</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Suivant</string>
+    <string name="onboarding_skip">Passer pour l\'instant</string>
+    <string name="onboarding_get_started">Compris, allons-y</string>
+    <string name="onboarding_step_counter">Étape %1$d sur %2$d</string>
+    <string name="onboarding_created_title">Votre foyer est prêt</string>
+    <string name="onboarding_created_body">Vous avez créé une liste de courses partagée pour tous à la maison. Tout ce que vous ajoutez apparaît pour tous en temps réel.</string>
+    <string name="onboarding_invite_step_title">Votre code d\'invitation</string>
+    <string name="onboarding_invite_step_body">Ce code permet aux autres de rejoindre votre foyer. Copiez-le ou partagez-le — ils le colleront dans « Rejoindre un foyer ».</string>
+    <string name="onboarding_share_step_title">Invitez vos colocataires</string>
+    <string name="onboarding_share_step_body">Envoyez le code à votre conjoint, vos enfants, colocataire ou toute personne qui doit voir la liste. Le code est toujours dans les Paramètres.</string>
+    <string name="onboarding_join_title">Bienvenue au foyer</string>
+    <string name="onboarding_join_body">Vous y êtes ! Vous partagez la même liste avec tout le monde — ajoutez des articles, marquez ce qui est acheté, tout est synchronisé.</string>
+    <string name="onboarding_list_add_title">Ajoutez ici</string>
+    <string name="onboarding_list_add_body">Appuyez sur ce bouton pour ajouter quoi que ce soit à la liste. Rapide et facile.</string>
+    <string name="onboarding_list_sync_title">Synchro en temps réel</string>
+    <string name="onboarding_list_sync_body">Tout se met à jour instantanément pour tous les membres du foyer.</string>
+    <string name="onboarding_list_settings_title">Vos paramètres</string>
+    <string name="onboarding_list_settings_body">Gérez les membres, le code d\'invitation et le nom du foyer.</string>
+    <string name="onboarding_list_extras_title">Mode courses</string>
+    <string name="onboarding_list_extras_body">Appuyez ici au magasin — cochez les articles en faisant vos courses !</string>
 </resources>

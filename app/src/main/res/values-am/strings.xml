@@ -223,4 +223,24 @@
     <string name="language_am">አማርኛ</string>
     <string name="settings_language_change_title">ቋንቋ ቀይር</string>
     <string name="settings_language_change_message">አዲሱን ቋንቋ ለመተግበር መተግበሪያው እንደገና ይጀምራል። ይቀጥል?</string>
-</resources>
+    <!-- Onboarding -->
+    <string name="onboarding_next">ቀጣይ</string>
+    <string name="onboarding_skip">ለአሁን ዝለል</string>
+    <string name="onboarding_get_started">ገባኝ፣ እንጀምር</string>
+    <string name="onboarding_step_counter">ደረጃ %1$d ከ %2$d</string>
+    <string name="onboarding_created_title">ቤትዎ ዝግጁ ነው</string>
+    <string name="onboarding_created_body">ለቤት ውስጥ ሁሉም የሚጋሩት የግዢ ዝርዝር ፈጥረዋል። የሚጨምሩት ሁሉ ወዲያውኑ ለሁሉም ይታያል።</string>
+    <string name="onboarding_invite_step_title">የመጋበዣ ኮድዎ</string>
+    <string name="onboarding_invite_step_body">በዚህ ኮድ ሌሎች ቤትዎን መቀላቀል ይችላሉ። ኮፒ ያድርጉ ወይም ያጋሩ — "ቤት መቀላቀል" ላይ ይለጥፉታል።</string>
+    <string name="onboarding_share_step_title">ከእርስዎ ጋር የሚኖሩትን ይጋብዙ</string>
+    <string name="onboarding_share_step_body">ኮዱን ለባለቤትዎ፣ ልጆች፣ ወይም ዝርዝሩን ማየት ለሚገባው ሰው ይላኩ። ኮዱ ሁልጊዜ በቅንብሮች ውስጥ ይገኛል።</string>
+    <string name="onboarding_join_title">እንኳን ደህና መጡ</string>
+    <string name="onboarding_join_body">ተቀላቅለዋል! ከሁሉም ጋር ተመሳሳይ ዝርዝር ይጋራሉ — ያክሉ፣ የተገዛውን ያመልክቱ፣ ሁሉም ይመሳሰላል።</string>
+    <string name="onboarding_list_add_title">እዚህ ያክሉ</string>
+    <string name="onboarding_list_add_body">ወደ ዝርዝሩ ማንኛውንም ነገር ለማከል ይህን ቁልፍ ይጫኑ። ፈጣንና ቀላል።</string>
+    <string name="onboarding_list_sync_title">በቅጽበት ማመሳሰል</string>
+    <string name="onboarding_list_sync_body">ሁሉም ነገር ወዲያውኑ ለቤት ውስጥ ሁሉም ይዘምናል።</string>
+    <string name="onboarding_list_settings_title">ቅንብሮችዎ</string>
+    <string name="onboarding_list_settings_body">አባላትን፣ የመጋበዣ ኮድ፣ እና የቤት ስም ያስተዳድሩ።</string>
+    <string name="onboarding_list_extras_title">የግዢ ሁነታ</string>
+    <string name="onboarding_list_extras_body">በመደብር ውስጥ እዚህ ይጫኑ — ሲገዙ ምልክት ያድርጉ!</string></resources>

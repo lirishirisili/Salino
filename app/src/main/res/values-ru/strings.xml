@@ -225,4 +225,26 @@
     <string name="language_am">አማርኛ</string>
     <string name="settings_language_change_title">Сменить язык</string>
     <string name="settings_language_change_message">Приложение перезапустится для применения нового языка. Продолжить?</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_get_started">Понятно, начнём</string>
+    <string name="onboarding_step_counter">Шаг %1$d из %2$d</string>
+    <string name="onboarding_created_title">Ваш дом готов</string>
+    <string name="onboarding_created_body">Вы создали общий список покупок для всех домочадцев. Всё, что вы добавите, появится у всех мгновенно.</string>
+    <string name="onboarding_invite_step_title">Ваш код приглашения</string>
+    <string name="onboarding_invite_step_body">По этому коду другие смогут присоединиться. Скопируйте или отправьте — они введут его в «Присоединиться к дому».</string>
+    <string name="onboarding_share_step_title">Пригласите домочадцев</string>
+    <string name="onboarding_share_step_body">Отправьте код партнёру, детям, соседу — всем, кому нужен доступ к списку. Код всегда можно найти в Настройках.</string>
+    <string name="onboarding_join_title">Добро пожаловать</string>
+    <string name="onboarding_join_body">Вы присоединились! У вас общий список покупок — добавляйте товары, отмечайте купленное, всё синхронизируется.</string>
+    <string name="onboarding_list_add_title">Добавляйте сюда</string>
+    <string name="onboarding_list_add_body">Нажмите эту кнопку, чтобы добавить что угодно в список. Быстро и просто.</string>
+    <string name="onboarding_list_sync_title">Синхронизация в реальном времени</string>
+    <string name="onboarding_list_sync_body">Всё обновляется мгновенно для всех в доме.</string>
+    <string name="onboarding_list_settings_title">Ваши настройки</string>
+    <string name="onboarding_list_settings_body">Управление участниками, код приглашения и название дома.</string>
+    <string name="onboarding_list_extras_title">Режим покупок</string>
+    <string name="onboarding_list_extras_body">Нажмите здесь в магазине — отмечайте товары прямо во время покупок!</string>
 </resources>

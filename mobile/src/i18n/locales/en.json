@@ -222,12 +222,12 @@
   "onboarding_share_step_body": "Send the code to your partner, kids, roommate, or anyone who should see the list. They open Haserli, choose Join a household, and enter the code. You can always find the code again in Settings.",
   "onboarding_join_title": "Welcome to the household",
   "onboarding_join_body": "You're in! You share the same shopping list with everyone in this home — add items, mark what's bought, and stay in sync.",
-  "onboarding_list_add_title": "Add what's missing",
-  "onboarding_list_add_body": "Tap the orange Add button to put something on the list. Ran out of milk? Add it in a second.",
-  "onboarding_list_sync_title": "Everyone sees the same list",
-  "onboarding_list_sync_body": "When someone adds or buys an item, it updates for everyone at home right away — no need to text or call.",
-  "onboarding_list_settings_title": "Household & invite code",
-  "onboarding_list_settings_body": "Open Settings (gear icon) to see who's in your home, copy or share the invite code, and rename your household.",
-  "onboarding_list_extras_title": "Shopping mode & more",
-  "onboarding_list_extras_body": "Use Store mode while shopping, check Activity to see who did what, and History for past trips. You're all set!"
+  "onboarding_list_add_title": "Add items here",
+  "onboarding_list_add_body": "Tap this button to add anything to your list. Quick and easy.",
+  "onboarding_list_sync_title": "Real-time sync",
+  "onboarding_list_sync_body": "Everything updates instantly for everyone in your household.",
+  "onboarding_list_settings_title": "Your settings",
+  "onboarding_list_settings_body": "Manage members, invite code, and household name.",
+  "onboarding_list_extras_title": "Shopping mode",
+  "onboarding_list_extras_body": "Tap here at the store — check off items as you shop!"
 }

@@ -11,6 +11,7 @@ import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore } from '../src/hooks';
 import { LoadingScreen, SalinoGradientBackground } from '../src/components';
 import { initMobileAds } from '../src/services/initMobileAds';
+import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
 
 LogBox.ignoreLogs(['Setting a timer']);
@@ -25,7 +26,11 @@ export default function RootLayout() {
   const isLoading = useAuthStore((s) => s.isLoading);
 
   useEffect(() => {
-    initMobileAds();
+    void (async () => {
+      // iOS: ATT runs inside initMobileAds before AdMob; analytics starts after.
+      await initMobileAds();
+      await initMobileAnalytics();
+    })();
   }, []);
 
   useEffect(() => {

@@ -29,6 +29,13 @@
             {
               "client_id": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "937718857697-6ui8hs9m3vo4sdr2irippl26r39c18sh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.salino.sali"
+              }
             }
           ]
         }
@@ -48,6 +55,30 @@
           "android_info": {
             "package_name": "com.salino.sali",
             "certificate_hash": "ab1b2978cf5d246e4ea9643bee3eab5bfbd927ab"
+          }
+        },
+        {
+          "client_id": "937718857697-mumtkakl43tjpsa7a3erhu2bb2iuq6fe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "937718857697-pivuv83nfbjd9v5ab1rv7alfaps6n610.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "a2817c31a524c2e49fde68bb197dc2a8033782a3"
+          }
+        },
+        {
+          "client_id": "937718857697-qo5uuphpcock7d38l8bhv1cc9a7082dq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salino.sali",
+            "certificate_hash": "4f7936b8c42efc7255af25b54904365b2cdde280"
           }
         },
         {
@@ -82,6 +113,13 @@
             {
               "client_id": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "937718857697-6ui8hs9m3vo4sdr2irippl26r39c18sh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.salino.sali"
+              }
             }
           ]
         }

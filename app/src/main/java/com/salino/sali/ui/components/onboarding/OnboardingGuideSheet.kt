@@ -5,6 +5,14 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -97,42 +106,64 @@ fun OnboardingGuideDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = step.icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                AnimatedContent(
+                    targetState = currentStepIndex,
+                    transitionSpec = {
+                        (fadeIn() + scaleIn(initialScale = 0.8f))
+                            .togetherWith(fadeOut())
+                    },
+                    label = "iconAnim"
+                ) { stepIdx ->
+                    val animStep = steps[stepIdx]
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = animStep.icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = step.title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                AnimatedContent(
+                    targetState = currentStepIndex,
+                    transitionSpec = {
+                        (fadeIn() + slideInVertically { it / 4 })
+                            .togetherWith(fadeOut())
+                    },
+                    label = "textAnim"
+                ) { stepIdx ->
+                    val animStep = steps[stepIdx]
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = animStep.title,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                Text(
-                    text = step.body,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                        Text(
+                            text = animStep.body,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
 
                 if (showInviteBlock && inviteCode != null) {
                     Spacer(modifier = Modifier.height(20.dp))
@@ -211,9 +242,10 @@ private fun OnboardingStepIndicator(
             val done = index < currentIndex
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .size(if (active) 10.dp else 8.dp)
-                    .clip(CircleShape)
+                    .padding(horizontal = 3.dp)
+                    .height(8.dp)
+                    .width(if (active) 22.dp else 8.dp)
+                    .clip(RoundedCornerShape(4.dp))
                     .background(
                         when {
                             active -> MaterialTheme.colorScheme.primary
@@ -221,6 +253,7 @@ private fun OnboardingStepIndicator(
                             else -> MaterialTheme.colorScheme.outlineVariant
                         }
                     )
+                    .animateContentSize(animationSpec = spring(dampingRatio = 0.7f))
             )
         }
     }
