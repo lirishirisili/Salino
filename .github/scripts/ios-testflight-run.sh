@@ -25,7 +25,8 @@ cd "$REPO_ROOT/$EXPO_DIR/ios"
 pod install --repo-update
 
 echo "=== Resolve iOS build & marketing version ==="
-bash "$SCRIPT_DIR/ios-resolve-versions.sh"
+# shellcheck source=ios-resolve-versions.sh
+source "$SCRIPT_DIR/ios-resolve-versions.sh"
 
 echo "=== Set CFBundleShortVersionString ($IOS_MARKETING_VERSION) and CFBundleVersion ($BUILD_NUMBER) ==="
 cd "$REPO_ROOT/$EXPO_DIR/ios"
