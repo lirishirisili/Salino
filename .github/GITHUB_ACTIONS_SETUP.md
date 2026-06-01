@@ -27,9 +27,15 @@ Single script: `.github/scripts/ios-testflight-run.sh`
 Shared env: `.github/scripts/ci-env.sh`  
 CLI tools: `codemagic-cli-tools` in `.ci-venv` (macOS PEP 668 safe).
 
-## Secrets (repository → Settings → Secrets and variables → Actions)
+## Secrets (required before the first run)
 
-Add these **Repository secrets** (same values as Codemagic group `app-store-connect`):
+Secrets are **not** stored in git. Add them in the GitHub UI (same values as Codemagic group `app-store-connect`):
+
+**[Repository → Settings → Secrets and variables → Actions → New repository secret](https://github.com/lironsh11/Salino/settings/secrets/actions)**
+
+After saving all three, re-run: **Actions → iOS — Expo TestFlight → Run workflow**, or push any commit to `main`.
+
+Add these **Repository secrets**:
 
 | Secret | Description |
 |--------|-------------|
