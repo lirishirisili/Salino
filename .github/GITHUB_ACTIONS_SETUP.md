@@ -59,7 +59,7 @@ Build number logic (`.github/scripts/ios-resolve-versions.sh`):
 - If `APP_STORE_APPLE_ID` is set: `max(TestFlight latest + 1, 22)`
 - Else: `max(GITHUB_RUN_NUMBER + 21, 22)` → first workflow run is **22**, then 23, 24, …
 
-After Codemagic build **1.3.17 (21)**, the next GitHub Actions upload should be **1.3.17 (22)** unless you bump `IOS_MARKETING_VERSION` or `app.json` `expo.version`.
+When App Store Connect closes a version train (e.g. **1.3.17** already approved), bump `expo.version` in `mobile/app.json` (e.g. **1.3.18**) before the next upload. Build number can stay on the same train only while Apple still accepts new builds for that marketing version.
 
 ### Common mistakes
 
