@@ -49,29 +49,26 @@ npx eas build --platform android --profile production
 
 ### iOS
 
-iOS builds run on Codemagic — no Mac required locally. Configuration lives in
-the repo root `codemagic.yaml` (workflow `ios-testflight`). One click in the
-Codemagic UI runs `expo prebuild`, installs pods, archives, exports the IPA,
-and uploads it to App Store Connect (TestFlight).
+iOS CI runs on **GitHub Actions** or **Codemagic** — no Mac required locally.
+Both use the same pipeline (`expo prebuild` → pods → sign → archive → IPA →
+TestFlight). Configuration:
 
-Required Codemagic Environment groups (one-time setup, already configured for
-this project):
+- GitHub: `.github/workflows/ios-testflight.yml` — push to `main` / `master` /
+  `release/*`, or **Actions → iOS — Expo TestFlight → Run workflow**.
+- Codemagic: repo root `codemagic.yaml` (workflow `ios-testflight`).
 
-- `app-store-connect` — App Store Connect API key:
-  `APP_STORE_CONNECT_PRIVATE_KEY`, `_KEY_IDENTIFIER`, `_ISSUER_ID`.
-- `ios-code-signing` — Apple Distribution certificate password (if the cert
-  is password-protected; new certs created by Codemagic CLI are not).
+**GitHub secrets** (one-time): see [`.github/GITHUB_ACTIONS_SETUP.md`](../.github/GITHUB_ACTIONS_SETUP.md).
 
-To run a build:
+**Codemagic groups** (one-time, if you use Codemagic):
 
-1. Codemagic → Applications → Salino → **Start new build** → workflow
-   **iOS — Expo TestFlight** → **Start**.
-2. ~15–20 min later the IPA is uploaded to App Store Connect.
-3. Wait ~10–30 min for ASC processing, then add testers under TestFlight.
+- `app-store-connect` — `APP_STORE_CONNECT_PRIVATE_KEY`, `_KEY_IDENTIFIER`, `_ISSUER_ID`.
+- `ios-code-signing` — can be empty when CLI creates certs automatically.
 
-EAS Build is also still configured via `eas.json` if you ever want to use it
-(`npx eas build --platform ios --profile production`), but Codemagic is the
-canonical path for this project.
+Typical timing: ~15–25 min build, then ~10–30 min App Store Connect processing
+before TestFlight testers see the build.
+
+EAS Build is also configured via `eas.json` (`npx eas build --platform ios
+--profile production`) if you prefer Expo’s cloud builders.
 
 ## Architecture
 

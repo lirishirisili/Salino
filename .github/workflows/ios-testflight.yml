@@ -1,0 +1,88 @@
+# iOS — Expo TestFlight (parity with codemagic.yaml ios-testflight)
+name: iOS — Expo TestFlight
+
+on:
+  push:
+    branches: [main, master, 'release/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ios-testflight-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TOOLCHAINS: com.apple.dt.toolchain.XcodeDefault
+  EXPO_DIR: mobile
+  XCODE_PROJECT: mobile/ios/Haserli.xcodeproj
+  XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
+  XCODE_SCHEME: Haserli
+  BUNDLE_ID: com.salino.sali
+  BUILD_DIR: ${{ github.workspace }}/build
+  # First GHA build must be ≥22 (last Codemagic/TestFlight was 1.3.17 (21)).
+  IOS_BUILD_NUMBER_FLOOR: "22"
+  IOS_BUILD_NUMBER_OFFSET: "21"
+  # Optional: App Store Connect numeric app id → query TestFlight for latest build (vars, not secret).
+  APP_STORE_APPLE_ID: ${{ vars.APP_STORE_APPLE_ID }}
+  SIMULATOR_DERIVED_DATA: ${{ github.workspace }}/build/DerivedDataSimulator
+  APPETIZE_ZIP: ${{ github.workspace }}/build/Haserli-simulator-appetize.zip
+  APP_PREVIEW_DIR: ${{ github.workspace }}/build/app-preview
+
+jobs:
+  build-and-publish:
+    name: Build, TestFlight & Simulator artifacts
+    runs-on: macos-26
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require App Store Connect secrets
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          missing=0
+          for name in APP_STORE_CONNECT_ISSUER_ID APP_STORE_CONNECT_KEY_IDENTIFIER APP_STORE_CONNECT_PRIVATE_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub secret: $name (see .github/GITHUB_ACTIONS_SETUP.md)"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ env.EXPO_DIR }}/package-lock.json
+
+      - name: Run iOS TestFlight pipeline
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APP_STORE_APPLE_ID: ${{ vars.APP_STORE_APPLE_ID }}
+          IOS_BUILD_NUMBER_FLOOR: ${{ env.IOS_BUILD_NUMBER_FLOOR }}
+          IOS_BUILD_NUMBER_OFFSET: ${{ env.IOS_BUILD_NUMBER_OFFSET }}
+        run: bash .github/scripts/ios-testflight-run.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-testflight-${{ github.run_number }}
+          path: |
+            build/ios/ipa/*.ipa
+            build/Haserli-simulator-appetize.zip
+            build/build.xcarchive
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to TestFlight
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: bash .github/scripts/ios-publish-testflight.sh

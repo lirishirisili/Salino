@@ -1,0 +1,42 @@
+# iOS — Simulator (Appetize) — manual; parity with codemagic.yaml ios-simulator-appetize
+name: iOS — Simulator (Appetize)
+
+on:
+  workflow_dispatch:
+
+env:
+  TOOLCHAINS: com.apple.dt.toolchain.XcodeDefault
+  EXPO_DIR: mobile
+  XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
+  XCODE_SCHEME: Haserli
+  BUILD_DIR: ${{ github.workspace }}/build
+  SIMULATOR_DERIVED_DATA: ${{ github.workspace }}/build/DerivedDataSimulator
+  APPETIZE_ZIP: ${{ github.workspace }}/build/Haserli-simulator-appetize.zip
+
+jobs:
+  simulator-appetize:
+    name: Build Simulator zip for Appetize
+    runs-on: macos-26
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ env.EXPO_DIR }}/package-lock.json
+
+      - name: Build Simulator zip
+        run: bash .github/scripts/ios-simulator-appetize-run.sh
+
+      - name: Upload Appetize zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: haserli-simulator-appetize-${{ github.run_number }}
+          path: build/Haserli-simulator-appetize.zip
+          if-no-files-found: error
+          retention-days: 14

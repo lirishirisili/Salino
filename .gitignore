@@ -16,5 +16,14 @@ local.properties
 # Logs
 *.log
 
+# GitHub Actions local Codemagic CLI venv (see .github/scripts/setup-codemagic-cli.sh)
+.ci-venv/
+
 # Stray Firebase config at repo root (the real one lives in mobile/ + app/)
 /google-services.json
+
+# Cloud Functions
+functions/node_modules/
+functions/lib/
+functions/.env
+functions/.env.local
