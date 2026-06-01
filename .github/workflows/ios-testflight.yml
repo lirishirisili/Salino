@@ -21,6 +21,8 @@ env:
   # First GHA build must be ≥22 (last Codemagic/TestFlight was 1.3.17 (21)).
   IOS_BUILD_NUMBER_FLOOR: "22"
   IOS_BUILD_NUMBER_OFFSET: "21"
+  # Must be > last approved App Store version (1.3.17). CI auto-bumps lower app.json values.
+  IOS_MARKETING_VERSION_MIN: "1.3.19"
   # Optional: App Store Connect numeric app id → query TestFlight for latest build (vars, not secret).
   APP_STORE_APPLE_ID: ${{ vars.APP_STORE_APPLE_ID }}
   SIMULATOR_DERIVED_DATA: ${{ github.workspace }}/build/DerivedDataSimulator
@@ -67,7 +69,7 @@ jobs:
           APP_STORE_APPLE_ID: ${{ vars.APP_STORE_APPLE_ID }}
           IOS_BUILD_NUMBER_FLOOR: ${{ env.IOS_BUILD_NUMBER_FLOOR }}
           IOS_BUILD_NUMBER_OFFSET: ${{ env.IOS_BUILD_NUMBER_OFFSET }}
-          # Optional: override expo.version for App Store (must be > last approved train, e.g. 1.3.20).
+          IOS_MARKETING_VERSION_MIN: ${{ env.IOS_MARKETING_VERSION_MIN }}
           IOS_MARKETING_VERSION: ${{ vars.IOS_MARKETING_VERSION }}
         run: bash .github/scripts/ios-testflight-run.sh
 

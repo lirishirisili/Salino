@@ -69,7 +69,11 @@ Build number logic (`.github/scripts/ios-resolve-versions.sh`):
 - If `APP_STORE_APPLE_ID` is set: `max(TestFlight latest + 1, 22)`
 - Else: `max(GITHUB_RUN_NUMBER + 21, 22)` → first workflow run is **22**, then 23, 24, …
 
-When App Store Connect closes a version train (e.g. **1.3.17** already approved), bump `expo.version` in `mobile/app.json` (e.g. **1.3.18**) before the next upload. Build number can stay on the same train only while Apple still accepts new builds for that marketing version.
+**App Store rule:** `CFBundleShortVersionString` must be **greater than** the last **approved** version (currently **1.3.17**). Values like `1.3.2` or `1.3.3` are rejected (semver: `1.3.17` > `1.3.3`).
+
+CI enforces `IOS_MARKETING_VERSION_MIN` (default **1.3.19**) in `ios-resolve-versions.sh` and auto-bumps lower `app.json` versions before upload.
+
+When Apple approves a new train, raise `IOS_MARKETING_VERSION_MIN` and `expo.version` in `mobile/app.json` together.
 
 ### Common mistakes
 

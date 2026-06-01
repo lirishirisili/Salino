@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Resolve CFBundleVersion (build) and optional CFBundleShortVersionString for CI.
-# Avoids resetting to 1 when GitHub Actions starts (GITHUB_RUN_NUMBER begins at 1).
+# Resolve CFBundleVersion (build) and CFBundleShortVersionString (marketing) for CI.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,5 +44,43 @@ if [ -z "$MARKETING" ]; then
   exit 1
 fi
 
+# App Store rejects CFBundleShortVersionString <= last approved (currently 1.3.17).
+export MARKETING_MIN="${IOS_MARKETING_VERSION_MIN:-1.3.19}"
+MARKETING=$(node -e "
+function parts(s) {
+  return String(s).trim().split('.').map((n) => parseInt(n, 10) || 0);
+}
+function compare(a, b) {
+  const pa = parts(a);
+  const pb = parts(b);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const da = pa[i] || 0;
+    const db = pb[i] || 0;
+    if (da > db) return 1;
+    if (da < db) return -1;
+  }
+  return 0;
+}
+function maxSemver(a, b) {
+  return compare(a, b) >= 0 ? a : b;
+}
+const requested = process.argv[1];
+const min = process.env.MARKETING_MIN || '1.3.19';
+const resolved = maxSemver(requested, min);
+if (compare(requested, min) < 0) {
+  console.error(
+    'WARN: expo.version ' +
+      requested +
+      ' is below App Store minimum ' +
+      min +
+      '; using ' +
+      resolved +
+      ' for this upload.'
+  );
+}
+console.log(resolved);
+" "$MARKETING")
+
 export IOS_MARKETING_VERSION="$MARKETING"
-echo "Resolved IOS_MARKETING_VERSION=$IOS_MARKETING_VERSION"
+echo "Resolved IOS_MARKETING_VERSION=$IOS_MARKETING_VERSION (min=$MARKETING_MIN)"
