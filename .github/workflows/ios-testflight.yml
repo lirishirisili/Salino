@@ -67,6 +67,8 @@ jobs:
           APP_STORE_APPLE_ID: ${{ vars.APP_STORE_APPLE_ID }}
           IOS_BUILD_NUMBER_FLOOR: ${{ env.IOS_BUILD_NUMBER_FLOOR }}
           IOS_BUILD_NUMBER_OFFSET: ${{ env.IOS_BUILD_NUMBER_OFFSET }}
+          # Optional: override expo.version for App Store (must be > last approved train, e.g. 1.3.20).
+          IOS_MARKETING_VERSION: ${{ vars.IOS_MARKETING_VERSION }}
         run: bash .github/scripts/ios-testflight-run.sh
 
       - name: Upload build artifacts
@@ -76,7 +78,16 @@ jobs:
           path: |
             build/ios/ipa/*.ipa
             build/Haserli-simulator-appetize.zip
+            build/app-preview/**/*.app
             build/build.xcarchive
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Appetize zip (standalone)
+        uses: actions/upload-artifact@v4
+        with:
+          name: haserli-appetize-${{ github.run_number }}
+          path: build/Haserli-simulator-appetize.zip
           if-no-files-found: error
           retention-days: 30
 

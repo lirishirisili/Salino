@@ -21,8 +21,18 @@ Single script: `.github/scripts/ios-testflight-run.sh`
 6. Refresh App ID (Sign in with Apple) + purge profiles/certs
 7. `fetch-signing-files` + keychain + `xcode-project use-profiles`
 8. `xcodebuild archive` + export IPA
-9. Simulator build + Appetize zip
+9. Simulator build (embedded JS) → smoke test on macOS Simulator → **Appetize zip**
 10. `ios-publish-testflight.sh` → TestFlight
+
+### Appetize.io
+
+After a successful **iOS — Expo TestFlight** run:
+
+1. Open the workflow run → **Artifacts**
+2. Download **`haserli-appetize-<run>`** or **`ios-testflight-<run>`** → `Haserli-simulator-appetize.zip`
+3. [Appetize.io](https://appetize.io/) → **Upload** → choose the zip (Simulator build only — not the IPA)
+
+Device IPAs from TestFlight do **not** run on Appetize.
 
 Shared env: `.github/scripts/ci-env.sh`  
 CLI tools: `codemagic-cli-tools` in `.ci-venv` (macOS PEP 668 safe).

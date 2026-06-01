@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/ci-env.sh"
 
 bash "$SCRIPT_DIR/select-xcode-26.sh"
-mkdir -p "$BUILD_DIR"
+mkdir -p "$BUILD_DIR" "$APP_PREVIEW_DIR"
 
 echo "=== Install JS dependencies ==="
 cd "$REPO_ROOT/$EXPO_DIR"
@@ -20,7 +20,7 @@ echo "=== Install CocoaPods ==="
 cd "$REPO_ROOT/$EXPO_DIR/ios"
 pod install --repo-update
 
-echo "=== Build for iOS Simulator and zip for Appetize ==="
+echo "=== Build Simulator zip for Appetize ==="
 bash "$SCRIPT_DIR/ios-simulator-artifacts.sh"
 
 echo "=== Simulator Appetize build finished ==="

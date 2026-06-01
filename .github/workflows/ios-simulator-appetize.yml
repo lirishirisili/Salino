@@ -12,6 +12,7 @@ env:
   BUILD_DIR: ${{ github.workspace }}/build
   SIMULATOR_DERIVED_DATA: ${{ github.workspace }}/build/DerivedDataSimulator
   APPETIZE_ZIP: ${{ github.workspace }}/build/Haserli-simulator-appetize.zip
+  APP_PREVIEW_DIR: ${{ github.workspace }}/build/app-preview
 
 jobs:
   simulator-appetize:
