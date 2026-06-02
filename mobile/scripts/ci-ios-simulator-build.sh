@@ -31,6 +31,7 @@ fi
 export CI=1
 echo "Building Simulator .app (Release, embedded bundle)..."
 echo "XCODE_WORKSPACE=$XCODE_WORKSPACE"
+# Universal Simulator binary (arm64 + x86_64) — required for Appetize cloud devices.
 xcodebuild build \
   -workspace "$XCODE_WORKSPACE" \
   -scheme "$XCODE_SCHEME" \
@@ -42,6 +43,7 @@ xcodebuild build \
   CODE_SIGNING_ALLOWED=NO \
   ONLY_ACTIVE_ARCH=NO \
   ARCHS="arm64 x86_64" \
+  VALID_ARCHS="arm64 x86_64" \
   EXCLUDED_ARCHS=
 
 APP_PATH="$(

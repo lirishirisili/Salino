@@ -28,11 +28,23 @@ Single script: `.github/scripts/ios-testflight-run.sh`
 
 After a successful **iOS — Expo TestFlight** run:
 
-1. Open the workflow run → **Artifacts**
-2. Download **`haserli-appetize-<run>`** or **`ios-testflight-<run>`** → `Haserli-simulator-appetize.zip`
-3. [Appetize.io](https://appetize.io/) → **Upload** → choose the zip (Simulator build only — not the IPA)
+1. Actions → open the green run → **Artifacts**
+2. Download **`haserli-appetize-<run>`** (recommended) — inside is **`Haserli-simulator-appetize.zip`**
+3. Upload **that inner zip** to [Appetize.io](https://appetize.io/) → Upload
 
-Device IPAs from TestFlight do **not** run on Appetize.
+**Do not upload:**
+
+| File | Why |
+|------|-----|
+| `ios-testflight-<run>.zip` (whole artifact) | Contains `build/ios/…`, `.xcarchive` — no `.app` at zip root → **"No .app folder found"** |
+| `Haserli.ipa` | Device build — Appetize needs **Simulator** `.app` only |
+| `.xcarchive` | Not a Simulator bundle |
+
+Quick check after download: open the zip — you should see **`Haserli.app/`** at the top level (not `build/`, not `Payload/`).
+
+CI runs `ci-package-appetize-zip.sh` to verify the archive before upload to GitHub Artifacts.
+
+See [Appetize iOS docs](https://docs.appetize.io/platform/app-management/uploading-apps/ios).
 
 Shared env: `.github/scripts/ci-env.sh`  
 CLI tools: `codemagic-cli-tools` in `.ci-venv` (macOS PEP 668 safe).

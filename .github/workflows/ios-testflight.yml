@@ -88,10 +88,12 @@ jobs:
       - name: Upload Appetize zip (standalone)
         uses: actions/upload-artifact@v4
         with:
+          # Download THIS artifact for Appetize — not ios-testflight-* (nested build/ folder).
           name: haserli-appetize-${{ github.run_number }}
           path: build/Haserli-simulator-appetize.zip
           if-no-files-found: error
           retention-days: 30
+          compression-level: 0
 
       - name: Publish to TestFlight
         env:
