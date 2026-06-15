@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.edititem
+package com.salino.sali.ui.screens.edititem
 
 import android.Manifest
 import android.app.Activity
@@ -10,13 +10,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,6 +51,7 @@ import com.salino.sali.R
 import com.salino.sali.data.model.ItemCategory
 import com.salino.sali.data.model.ItemUnit
 import com.salino.sali.ui.components.DuplicateWarningCard
+import com.salino.sali.ui.components.ItemNameAutocompleteField
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
@@ -68,7 +72,7 @@ private fun getAppLocale(): Locale {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditItemScreen(
     onNavigateBack: () -> Unit,
@@ -132,6 +136,27 @@ fun EditItemScreen(
         else -> null
     }
 
+    val imeVisible = WindowInsets.isImeVisible
+    val compactInputMode = imeVisible || uiState.isNameAutocompleteFocused
+    val scrollState = rememberScrollState()
+
+    var compactScrollApplied by remember { mutableStateOf(false) }
+    LaunchedEffect(compactInputMode) {
+        if (compactInputMode && !compactScrollApplied) {
+            scrollState.scrollTo(0)
+            compactScrollApplied = true
+        }
+        if (!compactInputMode) {
+            compactScrollApplied = false
+        }
+    }
+
+    LaunchedEffect(imeVisible) {
+        if (!imeVisible) {
+            viewModel.onNameAutocompleteDismissRequest()
+        }
+    }
+
     SalinoGradientBackground {
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -169,49 +194,55 @@ fun EditItemScreen(
                     .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                     .imePadding()
                     .navigationBarsPadding()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .verticalScroll(
+                        state = scrollState,
+                        enabled = !uiState.isNameAutocompleteVisible
+                    ),
+                verticalArrangement = Arrangement.spacedBy(if (compactInputMode) 8.dp else 12.dp)
             ) {
-                uiState.duplicateMatch?.let { duplicate ->
-                    val dupTitle = when (duplicate.reason) {
-                        DuplicateReason.EXACT_DUPLICATE -> stringResource(R.string.duplicate_warning_title)
-                        DuplicateReason.POSSIBLE_DUPLICATE -> stringResource(R.string.duplicate_warning_fuzzy)
-                        DuplicateReason.SIMILAR_ITEM -> stringResource(R.string.duplicate_warning_similar)
+                if (!compactInputMode) {
+                    uiState.duplicateMatch?.let { duplicate ->
+                        val dupTitle = when (duplicate.reason) {
+                            DuplicateReason.EXACT_DUPLICATE -> stringResource(R.string.duplicate_warning_title)
+                            DuplicateReason.POSSIBLE_DUPLICATE -> stringResource(R.string.duplicate_warning_fuzzy)
+                            DuplicateReason.SIMILAR_ITEM -> stringResource(R.string.duplicate_warning_similar)
+                        }
+                        val isSimilarOnly = duplicate.reason == DuplicateReason.SIMILAR_ITEM
+                        DuplicateWarningCard(
+                            duplicateMatch = duplicate,
+                            title = dupTitle,
+                            actionLabel = if (isSimilarOnly) null else stringResource(R.string.duplicate_merge_action),
+                            onMerge = if (isSimilarOnly) null else viewModel::mergeWithDuplicate
+                        )
                     }
-                    val isSimilarOnly = duplicate.reason == DuplicateReason.SIMILAR_ITEM
-                    DuplicateWarningCard(
-                        duplicateMatch = duplicate,
-                        title = dupTitle,
-                        actionLabel = if (isSimilarOnly) null else stringResource(R.string.duplicate_merge_action),
-                        onMerge = if (isSimilarOnly) null else viewModel::mergeWithDuplicate
-                    )
                 }
 
                 SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.edit_item_title),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
+                    if (!compactInputMode) {
+                        Text(
+                            text = stringResource(R.string.edit_item_title),
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.item_name_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = stringResource(R.string.item_name_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    OutlinedTextField(
+                    ItemNameAutocompleteField(
                         value = uiState.name,
                         onValueChange = viewModel::onNameChange,
-                        shape = SalinoWebTokens.InputCorner,
-                        colors = salinoWebOutlinedFieldColors(),
-                        label = { Text(stringResource(R.string.item_name_label)) },
+                        suggestions = uiState.nameAutocompleteSuggestions,
+                        isAutocompleteVisible = uiState.isNameAutocompleteVisible,
+                        onFocusChanged = viewModel::onNameAutocompleteFocusChanged,
+                        onSuggestionSelected = viewModel::onAutocompleteSuggestionSelected,
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
+                        label = { Text(stringResource(R.string.item_name_label)) },
                         isError = uiState.errorMessage == "empty_name",
+                        suggestionsMaxHeight = if (compactInputMode) 360.dp else 280.dp,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { viewModel.saveItem() }),
                         trailingIcon = {

@@ -1,26 +1,7 @@
 import type { ItemCategory } from '../types';
 import { normalizeItemName } from '../utils';
-
-const MIN_ACCEPT_SCORE = 24;
-
-function levenshteinDistance(a: string, b: string): number {
-  if (a === b) return 0;
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-
-  const costs = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    let previousDiagonal = costs[0];
-    costs[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      const temp = costs[j];
-      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
-      costs[j] = Math.min(costs[j] + 1, costs[j - 1] + 1, previousDiagonal + substitutionCost);
-      previousDiagonal = temp;
-    }
-  }
-  return costs[b.length];
-}
+import { exactTokenScore, phraseBoundaryScore, pickConfidentCategory } from './categoryScoringRules';
+import { mergeIsraeliHebrewKeywords } from './israeliHebrewCategoryKeywords';
 
 function removeCommonHebrewPrefixes(s: string): string {
   let r = s;
@@ -62,9 +43,6 @@ function tokenVariants(token: string): string[] {
   variants.add(cleaned);
   const noPrefix = removeCommonHebrewPrefixes(cleaned);
   variants.add(noPrefix);
-  const noSuffix = removeCommonHebrewSuffixes(cleaned);
-  variants.add(noSuffix);
-  variants.add(removeCommonHebrewSuffixes(noPrefix));
   const constructBase = hebrewConstructToBase(cleaned);
   variants.add(constructBase);
   variants.add(hebrewConstructToBase(noPrefix));
@@ -73,36 +51,13 @@ function tokenVariants(token: string): string[] {
   return Array.from(variants).filter(Boolean);
 }
 
-function fuzzyTokenMatch(input: string, keyword: string): boolean {
-  if (input.length < 3 || keyword.length < 3) return false;
-  const minLen = Math.min(input.length, keyword.length);
-  const maxDistance = minLen <= 4 ? 1 : minLen <= 7 ? 2 : 3;
-  return levenshteinDistance(input, keyword) <= maxDistance;
-}
-
 function scoreCategory(normalized: string, tokens: string[], keywords: string[]): number {
   let score = 0;
   for (const keyword of keywords) {
     const normalizedKeyword = normalizeItemName(keyword);
     if (!normalizedKeyword) continue;
-
-    if (normalized === normalizedKeyword) {
-      score += 120;
-    } else if (normalized.startsWith(normalizedKeyword + ' ') || normalized.endsWith(' ' + normalizedKeyword)) {
-      score += 70;
-    } else if (normalized.includes(normalizedKeyword)) {
-      score += normalizedKeyword.includes(' ') ? 65 : 40;
-    }
-
-    const keywordTokens = normalizedKeyword.split(' ');
-    for (const keywordToken of keywordTokens) {
-      if (!keywordToken) continue;
-      if (tokens.some((t) => t === keywordToken)) {
-        score += 26;
-      } else if (tokens.some((t) => fuzzyTokenMatch(t, keywordToken))) {
-        score += 14;
-      }
-    }
+    score += phraseBoundaryScore(normalized, normalizedKeyword);
+    score += exactTokenScore(tokens, normalizedKeyword);
   }
   return score;
 }
@@ -321,17 +276,11 @@ export function detectCategory(itemName: string): ItemCategory | null {
     .flatMap((token) => tokenVariants(token))
     .filter((v, i, a) => a.indexOf(v) === i);
 
-  let bestCategory: ItemCategory | null = null;
-  let bestScore = 0;
-
+  const scores: Record<string, number> = {};
   for (const [category, keywords] of Object.entries(keywordMap) as [ItemCategory, string[]][]) {
     if (keywords.length === 0) continue;
-    const score = scoreCategory(normalized, tokens, keywords);
-    if (score > bestScore) {
-      bestScore = score;
-      bestCategory = category;
-    }
+    scores[category] = scoreCategory(normalized, tokens, mergeIsraeliHebrewKeywords(category, keywords));
   }
 
-  return bestScore >= MIN_ACCEPT_SCORE ? bestCategory : null;
+  return pickConfidentCategory(scores);
 }

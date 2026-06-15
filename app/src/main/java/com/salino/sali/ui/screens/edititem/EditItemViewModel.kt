@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.edititem
+package com.salino.sali.ui.screens.edititem
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -11,19 +11,27 @@ import com.salino.sali.data.model.ShoppingItem
 import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.domain.repository.RecurringRepository
 import com.salino.sali.domain.repository.ShoppingRepository
-import com.salino.sali.domain.service.CategoryAutoDetector
+import com.salino.sali.data.service.CategoryDetectionCoordinator
+import com.salino.sali.data.service.ItemNameAutocompleteStore
+import com.salino.sali.domain.model.ItemNameAutocompleteSource
+import com.salino.sali.domain.model.ItemNameAutocompleteSuggestion
 import com.salino.sali.domain.service.DuplicateDetector
 import com.salino.sali.domain.service.DuplicateMatch
+import com.salino.sali.domain.service.ItemNameAutocompleteEngine
 import com.salino.sali.domain.service.VoiceInputParser
 import com.salino.sali.util.Constants
 import com.salino.sali.util.normalizeItemName
 import com.salino.sali.util.parseQuantity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Date
 import javax.inject.Inject
 
@@ -42,7 +50,10 @@ data class EditItemState(
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
     val isSaved: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val nameAutocompleteSuggestions: List<ItemNameAutocompleteSuggestion> = emptyList(),
+    val isNameAutocompleteVisible: Boolean = false,
+    val isNameAutocompleteFocused: Boolean = false
 )
 
 @HiltViewModel
@@ -51,9 +62,11 @@ class EditItemViewModel @Inject constructor(
     private val shoppingRepository: ShoppingRepository,
     private val authRepository: AuthRepository,
     private val recurringRepository: RecurringRepository,
-    private val categoryAutoDetector: CategoryAutoDetector,
+    private val categoryDetection: CategoryDetectionCoordinator,
     private val duplicateDetector: DuplicateDetector,
-    private val voiceInputParser: VoiceInputParser
+    private val voiceInputParser: VoiceInputParser,
+    private val autocompleteEngine: ItemNameAutocompleteEngine,
+    private val autocompleteStore: ItemNameAutocompleteStore
 ) : ViewModel() {
 
     private val itemId: String = savedStateHandle[Constants.ARG_ITEM_ID] ?: ""
@@ -62,29 +75,77 @@ class EditItemViewModel @Inject constructor(
     private var recurringItemId: String? = null
     private var activeItems: List<ShoppingItem> = emptyList()
     private var categoryManuallyChanged: Boolean = false
+    private var categoryAiJob: Job? = null
+    private var nameDerivativesJob: Job? = null
+    private var autocompleteRefreshJob: Job? = null
 
     private val _uiState = MutableStateFlow(EditItemState())
     val uiState: StateFlow<EditItemState> = _uiState
 
     init {
+        autocompleteStore.ensureStarted()
         loadItem()
     }
 
     fun onNameChange(value: String) {
-        _uiState.update { current ->
-            val detectedCategory = if (!categoryManuallyChanged) {
-                categoryAutoDetector.detectCategory(value) ?: current.category
-            } else {
-                current.category
+        categoryAiJob?.cancel()
+        _uiState.update { it.copy(name = value, errorMessage = null) }
+
+        if (_uiState.value.isNameAutocompleteFocused) {
+            refreshNameAutocomplete(value)
+        }
+
+        scheduleNameDerivatives(value)
+    }
+
+    fun onNameAutocompleteFocusChanged(focused: Boolean) {
+        _uiState.update { it.copy(isNameAutocompleteFocused = focused) }
+        if (focused) {
+            refreshNameAutocomplete(_uiState.value.name)
+        }
+    }
+
+    fun onNameAutocompleteDismissRequest() {
+        dismissNameAutocomplete()
+    }
+
+    fun onAutocompleteSuggestionSelected(suggestion: ItemNameAutocompleteSuggestion) {
+        dismissNameAutocomplete()
+        when (suggestion.source) {
+            ItemNameAutocompleteSource.HOUSEHOLD_HISTORY -> {
+                categoryManuallyChanged = true
+                categoryAiJob?.cancel()
+                _uiState.update {
+                    it.copy(
+                        name = suggestion.displayName,
+                        quantity = if (suggestion.quantity == suggestion.quantity.toLong().toDouble()) {
+                            suggestion.quantity.toLong().toString()
+                        } else {
+                            suggestion.quantity.toString()
+                        },
+                        unit = suggestion.unit ?: it.unit,
+                        category = suggestion.category ?: it.category,
+                        isCategoryAutoDetected = false,
+                        errorMessage = null
+                    )
+                }
+                recomputeDuplicate()
             }
-            current.copy(
-                name = value,
-                errorMessage = null,
-                category = detectedCategory,
-                isCategoryAutoDetected = !categoryManuallyChanged && categoryAutoDetector.detectCategory(value) != null
+            ItemNameAutocompleteSource.CATEGORY_CATALOG -> {
+                categoryManuallyChanged = false
+                onNameChange(suggestion.displayName)
+            }
+        }
+    }
+
+    fun dismissNameAutocomplete() {
+        autocompleteRefreshJob?.cancel()
+        _uiState.update {
+            it.copy(
+                nameAutocompleteSuggestions = emptyList(),
+                isNameAutocompleteVisible = false
             )
         }
-        recomputeDuplicate()
     }
 
     fun onQuantityChange(value: String) {
@@ -119,8 +180,9 @@ class EditItemViewModel @Inject constructor(
 
     fun onVoiceResult(spokenText: String) {
         val parsed = voiceInputParser.parse(spokenText)
-        val detectedCategory = categoryAutoDetector.detectCategory(parsed.name) ?: ItemCategory.OTHER
         categoryManuallyChanged = false
+        categoryAiJob?.cancel()
+        val keywordCategory = categoryDetection.detectWithKeywords(parsed.name)
         _uiState.update {
             it.copy(
                 name = parsed.name,
@@ -130,11 +192,16 @@ class EditItemViewModel @Inject constructor(
                     parsed.quantity.toString()
                 },
                 unit = parsed.unit ?: it.unit,
-                category = detectedCategory,
-                isCategoryAutoDetected = true,
+                category = keywordCategory ?: it.category,
+                isCategoryAutoDetected = keywordCategory != null &&
+                    categoryDetection.isAutoDetectable(keywordCategory),
                 errorMessage = null
             )
         }
+        if (keywordCategory == null) {
+            scheduleAiCategoryDetection(parsed.name)
+        }
+        dismissNameAutocomplete()
         recomputeDuplicate()
     }
 
@@ -243,12 +310,41 @@ class EditItemViewModel @Inject constructor(
         }
     }
 
+    private fun scheduleNameDerivatives(name: String) {
+        nameDerivativesJob?.cancel()
+        nameDerivativesJob = viewModelScope.launch {
+            delay(NAME_DERIVATIVES_DEBOUNCE_MS)
+            if (_uiState.value.name != name) return@launch
+            recomputeDuplicate()
+            if (!categoryManuallyChanged) {
+                applyKeywordCategory(name)
+            }
+        }
+    }
+
+    private fun applyKeywordCategory(name: String) {
+        val keywordCategory = categoryDetection.detectWithKeywords(name)
+        if (keywordCategory != null) {
+            _uiState.update {
+                it.copy(
+                    category = keywordCategory,
+                    isCategoryAutoDetected = categoryDetection.isAutoDetectable(keywordCategory)
+                )
+            }
+        } else {
+            _uiState.update { it.copy(isCategoryAutoDetected = false) }
+            scheduleAiCategoryDetection(name)
+        }
+    }
+
     private fun recomputeDuplicate() {
         val duplicate = duplicateDetector.findDuplicate(
             draftName = _uiState.value.name,
             existingItems = activeItems,
             excludeItemId = itemId
         )
+        val current = _uiState.value.duplicateMatch
+        if (current?.item?.id == duplicate?.item?.id && current?.reason == duplicate?.reason) return
         _uiState.update { it.copy(duplicateMatch = duplicate) }
     }
 
@@ -278,7 +374,67 @@ class EditItemViewModel @Inject constructor(
         }
     }
 
+    private fun refreshNameAutocomplete(query: String) {
+        val trimmed = query.trim()
+        if (!_uiState.value.isNameAutocompleteFocused || trimmed.isEmpty()) {
+            _uiState.update {
+                it.copy(
+                    nameAutocompleteSuggestions = emptyList(),
+                    isNameAutocompleteVisible = false
+                )
+            }
+            return
+        }
+
+        autocompleteRefreshJob?.cancel()
+        autocompleteRefreshJob = viewModelScope.launch(Dispatchers.Default) {
+            val index = autocompleteStore.historyIndex.value
+            val suggestions = autocompleteEngine.suggest(trimmed, index)
+
+            withContext(Dispatchers.Main.immediate) {
+                if (!_uiState.value.isNameAutocompleteFocused || _uiState.value.name.trim() != trimmed) {
+                    return@withContext
+                }
+
+                val normalizedQuery = normalizeItemName(trimmed)
+                val visible = when {
+                    suggestions.isEmpty() -> false
+                    suggestions.size == 1 &&
+                        normalizeItemName(suggestions.first().displayName) == normalizedQuery -> false
+                    else -> true
+                }
+
+                _uiState.update {
+                    it.copy(
+                        nameAutocompleteSuggestions = suggestions,
+                        isNameAutocompleteVisible = visible
+                    )
+                }
+            }
+        }
+    }
+
+    private fun scheduleAiCategoryDetection(name: String) {
+        if (name.trim().length < MIN_AI_NAME_LENGTH) return
+        val snapshotName = name
+        categoryAiJob = viewModelScope.launch {
+            delay(AI_DEBOUNCE_MS)
+            if (categoryManuallyChanged || _uiState.value.name != snapshotName) return@launch
+            val aiCategory = categoryDetection.detectWithAi(snapshotName) ?: return@launch
+            if (categoryManuallyChanged || _uiState.value.name != snapshotName) return@launch
+            _uiState.update {
+                it.copy(
+                    category = aiCategory,
+                    isCategoryAutoDetected = categoryDetection.isAutoDetectable(aiCategory)
+                )
+            }
+        }
+    }
+
     companion object {
         private const val DAY_MS = 24 * 60 * 60 * 1000L
+        private const val AI_DEBOUNCE_MS = 400L
+        private const val NAME_DERIVATIVES_DEBOUNCE_MS = 280L
+        private const val MIN_AI_NAME_LENGTH = 2
     }
 }

@@ -99,6 +99,8 @@
   "duplicate_merge_action": "להגדיל את הכמות בפריט הקיים",
   "duplicate_add_anyway": "להוסיף בכל זאת",
   "suggestions_title": "הצעות חכמות",
+  "autocomplete_section_household": "מהבית שלכם",
+  "autocomplete_section_catalog": "הצעות",
   "suggestions_subtitle_home": "מבוסס על מה שהבית שלכם קונה בדרך כלל",
   "suggestions_subtitle_add": "לחיצה מהירה תמלא את הטופס",
   "recurring_toggle_title": "פריט קבוע",

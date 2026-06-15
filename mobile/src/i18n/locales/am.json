@@ -94,6 +94,8 @@
   "duplicate_merge_action": "ያለውን ብዛት ይጨምሩ",
   "duplicate_add_anyway": "ለማንኛውም ጨምር",
   "suggestions_title": "ብልጥ ጥቆማዎች",
+  "autocomplete_section_household": "ከቤትዎ",
+  "autocomplete_section_catalog": "ጥቆማዎች",
   "suggestions_subtitle_home": "ቤተሰብዎ ብዙ ጊዜ በሚገዛው ላይ ተመስርቶ",
   "suggestions_subtitle_add": "ለፈጣን ሙሌት ይንኩ",
   "recurring_toggle_title": "ተደጋጋሚ እቃ",

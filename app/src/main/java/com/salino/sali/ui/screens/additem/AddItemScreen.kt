@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.additem
+package com.salino.sali.ui.screens.additem
 
 import android.Manifest
 import android.app.Activity
@@ -10,13 +10,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -65,6 +68,7 @@ import com.salino.sali.R
 import com.salino.sali.data.model.ItemCategory
 import com.salino.sali.data.model.ItemUnit
 import com.salino.sali.ui.components.DuplicateWarningCard
+import com.salino.sali.ui.components.ItemNameAutocompleteField
 import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
@@ -85,7 +89,7 @@ private fun getAppLocale(): Locale {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddItemScreen(
     onNavigateBack: () -> Unit,
@@ -136,6 +140,27 @@ fun AddItemScreen(
         else -> null
     }
 
+    val imeVisible = WindowInsets.isImeVisible
+    val compactInputMode = imeVisible || uiState.isNameAutocompleteFocused
+    val scrollState = rememberScrollState()
+
+    var compactScrollApplied by remember { mutableStateOf(false) }
+    LaunchedEffect(compactInputMode) {
+        if (compactInputMode && !compactScrollApplied) {
+            scrollState.scrollTo(0)
+            compactScrollApplied = true
+        }
+        if (!compactInputMode) {
+            compactScrollApplied = false
+        }
+    }
+
+    LaunchedEffect(imeVisible) {
+        if (!imeVisible) {
+            viewModel.onNameAutocompleteDismissRequest()
+        }
+    }
+
     SalinoGradientBackground {
         Scaffold(
             containerColor = androidx.compose.ui.graphics.Color.Transparent,
@@ -156,51 +181,65 @@ fun AddItemScreen(
                     .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                     .imePadding()
                     .navigationBarsPadding()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .verticalScroll(
+                        state = scrollState,
+                        enabled = !uiState.isNameAutocompleteVisible
+                    ),
+                verticalArrangement = Arrangement.spacedBy(if (compactInputMode) 8.dp else 12.dp)
             ) {
-                SuggestionSection(
-                    title = stringResource(R.string.suggestions_title),
-                    subtitle = stringResource(R.string.suggestions_subtitle_add),
-                    suggestions = uiState.suggestions,
-                    onSuggestionClick = viewModel::applySuggestion
-                )
+                if (!compactInputMode) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SuggestionSection(
+                            title = stringResource(R.string.suggestions_title),
+                            subtitle = stringResource(R.string.suggestions_subtitle_add),
+                            suggestions = uiState.suggestions,
+                            onSuggestionClick = viewModel::applySuggestion
+                        )
 
-                uiState.duplicateMatch?.let { duplicate ->
-                    val dupTitle = when (duplicate.reason) {
-                        DuplicateReason.EXACT_DUPLICATE -> stringResource(R.string.duplicate_warning_title)
-                        DuplicateReason.POSSIBLE_DUPLICATE -> stringResource(R.string.duplicate_warning_fuzzy)
-                        DuplicateReason.SIMILAR_ITEM -> stringResource(R.string.duplicate_warning_similar)
+                        uiState.duplicateMatch?.let { duplicate ->
+                            val dupTitle = when (duplicate.reason) {
+                                DuplicateReason.EXACT_DUPLICATE -> stringResource(R.string.duplicate_warning_title)
+                                DuplicateReason.POSSIBLE_DUPLICATE -> stringResource(R.string.duplicate_warning_fuzzy)
+                                DuplicateReason.SIMILAR_ITEM -> stringResource(R.string.duplicate_warning_similar)
+                            }
+                            val isSimilarOnly = duplicate.reason == DuplicateReason.SIMILAR_ITEM
+                            DuplicateWarningCard(
+                                duplicateMatch = duplicate,
+                                title = dupTitle,
+                                actionLabel = if (isSimilarOnly) null else stringResource(R.string.duplicate_merge_action),
+                                onMerge = if (isSimilarOnly) null else viewModel::mergeWithDuplicate
+                            )
+                        }
                     }
-                    val isSimilarOnly = duplicate.reason == DuplicateReason.SIMILAR_ITEM
-                    DuplicateWarningCard(
-                        duplicateMatch = duplicate,
-                        title = dupTitle,
-                        actionLabel = if (isSimilarOnly) null else stringResource(R.string.duplicate_merge_action),
-                        onMerge = if (isSimilarOnly) null else viewModel::mergeWithDuplicate
-                    )
                 }
 
                 SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = stringResource(R.string.item_name_label), style = MaterialTheme.typography.headlineMedium)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.item_name_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    if (!compactInputMode) {
+                        Text(
+                            text = stringResource(R.string.item_name_label),
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = stringResource(R.string.item_name_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
 
-                    OutlinedTextField(
+                    ItemNameAutocompleteField(
                         value = uiState.name,
                         onValueChange = viewModel::onNameChange,
-                        shape = SalinoWebTokens.InputCorner,
-                        colors = salinoWebOutlinedFieldColors(),
+                        suggestions = uiState.nameAutocompleteSuggestions,
+                        isAutocompleteVisible = uiState.isNameAutocompleteVisible,
+                        onFocusChanged = viewModel::onNameAutocompleteFocusChanged,
+                        onSuggestionSelected = viewModel::onAutocompleteSuggestionSelected,
+                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                         label = { Text(stringResource(R.string.item_name_label)) },
                         placeholder = { Text(stringResource(R.string.item_name_hint)) },
-                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                        singleLine = true,
                         isError = uiState.errorMessage == "empty_name",
+                        suggestionsMaxHeight = if (compactInputMode) 360.dp else 280.dp,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { viewModel.addItem() }),
                         trailingIcon = {
@@ -229,179 +268,228 @@ fun AddItemScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedTextField(
-                            value = uiState.quantity,
-                            onValueChange = viewModel::onQuantityChange,
-                            shape = SalinoWebTokens.InputCorner,
-                            colors = salinoWebOutlinedFieldColors(),
-                            label = { Text(stringResource(R.string.item_quantity_label)) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        )
-
-                        var unitExpanded by remember { mutableStateOf(false) }
-                        ExposedDropdownMenuBox(
-                            expanded = unitExpanded,
-                            onExpandedChange = { unitExpanded = it },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            OutlinedTextField(
-                                value = uiState.unit?.let { stringResource(it.labelResId) } ?: "",
-                                onValueChange = {},
-                                readOnly = true,
-                                shape = SalinoWebTokens.InputCorner,
-                                colors = salinoWebOutlinedFieldColors(),
-                                label = { Text(stringResource(R.string.item_unit_label)) },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
-                                modifier = Modifier.menuAnchor().fillMaxWidth()
-                            )
-                            ExposedDropdownMenu(expanded = unitExpanded, onDismissRequest = { unitExpanded = false }) {
-                                ItemUnit.entries.forEach { unit ->
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(unit.labelResId)) },
-                                        onClick = {
-                                            viewModel.onUnitChange(unit)
-                                            unitExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.item_category_label),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(ItemCategory.entries) { category ->
-                            FilterChip(
-                                selected = uiState.category == category,
-                                onClick = { viewModel.onCategoryChange(category) },
-                                label = { Text(stringResource(category.labelResId)) }
-                            )
-                        }
-                    }
-
-                    if (uiState.isCategoryAutoDetected) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.category_auto_detected, stringResource(uiState.category.labelResId)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = uiState.note,
-                        onValueChange = viewModel::onNoteChange,
-                        shape = SalinoWebTokens.InputCorner,
-                        colors = salinoWebOutlinedFieldColors(),
-                        label = { Text(stringResource(R.string.item_note_label)) },
-                        placeholder = { Text(stringResource(R.string.item_note_hint)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 3,
-                        minLines = 3
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.recurring_toggle_title), style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                text = stringResource(R.string.recurring_toggle_subtitle),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(checked = uiState.isRecurring, onCheckedChange = viewModel::onRecurringToggle)
-                    }
-
-                    if (uiState.isRecurring) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = uiState.recurrenceDays,
-                            onValueChange = viewModel::onRecurrenceDaysChange,
-                            shape = SalinoWebTokens.InputCorner,
-                            colors = salinoWebOutlinedFieldColors(),
-                            label = { Text(stringResource(R.string.recurring_every_days_label)) },
-                            placeholder = { Text("7") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Urgent toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                Icons.Default.PriorityHigh,
-                                contentDescription = null,
-                                tint = if (uiState.isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Column {
-                                Text(stringResource(R.string.urgent_toggle_title), style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    text = stringResource(R.string.urgent_toggle_subtitle),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Switch(
-                            checked = uiState.isUrgent,
-                            onCheckedChange = viewModel::onUrgentToggle,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.onError,
-                                checkedTrackColor = MaterialTheme.colorScheme.error
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    if (errorText != null && uiState.errorMessage != "empty_name") {
-                        Text(
-                            text = errorText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-
-                    SalinoPrimaryButton(
-                        text = if (uiState.isLoading) stringResource(R.string.item_saving) else stringResource(R.string.item_add),
-                        onClick = viewModel::addItem,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isLoading,
-                        leading = { Icon(Icons.Default.AddShoppingCart, contentDescription = null) }
+                    AddItemDetailsFields(
+                        quantity = uiState.quantity,
+                        unit = uiState.unit,
+                        category = uiState.category,
+                        note = uiState.note,
+                        isRecurring = uiState.isRecurring,
+                        recurrenceDays = uiState.recurrenceDays,
+                        isUrgent = uiState.isUrgent,
+                        isCategoryAutoDetected = uiState.isCategoryAutoDetected,
+                        isLoading = uiState.isLoading,
+                        errorMessage = uiState.errorMessage,
+                        onQuantityChange = viewModel::onQuantityChange,
+                        onUnitChange = viewModel::onUnitChange,
+                        onCategoryChange = viewModel::onCategoryChange,
+                        onNoteChange = viewModel::onNoteChange,
+                        onRecurringToggle = viewModel::onRecurringToggle,
+                        onRecurrenceDaysChange = viewModel::onRecurrenceDaysChange,
+                        onUrgentToggle = viewModel::onUrgentToggle,
+                        onAddItem = viewModel::addItem
                     )
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddItemDetailsFields(
+    quantity: String,
+    unit: ItemUnit?,
+    category: ItemCategory,
+    note: String,
+    isRecurring: Boolean,
+    recurrenceDays: String,
+    isUrgent: Boolean,
+    isCategoryAutoDetected: Boolean,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onQuantityChange: (String) -> Unit,
+    onUnitChange: (ItemUnit?) -> Unit,
+    onCategoryChange: (ItemCategory) -> Unit,
+    onNoteChange: (String) -> Unit,
+    onRecurringToggle: (Boolean) -> Unit,
+    onRecurrenceDaysChange: (String) -> Unit,
+    onUrgentToggle: (Boolean) -> Unit,
+    onAddItem: () -> Unit
+) {
+    val errorText = when (errorMessage) {
+        "empty_name" -> stringResource(R.string.item_error_empty_name)
+        "generic" -> stringResource(R.string.error_generic)
+        else -> null
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = quantity,
+            onValueChange = onQuantityChange,
+            shape = SalinoWebTokens.InputCorner,
+            colors = salinoWebOutlinedFieldColors(),
+            label = { Text(stringResource(R.string.item_quantity_label)) },
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        var unitExpanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = unitExpanded,
+            onExpandedChange = { unitExpanded = it },
+            modifier = Modifier.weight(1f)
+        ) {
+            OutlinedTextField(
+                value = unit?.let { stringResource(it.labelResId) } ?: "",
+                onValueChange = {},
+                readOnly = true,
+                shape = SalinoWebTokens.InputCorner,
+                colors = salinoWebOutlinedFieldColors(),
+                label = { Text(stringResource(R.string.item_unit_label)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(expanded = unitExpanded, onDismissRequest = { unitExpanded = false }) {
+                ItemUnit.entries.forEach { unitOption ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(unitOption.labelResId)) },
+                        onClick = {
+                            onUnitChange(unitOption)
+                            unitExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+        text = stringResource(R.string.item_category_label),
+        style = MaterialTheme.typography.labelLarge,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(ItemCategory.entries) { categoryOption ->
+            FilterChip(
+                selected = category == categoryOption,
+                onClick = { onCategoryChange(categoryOption) },
+                label = { Text(stringResource(categoryOption.labelResId)) }
+            )
+        }
+    }
+
+    if (isCategoryAutoDetected) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.category_auto_detected, stringResource(category.labelResId)),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    OutlinedTextField(
+        value = note,
+        onValueChange = onNoteChange,
+        shape = SalinoWebTokens.InputCorner,
+        colors = salinoWebOutlinedFieldColors(),
+        label = { Text(stringResource(R.string.item_note_label)) },
+        placeholder = { Text(stringResource(R.string.item_note_hint)) },
+        modifier = Modifier.fillMaxWidth(),
+        maxLines = 3,
+        minLines = 3
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.recurring_toggle_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.recurring_toggle_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(checked = isRecurring, onCheckedChange = onRecurringToggle)
+    }
+
+    if (isRecurring) {
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = recurrenceDays,
+            onValueChange = onRecurrenceDaysChange,
+            shape = SalinoWebTokens.InputCorner,
+            colors = salinoWebOutlinedFieldColors(),
+            label = { Text(stringResource(R.string.recurring_every_days_label)) },
+            placeholder = { Text("7") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                Icons.Default.PriorityHigh,
+                contentDescription = null,
+                tint = if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Column {
+                Text(stringResource(R.string.urgent_toggle_title), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = stringResource(R.string.urgent_toggle_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Switch(
+            checked = isUrgent,
+            onCheckedChange = onUrgentToggle,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.onError,
+                checkedTrackColor = MaterialTheme.colorScheme.error
+            )
+        )
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    if (errorText != null && errorMessage != "empty_name") {
+        Text(
+            text = errorText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+    }
+
+    SalinoPrimaryButton(
+        text = if (isLoading) stringResource(R.string.item_saving) else stringResource(R.string.item_add),
+        onClick = onAddItem,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = !isLoading,
+        leading = { Icon(Icons.Default.AddShoppingCart, contentDescription = null) }
+    )
 }
 
 private fun launchSpeechRecognizer(

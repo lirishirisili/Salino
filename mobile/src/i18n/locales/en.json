@@ -99,6 +99,8 @@
   "duplicate_merge_action": "Increase existing quantity instead",
   "duplicate_add_anyway": "Add anyway",
   "suggestions_title": "Smart suggestions",
+  "autocomplete_section_household": "From your household",
+  "autocomplete_section_catalog": "Suggestions",
   "suggestions_subtitle_home": "Based on what your household buys most",
   "suggestions_subtitle_add": "Tap one to prefill quickly",
   "recurring_toggle_title": "Recurring item",

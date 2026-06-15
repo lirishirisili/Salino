@@ -4,7 +4,6 @@ import com.salino.sali.data.model.ItemCategory
 import com.salino.sali.domain.service.CategoryAutoDetector
 import com.salino.sali.util.normalizeItemName
 import javax.inject.Inject
-import kotlin.math.min
 
 class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
 
@@ -17,13 +16,23 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             .flatMap { token -> tokenVariants(token) }
             .distinct()
 
-        val scored = keywordMap.mapValues { (_, keywords) ->
-            scoreCategory(normalized = normalized, tokens = tokens, keywords = keywords)
+        val scored = keywordMap.mapValues { (category, keywords) ->
+            val allKeywords = IsraeliHebrewCategoryKeywords.merge(keywords, category)
+            scoreCategory(normalized = normalized, tokens = tokens, keywords = allKeywords)
         }
 
-        val best = scored.maxByOrNull { it.value } ?: return null
-        return best.key.takeIf { best.value >= MIN_ACCEPT_SCORE }
+        return CategoryScoringRules.pickConfidentCategory(scored)
     }
+
+    /** All grocery keywords for name autocomplete (category catalog tier). */
+    fun catalogKeywordEntries(): List<CategoryCatalogEntry> =
+        keywordMap.flatMap { (category, keywords) ->
+            IsraeliHebrewCategoryKeywords.merge(keywords, category).map { keyword ->
+                CategoryCatalogEntry(displayName = keyword.trim(), category = category)
+            }
+        }
+            .filter { it.displayName.length >= MIN_CATALOG_TERM_LENGTH }
+            .distinctBy { normalizeItemName(it.displayName) }
 
     private fun scoreCategory(
         normalized: String,
@@ -36,27 +45,16 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
             val normalizedKeyword = normalizeItemName(keyword)
             if (normalizedKeyword.isBlank()) return@forEach
 
-            when {
-                normalized == normalizedKeyword -> score += 120
-                normalized.startsWith("$normalizedKeyword ") || normalized.endsWith(" $normalizedKeyword") -> score += 70
-                normalized.contains(normalizedKeyword) -> score += if (normalizedKeyword.contains(' ')) 65 else 40
-            }
-
-            val keywordTokens = normalizedKeyword.split(" ")
-            keywordTokens.forEach { keywordToken ->
-                if (keywordToken.isBlank()) return@forEach
-
-                if (tokens.any { it == keywordToken }) {
-                    score += 26
-                } else if (tokens.any { fuzzyTokenMatch(it, keywordToken) }) {
-                    score += 14
-                }
-            }
+            score += CategoryScoringRules.phraseBoundaryScore(normalized, normalizedKeyword)
+            score += CategoryScoringRules.exactTokenScore(tokens, normalizedKeyword)
         }
 
         return score
     }
 
+    /**
+     * Token variants for exact match only — no suffix stripping (avoids לבנות→לבנה-style false links).
+     */
     private fun tokenVariants(token: String): List<String> {
         val cleaned = token.trim()
         if (cleaned.isBlank()) return emptyList()
@@ -64,8 +62,6 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
         return buildList {
             add(cleaned)
             add(cleaned.removeCommonHebrewPrefixes())
-            add(cleaned.removeCommonHebrewSuffixes())
-            add(cleaned.removeCommonHebrewPrefixes().removeCommonHebrewSuffixes())
             add(cleaned.hebrewConstructToBase())
             add(cleaned.removeCommonHebrewPrefixes().hebrewConstructToBase())
             add(cleaned.removeEnglishPluralSuffix())
@@ -73,44 +69,8 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
         }.filter { it.isNotBlank() }.distinct()
     }
 
-    private fun fuzzyTokenMatch(input: String, keyword: String): Boolean {
-        if (input.length < 3 || keyword.length < 3) return false
-        val maxDistance = when (min(input.length, keyword.length)) {
-            in 0..4 -> 1
-            in 5..7 -> 2
-            else -> 3
-        }
-        return levenshteinDistance(input, keyword) <= maxDistance
-    }
-
-    private fun levenshteinDistance(a: String, b: String): Int {
-        if (a == b) return 0
-        if (a.isEmpty()) return b.length
-        if (b.isEmpty()) return a.length
-
-        val costs = IntArray(b.length + 1) { it }
-        for (i in 1..a.length) {
-            var previousDiagonal = costs[0]
-            costs[0] = i
-            for (j in 1..b.length) {
-                val temp = costs[j]
-                val substitutionCost = if (a[i - 1] == b[j - 1]) 0 else 1
-                costs[j] = minOf(
-                    costs[j] + 1,
-                    costs[j - 1] + 1,
-                    previousDiagonal + substitutionCost
-                )
-                previousDiagonal = temp
-            }
-        }
-        return costs[b.length]
-    }
-
     private fun String.removeCommonHebrewPrefixes(): String =
         removePrefix("ה").removePrefix("ו").removePrefix("ב").removePrefix("ל")
-
-    private fun String.removeCommonHebrewSuffixes(): String =
-        removeSuffix("ים").removeSuffix("ות").removeSuffix("ה")
 
     private fun String.removeEnglishPluralSuffix(): String =
         when {
@@ -124,6 +84,10 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
 
     private fun String.removeArabicDefiniteArticle(): String =
         removePrefix("\u0627\u0644")
+
+    companion object {
+        private const val MIN_CATALOG_TERM_LENGTH = 2
+    }
 
     private val keywordMap: LinkedHashMap<ItemCategory, List<String>> = linkedMapOf(
         ItemCategory.DAIRY to listOf(
@@ -337,7 +301,4 @@ class KeywordCategoryAutoDetector @Inject constructor() : CategoryAutoDetector {
         )
     )
 
-    companion object {
-        private const val MIN_ACCEPT_SCORE = 24
-    }
 }

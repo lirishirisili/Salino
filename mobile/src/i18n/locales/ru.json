@@ -94,6 +94,8 @@
   "duplicate_merge_action": "Увеличить количество вместо этого",
   "duplicate_add_anyway": "Добавить всё равно",
   "suggestions_title": "Умные подсказки",
+  "autocomplete_section_household": "Из вашего дома",
+  "autocomplete_section_catalog": "Подсказки",
   "suggestions_subtitle_home": "На основе покупок вашего дома",
   "suggestions_subtitle_add": "Нажмите для быстрого заполнения",
   "recurring_toggle_title": "Повторяющийся товар",

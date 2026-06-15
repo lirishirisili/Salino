@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.shoppinglist
+package com.salino.sali.ui.screens.shoppinglist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +10,7 @@ import com.salino.sali.data.model.ShoppingItem
 import com.salino.sali.data.model.SuggestionItem
 import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
+import com.salino.sali.data.service.ItemNameAutocompleteStore
 import com.salino.sali.domain.repository.OnboardingRepository
 import com.salino.sali.domain.repository.ShoppingRepository
 import com.salino.sali.domain.repository.SuggestionsRepository
@@ -42,7 +43,8 @@ class ShoppingListViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val suggestionsRepository: SuggestionsRepository,
     private val activityRepository: ActivityRepository,
-    private val onboardingRepository: OnboardingRepository
+    private val onboardingRepository: OnboardingRepository,
+    private val autocompleteStore: ItemNameAutocompleteStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ShoppingListState())
@@ -51,6 +53,7 @@ class ShoppingListViewModel @Inject constructor(
     private var householdId: String = ""
 
     init {
+        autocompleteStore.ensureStarted()
         loadData()
         observeAppForeground()
     }

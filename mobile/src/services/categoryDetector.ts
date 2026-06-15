@@ -1,23 +1,24 @@
 import { ItemCategory } from '../models';
+import { normalizeItemName } from '../utils/textUtils';
+import { exactTokenScore, phraseBoundaryScore, pickConfidentCategory } from './categoryScoringRules';
+import { mergeIsraeliHebrewKeywords } from './israeliHebrewCategoryKeywords';
 
 /**
  * Score-based multi-language keyword category detection.
- * Mirrors Android's KeywordCategoryAutoDetector.
+ * Mirrors Android's KeywordCategoryAutoDetector + CategoryScoringRules.
  */
-
-const MIN_ACCEPT_SCORE = 24;
 
 interface KeywordEntry {
   keywords: string[];
   category: ItemCategory;
 }
 
-const KEYWORD_MAP: KeywordEntry[] = [
+export const KEYWORD_MAP: KeywordEntry[] = [
   {
     category: ItemCategory.DAIRY,
     keywords: [
       'milk', 'cheese', 'yogurt', 'butter', 'cream', 'cottage',
-      'חלב', 'גבינה', 'יוגורט', 'חמאה', 'שמנת', 'קוטג',
+      'חלב', 'גבינה', 'יוגורט', 'חמאה', 'שמנת', 'קוטג', 'לבנה',
       'حليب', 'جبن', 'زبادي', 'زبدة', 'قشطة',
       'lait', 'fromage', 'yaourt', 'beurre', 'crème',
       'leche', 'queso', 'yogur', 'mantequilla',
@@ -116,74 +117,45 @@ const KEYWORD_MAP: KeywordEntry[] = [
   },
 ];
 
-/**
- * Simple Levenshtein distance for fuzzy matching
- */
-function levenshtein(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-    }
-  }
-  return dp[m][n];
+function tokenVariants(token: string): string[] {
+  const cleaned = token.trim();
+  if (!cleaned) return [];
+  let noPrefix = cleaned;
+  if (noPrefix.startsWith('ה')) noPrefix = noPrefix.slice(1);
+  if (noPrefix.startsWith('ו')) noPrefix = noPrefix.slice(1);
+  if (noPrefix.startsWith('ב')) noPrefix = noPrefix.slice(1);
+  if (noPrefix.startsWith('ל')) noPrefix = noPrefix.slice(1);
+  return [...new Set([cleaned, noPrefix])].filter(Boolean);
 }
 
-/**
- * Strip common Hebrew prefixes/suffixes for better matching
- */
-function stripHebrewAffixes(word: string): string {
-  // Remove common prefixes: ה, ו, ב, ל, מ, כ, ש
-  let stripped = word.replace(/^[הובלמכש]/, '');
-  // Remove common suffixes: ים, ות
-  stripped = stripped.replace(/(ים|ות)$/, '');
-  return stripped.length >= 2 ? stripped : word;
+function scoreCategory(normalized: string, tokens: string[], keywords: string[]): number {
+  let score = 0;
+  for (const keyword of keywords) {
+    const normalizedKeyword = normalizeItemName(keyword);
+    if (!normalizedKeyword) continue;
+    score += phraseBoundaryScore(normalized, normalizedKeyword);
+    score += exactTokenScore(tokens, normalizedKeyword);
+  }
+  return score;
 }
 
 export function detectCategory(itemName: string): ItemCategory | null {
-  const normalized = itemName.toLowerCase().trim();
+  const normalized = normalizeItemName(itemName);
   if (!normalized) return null;
 
-  let bestCategory: ItemCategory | null = null;
-  let bestScore = 0;
+  const tokens = normalized
+    .split(' ')
+    .flatMap((token) => tokenVariants(token))
+    .filter((v, i, a) => a.indexOf(v) === i);
 
+  const scores: Record<string, number> = {};
   for (const entry of KEYWORD_MAP) {
-    for (const keyword of entry.keywords) {
-      let score = 0;
-
-      // Exact match
-      if (normalized === keyword || normalized.includes(keyword)) {
-        score = 30;
-      } else {
-        // Try stripped Hebrew form
-        const stripped = stripHebrewAffixes(normalized);
-        if (stripped === keyword || stripped.includes(keyword) || keyword.includes(stripped)) {
-          score = 28;
-        } else {
-          // Fuzzy match with Levenshtein
-          const distance = levenshtein(normalized, keyword);
-          const maxLen = Math.max(normalized.length, keyword.length);
-          if (maxLen > 0 && distance <= Math.floor(maxLen * 0.3)) {
-            score = 25 - distance;
-          }
-        }
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestCategory = entry.category;
-      }
-    }
+    scores[entry.category] = scoreCategory(
+      normalized,
+      tokens,
+      mergeIsraeliHebrewKeywords(entry.category, entry.keywords)
+    );
   }
 
-  return bestScore >= MIN_ACCEPT_SCORE ? bestCategory : null;
+  return pickConfidentCategory(scores);
 }

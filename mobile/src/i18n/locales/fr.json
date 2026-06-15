@@ -94,6 +94,8 @@
   "duplicate_merge_action": "Augmenter la quantité existante",
   "duplicate_add_anyway": "Ajouter quand même",
   "suggestions_title": "Suggestions intelligentes",
+  "autocomplete_section_household": "De votre foyer",
+  "autocomplete_section_catalog": "Suggestions",
   "suggestions_subtitle_home": "Basé sur les achats de votre foyer",
   "suggestions_subtitle_add": "Appuyez pour préremplir rapidement",
   "recurring_toggle_title": "Article récurrent",

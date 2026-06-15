@@ -15,3 +15,4 @@ export { HeroSuggestionsCard } from './SuggestionsCard';
 export { EmptyState } from './EmptyState';
 export { LoadingIndicator, LoadingScreen } from './LoadingScreen';
 export { CategoryFilterRow } from './FilterChipRow';
+export { ItemNameAutocompleteField } from './ItemNameAutocompleteField';

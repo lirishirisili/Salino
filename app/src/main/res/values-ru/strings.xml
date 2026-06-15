@@ -99,6 +99,8 @@
     <string name="duplicate_warning_bought">Этот товар уже куплен</string>
     <string name="duplicate_merge_action">Увеличить количество существующего</string>
     <string name="duplicate_add_anyway">Добавить всё равно</string>
+    <string name="autocomplete_section_household">Из вашего дома</string>
+    <string name="autocomplete_section_catalog">Подсказки</string>
     <string name="suggestions_title">Умные подсказки</string>
     <string name="suggestions_subtitle_home">На основе частых покупок вашего дома</string>
     <string name="suggestions_subtitle_add">Нажмите, чтобы быстро заполнить</string>

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,15 +18,23 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
 import { ItemCategory, ItemUnit, ShoppingItem } from '../../src/models';
 import {
+  ItemNameAutocompleteField,
   SalinoGradientBackground,
   SalinoPrimaryButton,
   SalinoSurfaceCard,
   SalinoWebInnerTopBar,
 } from '../../src/components';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
+import { HouseholdHistoryIndex, AutocompleteSuggestion } from '../../src/services/householdHistoryIndex';
+import { suggestAutocomplete } from '../../src/services/itemNameAutocompleteEngine';
+import { warmUpCatalog } from '../../src/services/categoryKeywordCatalog';
+import { detectCategory } from '../../src/services';
 
 const ALL_CATEGORIES = Object.values(ItemCategory);
 const ALL_UNITS = Object.values(ItemUnit);
+
+const AUTOCOMPLETE_DEBOUNCE_MS = 80;
+const NAME_DERIVATIVES_DEBOUNCE_MS = 280;
 
 export default function EditItemScreen() {
   const { t } = useTranslation();
@@ -33,7 +42,7 @@ export default function EditItemScreen() {
   const colors = useThemeColors();
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { items, updateItem, deleteItem } = useShoppingStore();
+  const { items, updateItem, deleteItem, activeItems, boughtItems, recurringItems } = useShoppingStore();
 
   const item = items.find((i) => i.id === itemId);
 
@@ -47,6 +56,88 @@ export default function EditItemScreen() {
   const [isUrgent, setIsUrgent] = useState(item?.isUrgent || false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [isAutocompleteVisible, setIsAutocompleteVisible] = useState(false);
+  const autocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const derivativesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const historyIndex = useMemo(
+    () => HouseholdHistoryIndex.from(activeItems, boughtItems, recurringItems),
+    [activeItems, boughtItems, recurringItems],
+  );
+
+  useEffect(() => {
+    warmUpCatalog();
+  }, []);
+
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidHide', () => {
+      setIsAutocompleteVisible(false);
+    });
+    return () => sub.remove();
+  }, []);
+
+  const refreshAutocomplete = useCallback(
+    (text: string) => {
+      if (autocompleteTimerRef.current) clearTimeout(autocompleteTimerRef.current);
+      autocompleteTimerRef.current = setTimeout(() => {
+        const trimmed = text.trim();
+        if (!trimmed) {
+          setAutocompleteSuggestions([]);
+          setIsAutocompleteVisible(false);
+          return;
+        }
+        const results = suggestAutocomplete(trimmed, historyIndex);
+        setAutocompleteSuggestions(results);
+        setIsAutocompleteVisible(results.length > 0);
+      }, AUTOCOMPLETE_DEBOUNCE_MS);
+    },
+    [historyIndex],
+  );
+
+  const scheduleNameDerivatives = useCallback(
+    (text: string) => {
+      if (derivativesTimerRef.current) clearTimeout(derivativesTimerRef.current);
+      derivativesTimerRef.current = setTimeout(() => {
+        if (text.trim().length >= 2) {
+          const detected = detectCategory(text);
+          if (detected) {
+            setCategory((prev) => (detected !== prev ? detected : prev));
+          }
+        }
+      }, NAME_DERIVATIVES_DEBOUNCE_MS);
+    },
+    [],
+  );
+
+  const handleNameChange = useCallback(
+    (text: string) => {
+      setName(text);
+      setError(null);
+      refreshAutocomplete(text);
+      scheduleNameDerivatives(text);
+    },
+    [refreshAutocomplete, scheduleNameDerivatives],
+  );
+
+  const handleSuggestionSelected = useCallback(
+    (suggestion: AutocompleteSuggestion) => {
+      setName(suggestion.displayName);
+      setIsAutocompleteVisible(false);
+      setAutocompleteSuggestions([]);
+      if (suggestion.category) {
+        setCategory(suggestion.category);
+      }
+      if (suggestion.unit !== undefined && suggestion.unit !== null) {
+        setUnit(suggestion.unit);
+      }
+      if (suggestion.quantity) {
+        setQuantity(String(suggestion.quantity));
+      }
+    },
+    [],
+  );
 
   if (!item) {
     return (
@@ -136,7 +227,7 @@ export default function EditItemScreen() {
             styles.scroll,
             { paddingBottom: insets.bottom + 32 },
           ]}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
         >
           <View style={styles.inner}>
             <SalinoSurfaceCard>
@@ -154,20 +245,16 @@ export default function EditItemScreen() {
               </Text>
               <View style={{ height: 20 }} />
 
-              <TextInput
+              <ItemNameAutocompleteField
                 value={name}
-                onChangeText={(v) => {
-                  setName(v);
-                  setError(null);
-                }}
+                onChangeText={handleNameChange}
+                suggestions={autocompleteSuggestions}
+                isAutocompleteVisible={isAutocompleteVisible}
+                onSuggestionSelected={handleSuggestionSelected}
                 label={t('item_name_label')}
-                mode="outlined"
-                outlineStyle={{ borderRadius: Layout.inputCorner }}
-                style={styles.input}
-                error={error === 'empty_name'}
-                returnKeyType="done"
-                blurOnSubmit
+                isError={error === 'empty_name'}
                 onSubmitEditing={handleSave}
+                suggestionsMaxHeight={320}
               />
               {errorText && error === 'empty_name' && (
                 <Text
@@ -180,6 +267,7 @@ export default function EditItemScreen() {
                 </Text>
               )}
 
+              <View pointerEvents={isAutocompleteVisible ? 'none' : 'auto'}>
               <View style={{ height: 16 }} />
 
               <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -194,6 +282,7 @@ export default function EditItemScreen() {
                   returnKeyType="done"
                   blurOnSubmit
                   onSubmitEditing={handleSave}
+                  editable={!isAutocompleteVisible}
                 />
                 <View style={{ flex: 1 }}>
                   <Text
@@ -266,6 +355,7 @@ export default function EditItemScreen() {
                 numberOfLines={3}
                 outlineStyle={{ borderRadius: Layout.inputCorner }}
                 style={[styles.input, { minHeight: 90 }]}
+                editable={!isAutocompleteVisible}
               />
 
               <View style={{ height: 16 }} />
@@ -327,6 +417,7 @@ export default function EditItemScreen() {
                   <MaterialCommunityIcons name="content-save" size={20} color={colors.onPrimary} />
                 }
               />
+              </View>
             </SalinoSurfaceCard>
           </View>
         </ScrollView>

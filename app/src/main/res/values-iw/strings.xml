@@ -101,6 +101,8 @@
     <string name="duplicate_warning_bought">הפריט הזה כבר נקנה</string>
     <string name="duplicate_merge_action">להגדיל את הכמות בפריט הקיים</string>
     <string name="duplicate_add_anyway">להוסיף בכל זאת</string>
+    <string name="autocomplete_section_household">מהבית שלכם</string>
+    <string name="autocomplete_section_catalog">הצעות</string>
     <string name="suggestions_title">הצעות חכמות</string>
     <string name="suggestions_subtitle_home">מבוסס על מה שהבית שלכם קונה בדרך כלל</string>
     <string name="suggestions_subtitle_add">לחיצה מהירה תמלא את הטופס</string>

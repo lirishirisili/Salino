@@ -99,6 +99,8 @@
     <string name="duplicate_warning_bought">ይህ ዕቃ ቀድሞ ተገዝቷል</string>
     <string name="duplicate_merge_action">ያለውን ብዛት ይጨምሩ</string>
     <string name="duplicate_add_anyway">ለማንም ይጨምሩ</string>
+    <string name="autocomplete_section_household">ከቤትዎ</string>
+    <string name="autocomplete_section_catalog">ጥቆማዎች</string>
     <string name="suggestions_title">ብልጥ ጥቆማዎች</string>
     <string name="suggestions_subtitle_home">ቤትዎ ብዙ ጊዜ በሚገዛው ላይ የተመሠረተ</string>
     <string name="suggestions_subtitle_add">በፍጥነት ለመሙላት ይጫኑ</string>
