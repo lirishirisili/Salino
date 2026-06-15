@@ -83,7 +83,7 @@ Build number logic (`.github/scripts/ios-resolve-versions.sh`):
 
 **App Store rule:** `CFBundleShortVersionString` must be **greater than** the last **approved** version (currently **1.3.17**). Values like `1.3.2` or `1.3.3` are rejected (semver: `1.3.17` > `1.3.3`).
 
-CI enforces `IOS_MARKETING_VERSION_MIN` (default **1.3.19**) in `ios-resolve-versions.sh` and auto-bumps lower `app.json` versions before upload.
+CI enforces `IOS_MARKETING_VERSION_MIN` (default **1.3.20**) in `ios-resolve-versions.sh` and auto-bumps lower `app.json` versions before upload.
 
 When Apple approves a new train, raise `IOS_MARKETING_VERSION_MIN` and `expo.version` in `mobile/app.json` together.
 

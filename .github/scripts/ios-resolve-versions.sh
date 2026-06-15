@@ -45,7 +45,7 @@ if [ -z "$MARKETING" ]; then
 fi
 
 # App Store rejects CFBundleShortVersionString <= last approved (currently 1.3.17).
-export MARKETING_MIN="${IOS_MARKETING_VERSION_MIN:-1.3.19}"
+export MARKETING_MIN="${IOS_MARKETING_VERSION_MIN:-1.3.20}"
 MARKETING=$(node -e "
 function parts(s) {
   return String(s).trim().split('.').map((n) => parseInt(n, 10) || 0);
@@ -66,7 +66,7 @@ function maxSemver(a, b) {
   return compare(a, b) >= 0 ? a : b;
 }
 const requested = process.argv[1];
-const min = process.env.MARKETING_MIN || '1.3.19';
+const min = process.env.MARKETING_MIN || '1.3.20';
 const resolved = maxSemver(requested, min);
 if (compare(requested, min) < 0) {
   console.error(
