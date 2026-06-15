@@ -25,22 +25,41 @@ ditto "$APP_PATH" "$STAGING/$APP_NAME"
 
 mkdir -p "$(dirname "$APPETIZE_ZIP")"
 rm -f "$APPETIZE_ZIP"
+APPETIZE_ZIP_ABS="$(cd "$(dirname "$APPETIZE_ZIP")" && pwd)/$(basename "$APPETIZE_ZIP")"
 
-echo "Creating $APPETIZE_ZIP ..."
+echo "Creating $APPETIZE_ZIP_ABS ..."
 (
   cd "$STAGING"
-  zip -ry "$APPETIZE_ZIP" "$APP_NAME"
+  zip -ry "$APPETIZE_ZIP_ABS" "$APP_NAME"
 )
 
 echo "Zip contents (must show ${APP_NAME}/ at root):"
-unzip -l "$APPETIZE_ZIP" | head -25
+unzip -Z1 "$APPETIZE_ZIP_ABS" | head -25
 
-if ! unzip -l "$APPETIZE_ZIP" | grep -qE "[[:space:]]+0.*/${APP_NAME}/$"; then
-  echo "ERROR: ${APP_NAME}/ not found at zip root (Appetize: No .app folder found)" >&2
+zip_entries="$(unzip -Z1 "$APPETIZE_ZIP_ABS")"
+if [ -z "$zip_entries" ]; then
+  echo "ERROR: Empty zip archive" >&2
   exit 1
 fi
 
-if unzip -l "$APPETIZE_ZIP" | grep -qE 'Payload/.*\.app/'; then
+if ! printf '%s\n' "$zip_entries" | grep -q "^${APP_NAME}/"; then
+  echo "ERROR: ${APP_NAME}/ not found at zip root (Appetize: No .app folder found)" >&2
+  printf '%s\n' "$zip_entries" | head -10 >&2
+  exit 1
+fi
+
+while IFS= read -r entry; do
+  [ -z "$entry" ] && continue
+  case "$entry" in
+    "${APP_NAME}"|"${APP_NAME}"/*) ;;
+    *)
+      echo "ERROR: Unexpected zip entry outside ${APP_NAME}/: $entry" >&2
+      exit 1
+      ;;
+  esac
+done <<< "$zip_entries"
+
+if printf '%s\n' "$zip_entries" | grep -qE '^Payload/'; then
   echo "ERROR: Zip looks like an IPA (Payload/...) — use the Simulator zip artifact, not the .ipa" >&2
   exit 1
 fi
@@ -51,5 +70,5 @@ if [ -f "$APP_PATH/$MAIN_BIN" ]; then
   file "$APP_PATH/$MAIN_BIN" || true
 fi
 
-ls -la "$APPETIZE_ZIP"
+ls -la "$APPETIZE_ZIP_ABS"
 echo "OK: Appetize zip ready — upload this file only (not the whole GitHub Actions artifacts bundle)."
