@@ -68,6 +68,11 @@ fun ShoppingListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filteredActive by viewModel.filteredActiveItems.collectAsStateWithLifecycle(emptyList())
     var isBoughtSectionExpanded by remember { mutableStateOf(false) }
+    var boughtVisibleCount by remember { mutableIntStateOf(BOUGHT_ITEMS_PAGE_SIZE) }
+    val visibleBoughtItems = remember(uiState.boughtItems, boughtVisibleCount) {
+        uiState.boughtItems.take(boughtVisibleCount)
+    }
+    val hasMoreBoughtItems = uiState.boughtItems.size > boughtVisibleCount
     var pendingDeleteItem by remember { mutableStateOf<ShoppingItem?>(null) }
     val configuration = LocalConfiguration.current
     val isCompactWidth = configuration.screenWidthDp < 400
@@ -354,12 +359,17 @@ fun ShoppingListScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { isBoughtSectionExpanded = !isBoughtSectionExpanded },
+                                    .clickable {
+                                        if (!isBoughtSectionExpanded) {
+                                            boughtVisibleCount = BOUGHT_ITEMS_PAGE_SIZE
+                                        }
+                                        isBoughtSectionExpanded = !isBoughtSectionExpanded
+                                    },
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 SalinoSectionTitle(
-                                    text = "${stringResource(R.string.shopping_list_bought_section)} (${uiState.boughtItems.size})",
+                                    text = stringResource(R.string.shopping_list_bought_section),
                                     modifier = Modifier.weight(1f)
                                 )
                                 Icon(
@@ -377,11 +387,25 @@ fun ShoppingListScreen(
                         if (isBoughtSectionExpanded) {
                             item(key = "__bought_group") {
                                 ShoppingItemsGroupCard(
-                                    items = uiState.boughtItems,
+                                    items = visibleBoughtItems,
                                     onToggleBought = { item -> viewModel.markAsActive(item.id) },
                                     onItemClick = { item -> onNavigateToEditItem(item.id) },
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )
+                            }
+                            if (hasMoreBoughtItems) {
+                                item(key = "__bought_show_more") {
+                                    TextButton(
+                                        onClick = {
+                                            boughtVisibleCount += BOUGHT_ITEMS_PAGE_SIZE
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 4.dp)
+                                    ) {
+                                        Text(stringResource(R.string.shopping_list_bought_show_more))
+                                    }
+                                }
                             }
                         }
                     }
@@ -537,4 +561,5 @@ private fun HeroSuggestionsCard(
     }
 }
 
+private const val BOUGHT_ITEMS_PAGE_SIZE = 10
 

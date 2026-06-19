@@ -74,6 +74,7 @@
     <string name="shopping_list_empty_subtitle">הוסיפו משהו שנגמר</string>
     <string name="shopping_list_active_section">לקנות</string>
     <string name="shopping_list_bought_section">כבר קנינו</string>
+    <string name="shopping_list_bought_show_more">הצג עוד</string>
     <string name="shopping_list_added_by">נוסף ע״י %1$s</string>
     <string name="shopping_list_bought_by">נקנה ע״י %1$s</string>
     <string name="shopping_list_mark_bought">סמן כנקנה</string>

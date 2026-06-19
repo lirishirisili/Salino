@@ -15,14 +15,24 @@ android {
         applicationId = "com.salino.sali"
         minSdk = 26
         targetSdk = 35
-        versionCode = 48
-        versionName = "1.3.20"
+        versionCode = 49
+        versionName = "1.3.21"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../salino-upload-key.jks")
+            storePassword = "XkHbU1787570@"
+            keyAlias = "Salino"
+            keyPassword = "XkHbU1787570@"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

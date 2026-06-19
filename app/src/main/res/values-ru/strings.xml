@@ -72,6 +72,7 @@
     <string name="shopping_list_empty_subtitle">Добавьте то, что закончилось</string>
     <string name="shopping_list_active_section">Купить</string>
     <string name="shopping_list_bought_section">Уже куплено</string>
+    <string name="shopping_list_bought_show_more">Показать ещё</string>
     <string name="shopping_list_added_by">Добавил(а) %1$s</string>
     <string name="shopping_list_bought_by">Купил(а) %1$s</string>
     <string name="shopping_list_mark_bought">Отметить как купленное</string>

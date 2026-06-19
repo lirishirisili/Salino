@@ -73,6 +73,7 @@
   "shopping_list_empty_subtitle": "הוסיפו משהו שנגמר",
   "shopping_list_active_section": "לקנות",
   "shopping_list_bought_section": "כבר קנינו",
+  "shopping_list_bought_show_more": "הצג עוד",
   "shopping_list_added_by": "נוסף ע״י {{name}}",
   "shopping_list_bought_by": "נקנה ע״י {{name}}",
   "shopping_list_mark_bought": "סמן כנקנה",

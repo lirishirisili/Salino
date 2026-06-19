@@ -72,6 +72,7 @@
     <string name="shopping_list_empty_subtitle">أضف شيئاً نفد من البيت</string>
     <string name="shopping_list_active_section">للشراء</string>
     <string name="shopping_list_bought_section">تم الشراء</string>
+    <string name="shopping_list_bought_show_more">عرض المزيد</string>
     <string name="shopping_list_added_by">أضافه %1$s</string>
     <string name="shopping_list_bought_by">اشتراه %1$s</string>
     <string name="shopping_list_mark_bought">تم الشراء</string>

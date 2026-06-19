@@ -66,6 +66,7 @@
   "shopping_list_empty_subtitle": "أضف شيئاً نفد",
   "shopping_list_active_section": "للشراء",
   "shopping_list_bought_section": "تم الشراء",
+  "shopping_list_bought_show_more": "عرض المزيد",
   "shopping_list_added_by": "أضافه {{name}}",
   "shopping_list_bought_by": "اشتراه {{name}}",
   "shopping_list_mark_bought": "تم الشراء",

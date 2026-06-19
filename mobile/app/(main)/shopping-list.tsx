@@ -31,6 +31,8 @@ import {
 import { ShoppingItem, ItemCategory } from '../../src/models';
 import { AccentColors, Layout, Typography, useThemeColors, useIsDark } from '../../src/theme';
 
+const BOUGHT_ITEMS_PAGE_SIZE = 10;
+
 export default function ShoppingListScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -51,6 +53,7 @@ export default function ShoppingListScreen() {
   } = useShoppingStore();
 
   const [boughtExpanded, setBoughtExpanded] = useState(false);
+  const [boughtVisibleCount, setBoughtVisibleCount] = useState(BOUGHT_ITEMS_PAGE_SIZE);
   const [showShoppingListGuide, setShowShoppingListGuide] = useState(false);
   const isHebrew = i18n.language === 'he';
 
@@ -70,6 +73,32 @@ export default function ShoppingListScreen() {
   const dismissShoppingListGuide = async () => {
     await onboardingRepository.markShoppingListGuideSeen();
     setShowShoppingListGuide(false);
+  };
+
+  const sortedBoughtItems = useMemo(
+    () =>
+      [...boughtItems].sort(
+        (a, b) =>
+          (b.updatedAt?.toMillis() ?? b.createdAt?.toMillis() ?? 0) -
+          (a.updatedAt?.toMillis() ?? a.createdAt?.toMillis() ?? 0),
+      ),
+    [boughtItems],
+  );
+
+  const visibleBoughtItems = useMemo(
+    () => sortedBoughtItems.slice(0, boughtVisibleCount),
+    [sortedBoughtItems, boughtVisibleCount],
+  );
+
+  const hasMoreBoughtItems = sortedBoughtItems.length > boughtVisibleCount;
+
+  const handleBoughtSectionToggle = () => {
+    setBoughtExpanded((expanded) => {
+      if (!expanded) {
+        setBoughtVisibleCount(BOUGHT_ITEMS_PAGE_SIZE);
+      }
+      return !expanded;
+    });
   };
 
   const filteredActive = useMemo(() => {
@@ -138,15 +167,13 @@ export default function ShoppingListScreen() {
         />
       </View>
 
-      {boughtItems.length > 0 && (
+      {sortedBoughtItems.length > 0 && (
         <>
           <Pressable
-            onPress={() => setBoughtExpanded((v) => !v)}
+            onPress={handleBoughtSectionToggle}
             style={styles.boughtToggleRow}
           >
-            <SalinoSectionTitle
-              text={`${t('shopping_list_bought_section')} (${boughtItems.length})`}
-            />
+            <SalinoSectionTitle text={t('shopping_list_bought_section')} />
             <MaterialCommunityIcons
               name={boughtExpanded ? 'chevron-up' : 'chevron-down'}
               size={22}
@@ -156,12 +183,32 @@ export default function ShoppingListScreen() {
           {boughtExpanded && (
             <View style={{ paddingVertical: 4 }}>
               <ShoppingItemsGroupCard
-                items={boughtItems}
+                items={visibleBoughtItems}
                 onToggleBought={handleMarkActive}
                 onItemPress={(item) =>
                   router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } })
                 }
               />
+              {hasMoreBoughtItems && (
+                <Pressable
+                  onPress={() =>
+                    setBoughtVisibleCount((count) => count + BOUGHT_ITEMS_PAGE_SIZE)
+                  }
+                  style={({ pressed }) => [
+                    styles.showMoreButton,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      Typography.labelLarge,
+                      { color: colors.primary, textAlign: 'center' } as any,
+                    ]}
+                  >
+                    {t('shopping_list_bought_show_more')}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           )}
         </>
@@ -169,10 +216,10 @@ export default function ShoppingListScreen() {
     </View>
   );
 
-  const hasAnyItems = activeItems.length > 0 || boughtItems.length > 0;
+  const hasAnyItems = activeItems.length > 0 || sortedBoughtItems.length > 0;
   const showInitialLoading = !hasReceivedRemoteSnapshot && !hasAnyItems && isLoading;
   const isEmpty =
-    hasReceivedRemoteSnapshot && filteredActive.length === 0 && boughtItems.length === 0;
+    hasReceivedRemoteSnapshot && filteredActive.length === 0 && sortedBoughtItems.length === 0;
 
   return (
     <SalinoGradientBackground style={{ flex: 1 }}>
@@ -491,6 +538,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingRight: 4,
+  },
+  showMoreButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   fabRow: {
     position: 'absolute',

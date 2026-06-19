@@ -68,6 +68,7 @@
   "shopping_list_empty_subtitle": "ያለቀ ነገር ይጨምሩ",
   "shopping_list_active_section": "ለመግዛት",
   "shopping_list_bought_section": "ተገዝቷል",
+  "shopping_list_bought_show_more": "ተጨማሪ አሳይ",
   "shopping_list_added_by": "{{name}} ጨመረ",
   "shopping_list_bought_by": "{{name}} ገዛ",
   "shopping_list_mark_bought": "እንደተገዛ ምልክት አድርግ",

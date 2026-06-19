@@ -91,10 +91,18 @@ class ShoppingListViewModel @Inject constructor(
                 }
             }
 
-            // Observe bought items (show recent on main list)
+            // Observe bought items (recent first on main list; UI paginates)
             launch {
                 shoppingRepository.observeBoughtItems(householdId).collect { items ->
-                    _uiState.update { it.copy(boughtItems = items.take(5)) }
+                    _uiState.update {
+                        it.copy(
+                            boughtItems = items.sortedByDescending { item ->
+                                item.updatedAt?.toDate()?.time
+                                    ?: item.createdAt?.toDate()?.time
+                                    ?: 0L
+                            }
+                        )
+                    }
                 }
             }
 

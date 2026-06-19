@@ -72,6 +72,7 @@
     <string name="shopping_list_empty_subtitle">ያለቀ ነገር ያክሉ</string>
     <string name="shopping_list_active_section">ለመግዛት</string>
     <string name="shopping_list_bought_section">ተገዝቷል</string>
+    <string name="shopping_list_bought_show_more">ተጨማሪ አሳይ</string>
     <string name="shopping_list_added_by">በ%1$s ተጨምሯል</string>
     <string name="shopping_list_bought_by">በ%1$s ተገዝቷል</string>
     <string name="shopping_list_mark_bought">እንደ ተገዛ ምልክት ያድርጉ</string>
