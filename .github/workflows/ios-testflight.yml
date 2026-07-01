@@ -2,8 +2,6 @@
 name: iOS — Expo TestFlight
 
 on:
-  push:
-    branches: [main, master, 'release/**']
   workflow_dispatch:
 
 concurrency:
