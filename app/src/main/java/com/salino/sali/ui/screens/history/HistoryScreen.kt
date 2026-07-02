@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.history
+package com.salino.sali.ui.screens.history
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -33,6 +33,8 @@ import com.salino.sali.ui.components.SalinoSurfaceCard
 import com.salino.sali.ui.components.SalinoWebInnerTopBar
 import com.salino.sali.ui.components.SalinoWebTokens
 import com.salino.sali.ui.components.salinoWebMaxWidth
+import com.salino.sali.feature.tour.TourAnchorId
+import com.salino.sali.feature.tour.tourAnchor
 import com.salino.sali.util.formatQuantity
 import com.salino.sali.util.formatTimestamp
 
@@ -51,7 +53,8 @@ fun HistoryScreen(
                 SalinoWebInnerTopBar(
                     title = stringResource(R.string.history_title),
                     onBack = onNavigateBack,
-                    backContentDescription = stringResource(R.string.cancel)
+                    backContentDescription = stringResource(R.string.cancel),
+                    modifier = Modifier.tourAnchor(TourAnchorId.HistoryTitle),
                 )
             },
             bottomBar = { BottomBannerAd() },

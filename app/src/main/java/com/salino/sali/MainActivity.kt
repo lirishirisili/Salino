@@ -1,10 +1,11 @@
-﻿package com.salino.sali
+package com.salino.sali
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.compose.rememberNavController
+import com.salino.sali.feature.tour.TourHost
 import com.salino.sali.navigation.SalinoNavGraph
 import com.salino.sali.ui.theme.SalinoTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,7 +18,9 @@ class MainActivity : AppCompatActivity() {
         setContent {
             SalinoTheme {
                 val navController = rememberNavController()
-                SalinoNavGraph(navController = navController)
+                TourHost(navController = navController) {
+                    SalinoNavGraph(navController = navController)
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.settings
+package com.salino.sali.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,7 +8,7 @@ import com.salino.sali.data.model.User
 import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.domain.repository.HouseholdRepository
-import com.salino.sali.domain.repository.OnboardingRepository
+import com.salino.sali.domain.repository.TourRepository
 import com.salino.sali.domain.repository.RecurringRepository
 import com.salino.sali.domain.repository.ShoppingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +38,7 @@ class SettingsViewModel @Inject constructor(
     private val shoppingRepository: ShoppingRepository,
     private val recurringRepository: RecurringRepository,
     private val activityRepository: ActivityRepository,
-    private val onboardingRepository: OnboardingRepository
+    private val tourRepository: TourRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -117,7 +117,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val result = householdRepository.leaveHousehold(householdId)
             if (result.isSuccess) {
-                onboardingRepository.resetHouseholdOnboarding()
+                val uid = _uiState.value.user?.id
+                if (!uid.isNullOrBlank()) {
+                    tourRepository.clearTourCompleted(uid)
+                }
                 _uiState.value = _uiState.value.copy(showLeaveDialog = false, hasLeftHousehold = true)
             } else {
                 _uiState.value = _uiState.value.copy(showLeaveDialog = false)

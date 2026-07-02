@@ -24,10 +24,10 @@ import com.salino.sali.data.service.duplicate.ProductSignatureExtractor
 import com.salino.sali.data.service.duplicate.ProtectedPhraseMatcher
 import com.salino.sali.data.service.duplicate.SignatureComparisonEngine
 import com.salino.sali.domain.repository.ActivityRepository
-import com.salino.sali.data.repository.OnboardingRepositoryImpl
+import com.salino.sali.data.repository.TourRepositoryImpl
 import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.domain.repository.HouseholdRepository
-import com.salino.sali.domain.repository.OnboardingRepository
+import com.salino.sali.domain.repository.TourRepository
 import com.salino.sali.domain.repository.RecurringRepository
 import com.salino.sali.domain.repository.ShoppingRepository
 import com.salino.sali.domain.repository.SuggestionsRepository
@@ -103,9 +103,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOnboardingRepository(
-        impl: OnboardingRepositoryImpl
-    ): OnboardingRepository = impl
+    fun provideTourRepository(
+        impl: TourRepositoryImpl
+    ): TourRepository = impl
 
     @Provides
     @Singleton

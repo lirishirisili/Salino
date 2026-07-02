@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useAuthStore, useHouseholdStore } from '../../src/hooks';
-import { onboardingRepository } from '../../src/repositories';
+import { clearTourCompleted, useTourAnchor, useTourScroller, useTourStore } from '../../src/features/tour';
 import { changeLanguage, SUPPORTED_LANGUAGES, isRTL } from '../../src/i18n';
 import {
   BrandLogo,
@@ -34,7 +34,7 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const { signOut, deleteAccount, profile, isLoading: authLoading } = useAuthStore();
+  const { signOut, deleteAccount, profile, isLoading: authLoading, user } = useAuthStore();
   const {
     household,
     members,
@@ -49,6 +49,12 @@ export default function SettingsScreen() {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [newName, setNewName] = useState(household?.name || '');
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  useTourScroller('settings', scrollRef, scrollContentRef);
+  const inviteAnchor = useTourAnchor('settings.invite');
+  const requestTourReplay = useTourStore((s) => s.requestReplay);
 
   const openPrivacyPolicy = () => {
     Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
@@ -71,7 +77,9 @@ export default function SettingsScreen() {
 
   const handleLeave = async () => {
     setShowLeave(false);
-    await onboardingRepository.resetHouseholdOnboarding();
+    if (user?.uid) {
+      await clearTourCompleted(user.uid);
+    }
     await leaveHousehold();
     router.replace('/household-setup');
   };
@@ -146,12 +154,13 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           styles.scroll,
           { paddingBottom: insets.bottom + 24 },
         ]}
       >
-        <View style={styles.inner}>
+        <View ref={scrollContentRef} style={styles.inner}>
           {household && (
             <SalinoSurfaceCard>
               <Text
@@ -182,21 +191,23 @@ export default function SettingsScreen() {
               />
               <Divider />
 
-              <Row
-                icon="key"
-                title={t('settings_invite_code')}
-                subtitle={household.inviteCode}
-                trailing={
-                  <View style={{ flexDirection: 'row' }}>
-                    <Pressable onPress={handleCopy} style={{ padding: 6 }}>
-                      <MaterialCommunityIcons name="content-copy" size={20} color={colors.onSurfaceVariant} />
-                    </Pressable>
-                    <Pressable onPress={handleShareInvite} style={{ padding: 6 }}>
-                      <MaterialCommunityIcons name="share-variant" size={20} color={colors.onSurfaceVariant} />
-                    </Pressable>
-                  </View>
-                }
-              />
+              <View ref={inviteAnchor.ref} style={inviteAnchor.highlightStyle} collapsable={false}>
+                <Row
+                  icon="key"
+                  title={t('settings_invite_code')}
+                  subtitle={household.inviteCode}
+                  trailing={
+                    <View style={{ flexDirection: 'row' }}>
+                      <Pressable onPress={handleCopy} style={{ padding: 6 }}>
+                        <MaterialCommunityIcons name="content-copy" size={20} color={colors.onSurfaceVariant} />
+                      </Pressable>
+                      <Pressable onPress={handleShareInvite} style={{ padding: 6 }}>
+                        <MaterialCommunityIcons name="share-variant" size={20} color={colors.onSurfaceVariant} />
+                      </Pressable>
+                    </View>
+                  }
+                />
+              </View>
               <Divider />
 
               <View style={{ paddingVertical: 8 }}>
@@ -316,6 +327,38 @@ export default function SettingsScreen() {
                 {t('settings_delete_account')}
               </Text>
             </Pressable>
+          </SalinoSurfaceCard>
+
+          <View style={{ height: 14 }} />
+
+          <SalinoSurfaceCard>
+            <Text
+              style={[
+                Typography.titleLarge,
+                { color: colors.primary } as any,
+              ]}
+            >
+              {t('tour.replaySection')}
+            </Text>
+            <Text
+              style={[
+                Typography.bodyMedium,
+                { color: colors.onSurfaceVariant, marginTop: 6 } as any,
+              ]}
+            >
+              {t('tour.replayHint')}
+            </Text>
+            <View style={{ height: 12 }} />
+            <Button
+              mode="outlined"
+              icon="map-marker-path"
+              onPress={() => {
+                requestTourReplay();
+                router.back();
+              }}
+            >
+              {t('tour.replay')}
+            </Button>
           </SalinoSurfaceCard>
 
           <View style={{ height: 14 }} />

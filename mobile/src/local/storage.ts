@@ -172,12 +172,22 @@ export const localClearHouseholdData = async (householdId: string): Promise<void
   ]);
 };
 
+// Keys that must survive sign-out / session resets (per-user prefs, tour, boot flags).
+const PRESERVED_ASYNC_PREFIXES = [
+  '@onboarding_',
+  '@salino/tour_completed',
+  '@app_language',
+  '@rtl_boot_reload_attempted',
+] as const;
+
+function isPreservedAsyncKey(key: string): boolean {
+  return PRESERVED_ASYNC_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
 // Clear everything on sign out
 export const localClearAll = async (): Promise<void> => {
   const keys = await AsyncStorage.getAllKeys();
-  const appKeys = keys.filter(
-    (k) => k.startsWith('@') && !k.startsWith('@onboarding_')
-  );
+  const appKeys = keys.filter((k) => k.startsWith('@') && !isPreservedAsyncKey(k));
   if (appKeys.length > 0) {
     await AsyncStorage.multiRemove(appKeys);
   }

@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,7 +52,13 @@ import com.salino.sali.ui.components.SalinoWebAppBarTitle
 import com.salino.sali.ui.components.SalinoWebTokens
 import com.salino.sali.ui.components.ShoppingItemsGroupCard
 import com.salino.sali.ui.components.salinoWebMaxWidth
-import com.salino.sali.ui.components.onboarding.ShoppingListOnboardingFlow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import com.salino.sali.feature.tour.LocalTourViewModel
+import com.salino.sali.feature.tour.TourAnchorId
+import com.salino.sali.feature.tour.TourPreview
+import com.salino.sali.feature.tour.tourAnchor
 import com.salino.sali.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,11 +87,52 @@ fun ShoppingListScreen(
     val tintActivityLight = Color(0xFFF18E6A)
     val isDark = isSystemInDarkTheme()
     val isHebrew = configuration.locales[0]?.language in setOf("he", "iw")
+    val tourViewModel = LocalTourViewModel.current
+    val tourState by tourViewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    val resources = LocalContext.current.resources
 
-    if (uiState.showShoppingListGuide) {
-        ShoppingListOnboardingFlow(
-            onComplete = { viewModel.dismissShoppingListGuide() }
-        )
+    val isListEmptyForTour = filteredActive.isEmpty() &&
+        uiState.boughtItems.isEmpty() &&
+        uiState.suggestions.isEmpty()
+    val showTourPreview = tourState.active && isListEmptyForTour
+    val previewItems = remember(resources) { TourPreview.items(resources) }
+    val listSuggestions = if (showTourPreview) {
+        TourPreview.suggestions(resources)
+    } else {
+        uiState.suggestions
+    }
+    val listActiveItems = if (showTourPreview) {
+        val selected = uiState.selectedCategory
+        if (selected == null) {
+            previewItems
+        } else {
+            previewItems.filter { ItemCategory.fromString(it.category) == selected }
+        }
+    } else {
+        filteredActive
+    }
+    val noopSuggestion: (SuggestionItem) -> Unit = {}
+    val noopItem: (ShoppingItem) -> Unit = {}
+
+    LaunchedEffect(uiState.isLoading) {
+        if (!uiState.isLoading) {
+            tourViewModel.setShoppingListReady(true)
+        }
+    }
+
+    DisposableEffect(listState, tourViewModel) {
+        val registry = tourViewModel.anchorRegistry
+        registry.registerScrollHandler(TourAnchorId.ListHero) {
+            listState.animateScrollToItem(0)
+        }
+        registry.registerScrollHandler(TourAnchorId.ListFilters) {
+            listState.animateScrollToItem(1)
+        }
+        onDispose {
+            registry.unregisterScrollHandler(TourAnchorId.ListHero)
+            registry.unregisterScrollHandler(TourAnchorId.ListFilters)
+        }
     }
 
     SalinoGradientBackground {
@@ -166,7 +214,9 @@ fun ShoppingListScreen(
                         Row {
                             IconButton(
                                 onClick = onNavigateToSettings,
-                                modifier = Modifier.size(42.dp)
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .tourAnchor(TourAnchorId.ListSettings),
                             ) {
                                 Icon(
                                     Icons.Default.Settings,
@@ -176,7 +226,9 @@ fun ShoppingListScreen(
                             }
                             IconButton(
                                 onClick = onNavigateToActivityFeed,
-                                modifier = Modifier.size(42.dp)
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .tourAnchor(TourAnchorId.ListActivity),
                             ) {
                                 Icon(
                                     Icons.Default.Timeline,
@@ -206,6 +258,7 @@ fun ShoppingListScreen(
                     // Supermarket FAB (green/primary)
                     ExtendedFloatingActionButton(
                         onClick = onNavigateToSupermarketMode,
+                        modifier = Modifier.tourAnchor(TourAnchorId.ListSupermarketFab),
                         icon = { Icon(Icons.Default.Storefront, contentDescription = null) },
                         text = {
                             Text(
@@ -223,6 +276,7 @@ fun ShoppingListScreen(
                     // Add FAB
                     ExtendedFloatingActionButton(
                         onClick = onNavigateToAddItem,
+                        modifier = Modifier.tourAnchor(TourAnchorId.ListAddFab),
                         icon = { Icon(Icons.Default.Add, contentDescription = null) },
                         text = {
                             Text(
@@ -244,7 +298,7 @@ fun ShoppingListScreen(
 
             val isEmpty = filteredActive.isEmpty() && uiState.boughtItems.isEmpty()
 
-            if (isEmpty && uiState.suggestions.isEmpty()) {
+            if (isEmpty && uiState.suggestions.isEmpty() && !tourState.active) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -262,6 +316,7 @@ fun ShoppingListScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
@@ -274,15 +329,18 @@ fun ShoppingListScreen(
                         HeroSuggestionsCard(
                             suggestionsTitle = stringResource(R.string.suggestions_title),
                             suggestionsSubtitle = stringResource(R.string.suggestions_subtitle_home),
-                            suggestions = uiState.suggestions,
-                            onSuggestionClick = viewModel::addSuggestion,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            suggestions = listSuggestions,
+                            onSuggestionClick = if (showTourPreview) noopSuggestion else viewModel::addSuggestion,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .tourAnchor(TourAnchorId.ListHero),
                         )
                     }
 
                     // ── Category filter chips ──
                     item(key = "__filters") {
                         LazyRow(
+                            modifier = Modifier.tourAnchor(TourAnchorId.ListFilters),
                             contentPadding = PaddingValues(vertical = 6.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -339,16 +397,32 @@ fun ShoppingListScreen(
 
                     item(key = "__section_active") {
                         SalinoSectionTitle(
-                            text = "${stringResource(R.string.shopping_list_active_section)} (${filteredActive.size})"
+                            text = if (showTourPreview) {
+                                "${stringResource(R.string.shopping_list_active_section)} (${listActiveItems.size}) · ${stringResource(R.string.tour_preview_label)}"
+                            } else {
+                                "${stringResource(R.string.shopping_list_active_section)} (${filteredActive.size})"
+                            }
                         )
                     }
 
                     item(key = "__active_group") {
                         ShoppingItemsGroupCard(
-                            items = filteredActive,
-                            onToggleBought = { item -> viewModel.markAsBought(item.id) },
-                            onItemClick = { item -> onNavigateToEditItem(item.id) },
-                            onDeleteItem = { item -> pendingDeleteItem = item },
+                            items = listActiveItems,
+                            onToggleBought = if (showTourPreview) {
+                                { _ -> }
+                            } else {
+                                { item -> viewModel.markAsBought(item.id) }
+                            },
+                            onItemClick = if (showTourPreview) {
+                                noopItem
+                            } else {
+                                { item -> onNavigateToEditItem(item.id) }
+                            },
+                            onDeleteItem = if (showTourPreview) {
+                                null
+                            } else {
+                                { item -> pendingDeleteItem = item }
+                            },
                             modifier = Modifier.padding(vertical = 6.dp)
                         )
                     }

@@ -57,7 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
-      if (previousAuthUid !== user.uid) {
+      if (previousAuthUid !== null && previousAuthUid !== user.uid) {
         await resetSessionState();
       }
       previousAuthUid = user.uid;

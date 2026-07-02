@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
-import { I18nManager, LogBox, useColorScheme } from 'react-native';
+import { I18nManager, LogBox, useColorScheme, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -10,6 +10,7 @@ import { LightTheme, DarkTheme } from '../src/theme';
 import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore } from '../src/hooks';
 import { LoadingScreen, SalinoGradientBackground } from '../src/components';
+import { TourOverlay } from '../src/components/tour/TourOverlay';
 import { initMobileAds } from '../src/services/initMobileAds';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
@@ -111,19 +112,22 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <PaperProvider theme={paperTheme}>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} translucent />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: 'transparent' },
-              animation: 'fade',
-            }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="auth" />
-            <Stack.Screen name="household-setup" />
-            <Stack.Screen name="(main)" />
-          </Stack>
+          <View style={{ flex: 1 }}>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} translucent />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: 'transparent' },
+                animation: 'fade',
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="household-setup" />
+              <Stack.Screen name="(main)" />
+            </Stack>
+            <TourOverlay />
+          </View>
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

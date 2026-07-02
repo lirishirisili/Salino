@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.household
+package com.salino.sali.ui.screens.household
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,8 +41,6 @@ import com.salino.sali.ui.components.SalinoGradientBackground
 import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoWebSegmentedTabs
 import com.salino.sali.ui.components.SalinoWebTokens
-import com.salino.sali.ui.components.onboarding.HouseholdCreatedOnboardingFlow
-import com.salino.sali.ui.components.onboarding.HouseholdJoinedOnboardingFlow
 import com.salino.sali.ui.components.salinoWebOutlinedFieldColors
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -60,26 +58,6 @@ fun HouseholdSetupScreen(
         if (uiState.isComplete) {
             onHouseholdReady()
         }
-    }
-
-    when (uiState.activeGuide) {
-        HouseholdSetupGuide.CREATED -> {
-            val code = uiState.inviteCode
-            if (code != null) {
-                HouseholdCreatedOnboardingFlow(
-                    inviteCode = code,
-                    onComplete = { viewModel.completeCreatedGuide() }
-                )
-                return
-            }
-        }
-        HouseholdSetupGuide.JOINED -> {
-            HouseholdJoinedOnboardingFlow(
-                onComplete = { viewModel.completeJoinedGuide() }
-            )
-            return
-        }
-        HouseholdSetupGuide.NONE -> Unit
     }
 
     val errorText = when (uiState.errorMessage) {

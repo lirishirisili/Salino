@@ -229,25 +229,30 @@
     <string name="settings_language_change_title">تغيير اللغة</string>
     <string name="settings_language_change_message">سيتم إعادة تشغيل التطبيق لتطبيق اللغة الجديدة. هل تريد المتابعة؟</string>
 
-    <!-- Onboarding -->
-    <string name="onboarding_next">التالي</string>
-    <string name="onboarding_skip">تخطّي الآن</string>
-    <string name="onboarding_get_started">فهمت، هيا نبدأ</string>
-    <string name="onboarding_step_counter">خطوة %1$d من %2$d</string>
-    <string name="onboarding_created_title">بيتكم جاهز</string>
-    <string name="onboarding_created_body">أنشأتم قائمة تسوّق مشتركة لكل من يسكن معكم. كل ما تضيفونه يظهر للجميع فوراً.</string>
-    <string name="onboarding_invite_step_title">رمز الدعوة</string>
-    <string name="onboarding_invite_step_body">بهذا الرمز يمكن للآخرين الانضمام. انسخوه أو شاركوه — سيلصقونه في "الانضمام إلى بيت".</string>
-    <string name="onboarding_share_step_title">ادعوا من يسكن معكم</string>
-    <string name="onboarding_share_step_body">أرسلوا الرمز لشريك الحياة، الأولاد، أو أي شخص يحتاج رؤية القائمة. يمكن إيجاد الرمز دائماً في الإعدادات.</string>
-    <string name="onboarding_join_title">مرحباً بكم في البيت</string>
-    <string name="onboarding_join_body">انضممتم! تشاركون نفس قائمة التسوّق مع الجميع — أضيفوا منتجات، علّموا ما اشتريتم، والكل متزامن.</string>
-    <string name="onboarding_list_add_title">أضيفوا من هنا</string>
-    <string name="onboarding_list_add_body">اضغطوا هذا الزر لإضافة أي شيء للقائمة. سريع وسهل.</string>
-    <string name="onboarding_list_sync_title">مزامنة فورية</string>
-    <string name="onboarding_list_sync_body">كل شيء يتحدّث فوراً لكل أفراد البيت.</string>
-    <string name="onboarding_list_settings_title">إعداداتكم</string>
-    <string name="onboarding_list_settings_body">إدارة الأعضاء، رمز الدعوة، واسم البيت.</string>
-    <string name="onboarding_list_extras_title">وضع التسوّق</string>
-    <string name="onboarding_list_extras_body">اضغطوا هنا في المتجر — علّموا المنتجات أثناء التسوّق!</string>
+    <!-- Tour (English fallback) -->
+    <string name="tour_skip">Skip</string>
+    <string name="tour_finish">Let\'s go</string>
+    <string name="tour_next">Next</string>
+    <string name="tour_step_of">%1$d of %2$d</string>
+    <string name="tour_replay">App tour</string>
+    <string name="tour_replay_section">Guided tour</string>
+    <string name="tour_replay_hint">A full walkthrough of your list, settings, activity, and purchase history.</string>
+    <string name="tour_step_hero_title">Smart suggestions</string>
+    <string name="tour_step_hero_body">Quick picks based on what you buy often — tap one to add it to your list.</string>
+    <string name="tour_step_filters_title">Filter by category</string>
+    <string name="tour_step_filters_body">Narrow the list to produce, dairy, cleaning, and more.</string>
+    <string name="tour_step_add_fab_title">Add items</string>
+    <string name="tour_step_add_fab_body">Tap here to add anything to your shared list.</string>
+    <string name="tour_step_supermarket_title">Supermarket mode</string>
+    <string name="tour_step_supermarket_fab_body">At the store? Open this mode to check off items as you shop.</string>
+    <string name="tour_step_settings_title">Settings</string>
+    <string name="tour_step_settings_body">Manage your household, invite code, and account.</string>
+    <string name="tour_step_invite_title">Invite code</string>
+    <string name="tour_step_invite_body">Share this code so family or roommates can join your household.</string>
+    <string name="tour_step_activity_title">Activity feed</string>
+    <string name="tour_step_activity_body">See who added, bought, or removed items — everything in one timeline.</string>
+    <string name="tour_step_history_title">Purchase history</string>
+    <string name="tour_step_history_body">Everything you\'ve bought, grouped by day. Tap an item to put it back on the list.</string>
+    <string name="tour_step_done_title">You\'re all set!</string>
+    <string name="tour_step_done_body">You\'ve seen the main parts of Haserli. Happy shopping!</string>
 </resources>

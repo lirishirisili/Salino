@@ -1,33 +1,24 @@
-﻿package com.salino.sali.ui.screens.household
+package com.salino.sali.ui.screens.household
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.salino.sali.domain.repository.HouseholdRepository
-import com.salino.sali.domain.repository.OnboardingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class HouseholdSetupGuide {
-    NONE,
-    CREATED,
-    JOINED
-}
-
 data class HouseholdSetupState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isComplete: Boolean = false,
     val inviteCode: String? = null,
-    val activeGuide: HouseholdSetupGuide = HouseholdSetupGuide.NONE
 )
 
 @HiltViewModel
 class HouseholdSetupViewModel @Inject constructor(
     private val householdRepository: HouseholdRepository,
-    private val onboardingRepository: OnboardingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HouseholdSetupState())
@@ -43,11 +34,9 @@ class HouseholdSetupViewModel @Inject constructor(
 
             householdRepository.createHousehold(name)
                 .onSuccess { household ->
-                    val showGuide = onboardingRepository.shouldShowHouseholdCreatedGuide()
                     _uiState.value = HouseholdSetupState(
                         inviteCode = household.inviteCode,
-                        activeGuide = if (showGuide) HouseholdSetupGuide.CREATED else HouseholdSetupGuide.NONE,
-                        isComplete = !showGuide
+                        isComplete = true,
                     )
                 }
                 .onFailure { error ->
@@ -68,36 +57,12 @@ class HouseholdSetupViewModel @Inject constructor(
 
             householdRepository.joinHousehold(inviteCode)
                 .onSuccess {
-                    val showWelcome = onboardingRepository.shouldShowJoinWelcome()
-                    _uiState.value = HouseholdSetupState(
-                        activeGuide = if (showWelcome) HouseholdSetupGuide.JOINED else HouseholdSetupGuide.NONE,
-                        isComplete = !showWelcome
-                    )
+                    _uiState.value = HouseholdSetupState(isComplete = true)
                 }
                 .onFailure { error ->
                     val msg = if (error is IllegalArgumentException) "invalid_code" else "generic"
                     _uiState.value = HouseholdSetupState(errorMessage = msg)
                 }
-        }
-    }
-
-    fun completeCreatedGuide() {
-        viewModelScope.launch {
-            onboardingRepository.markHouseholdCreatedGuideSeen()
-            _uiState.value = _uiState.value.copy(
-                activeGuide = HouseholdSetupGuide.NONE,
-                isComplete = true
-            )
-        }
-    }
-
-    fun completeJoinedGuide() {
-        viewModelScope.launch {
-            onboardingRepository.markJoinWelcomeSeen()
-            _uiState.value = _uiState.value.copy(
-                activeGuide = HouseholdSetupGuide.NONE,
-                isComplete = true
-            )
         }
     }
 

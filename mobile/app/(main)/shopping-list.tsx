@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -15,8 +15,11 @@ import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
-import { onboardingRepository } from '../../src/repositories';
-import { ShoppingListOnboardingFlow } from '../../src/components/onboarding';
+import { useTourAnchor, useTourScroller, useTourStore } from '../../src/features/tour';
+import {
+  buildTourPreviewItems,
+  buildTourPreviewSuggestions,
+} from '../../src/features/tour/tourPreview';
 import {
   BrandLogo,
   EmptyState,
@@ -52,28 +55,20 @@ export default function ShoppingListScreen() {
     isLoading,
   } = useShoppingStore();
 
+  const tourActive = useTourStore((s) => s.active);
+
   const [boughtExpanded, setBoughtExpanded] = useState(false);
   const [boughtVisibleCount, setBoughtVisibleCount] = useState(BOUGHT_ITEMS_PAGE_SIZE);
-  const [showShoppingListGuide, setShowShoppingListGuide] = useState(false);
   const isHebrew = i18n.language === 'he';
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const show = await onboardingRepository.shouldShowShoppingListGuide();
-      if (!cancelled && show) {
-        setShowShoppingListGuide(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const listRef = useRef<FlatList<number>>(null);
+  const listContentRef = useRef<View>(null);
+  useTourScroller('shopping-list', listRef, listContentRef, 'flat');
 
-  const dismissShoppingListGuide = async () => {
-    await onboardingRepository.markShoppingListGuideSeen();
-    setShowShoppingListGuide(false);
-  };
+  const heroAnchor = useTourAnchor('list.hero');
+  const filtersAnchor = useTourAnchor('list.filters');
+  const addFabAnchor = useTourAnchor('list.addFab');
+  const supermarketFabAnchor = useTourAnchor('list.supermarketFab');
 
   const sortedBoughtItems = useMemo(
     () =>
@@ -136,34 +131,66 @@ export default function ShoppingListScreen() {
     });
   };
 
+  const hasAnyItems = activeItems.length > 0 || sortedBoughtItems.length > 0;
+  const showInitialLoading = !hasReceivedRemoteSnapshot && !hasAnyItems && isLoading;
+  const isListEmptyForTour =
+    activeItems.length === 0 && sortedBoughtItems.length === 0 && suggestions.length === 0;
+  const isEmpty =
+    hasReceivedRemoteSnapshot && filteredActive.length === 0 && sortedBoughtItems.length === 0;
+  const showTourPreview = tourActive && isListEmptyForTour;
+
+  const previewItems = useMemo(() => buildTourPreviewItems(t), [t]);
+  const listSuggestions = showTourPreview ? buildTourPreviewSuggestions(t) : suggestions;
+  const listActiveItems = showTourPreview
+    ? selectedCategory
+      ? previewItems.filter((i) => i.category === selectedCategory)
+      : previewItems
+    : filteredActive;
+
+  const noop = () => {};
+
   const ListContent = () => (
-    <View style={{ paddingHorizontal: Layout.horizontalPadding, paddingBottom: 130 }}>
-      <View style={{ paddingVertical: 8 }}>
-        <HeroSuggestionsCard
-          title={t('suggestions_title')}
-          subtitle={t('suggestions_subtitle_home')}
-          suggestions={suggestions}
-          onSuggestionPress={handleSuggestionPress}
+    <View
+      ref={listContentRef}
+      style={{ paddingHorizontal: Layout.horizontalPadding, paddingBottom: 130 }}
+    >
+      <View ref={heroAnchor.ref} style={heroAnchor.highlightStyle} collapsable={false}>
+        <View style={{ paddingVertical: 8 }}>
+          <HeroSuggestionsCard
+            title={t('suggestions_title')}
+            subtitle={t('suggestions_subtitle_home')}
+            suggestions={listSuggestions}
+            onSuggestionPress={showTourPreview ? noop : handleSuggestionPress}
+          />
+        </View>
+      </View>
+
+      <View ref={filtersAnchor.ref} style={filtersAnchor.highlightStyle} collapsable={false}>
+        <CategoryFilterRow
+          selectedCategory={selectedCategory as ItemCategory | null}
+          onSelect={(c) => setSelectedCategory(c)}
         />
       </View>
 
-      <CategoryFilterRow
-        selectedCategory={selectedCategory as ItemCategory | null}
-        onSelect={(c) => setSelectedCategory(c)}
-      />
-
       <SalinoSectionTitle
-        text={`${t('shopping_list_active_section')} (${filteredActive.length})`}
+        text={
+          showTourPreview
+            ? `${t('shopping_list_active_section')} (${listActiveItems.length}) · ${t('tour.preview.label')}`
+            : `${t('shopping_list_active_section')} (${filteredActive.length})`
+        }
       />
 
       <View style={{ paddingVertical: 6 }}>
         <ShoppingItemsGroupCard
-          items={filteredActive}
-          onToggleBought={handleMarkBought}
-          onItemPress={(item) =>
-            router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } })
+          items={listActiveItems}
+          onToggleBought={showTourPreview ? noop : handleMarkBought}
+          onItemPress={
+            showTourPreview
+              ? noop
+              : (item) =>
+                  router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } })
           }
-          onDelete={handleDelete}
+          onDelete={showTourPreview ? undefined : handleDelete}
         />
       </View>
 
@@ -216,16 +243,8 @@ export default function ShoppingListScreen() {
     </View>
   );
 
-  const hasAnyItems = activeItems.length > 0 || sortedBoughtItems.length > 0;
-  const showInitialLoading = !hasReceivedRemoteSnapshot && !hasAnyItems && isLoading;
-  const isEmpty =
-    hasReceivedRemoteSnapshot && filteredActive.length === 0 && sortedBoughtItems.length === 0;
-
   return (
     <SalinoGradientBackground style={{ flex: 1 }}>
-      {showShoppingListGuide ? (
-        <ShoppingListOnboardingFlow onComplete={dismissShoppingListGuide} />
-      ) : null}
       <CurvedTopBar
         isHebrew={isHebrew}
         isDark={isDark}
@@ -244,7 +263,7 @@ export default function ShoppingListScreen() {
             {t('loading')}
           </Text>
         </View>
-      ) : isEmpty && suggestions.length === 0 ? (
+      ) : isEmpty && suggestions.length === 0 && !tourActive ? (
         <View
           style={{
             flex: 1,
@@ -264,6 +283,7 @@ export default function ShoppingListScreen() {
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           data={[0]}
           keyExtractor={() => 'content'}
           renderItem={() => <ListContent />}
@@ -282,18 +302,26 @@ export default function ShoppingListScreen() {
           style={[styles.fabRow, { paddingBottom: insets.bottom + 12 }]}
           pointerEvents="box-none"
         >
-          <FabButton
-            icon="store"
-            label={t('supermarket_mode_short')}
-            color={AccentColors.fabSupermarketBg}
-            onPress={() => router.push('/(main)/supermarket-mode')}
-          />
-          <FabButton
-            icon="plus"
-            label={t('item_add')}
-            color={AccentColors.fabAddBg}
-            onPress={() => router.push('/(main)/add-item')}
-          />
+          <View
+            ref={supermarketFabAnchor.ref}
+            style={supermarketFabAnchor.highlightStyle}
+            collapsable={false}
+          >
+            <FabButton
+              icon="store"
+              label={t('supermarket_mode_short')}
+              color={AccentColors.fabSupermarketBg}
+              onPress={() => router.push('/(main)/supermarket-mode')}
+            />
+          </View>
+          <View ref={addFabAnchor.ref} style={addFabAnchor.highlightStyle} collapsable={false}>
+            <FabButton
+              icon="plus"
+              label={t('item_add')}
+              color={AccentColors.fabAddBg}
+              onPress={() => router.push('/(main)/add-item')}
+            />
+          </View>
         </View>
       )}
     </SalinoGradientBackground>
@@ -319,6 +347,8 @@ function CurvedTopBar({
 }) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const settingsAnchor = useTourAnchor('list.settings');
+  const activityAnchor = useTourAnchor('list.activity');
   const [size, setSize] = useState({ w: 0, h: 0 });
   const tintSettings = isDark ? '#FFFFFF' : AccentColors.tintSettingsLight;
   const tintActivity = isDark ? '#FFFFFF' : AccentColors.tintActivityLight;
@@ -393,17 +423,28 @@ function CurvedTopBar({
             </>
           )}
           <View style={styles.topActions}>
-            <TopBarIconButton
-              icon="cog"
-              tint={tintSettings}
-              onPress={() => router.push('/(main)/settings')}
-            />
-            {/* Matches Android Icons.Default.Timeline — Material's timeline glyph */}
-            <TopBarMaterialIconButton
-              icon="timeline"
-              tint={tintActivity}
-              onPress={() => router.push('/(main)/activity')}
-            />
+            <View
+              ref={settingsAnchor.ref}
+              style={settingsAnchor.highlightStyle}
+              collapsable={false}
+            >
+              <TopBarIconButton
+                icon="cog"
+                tint={tintSettings}
+                onPress={() => router.push('/(main)/settings')}
+              />
+            </View>
+            <View
+              ref={activityAnchor.ref}
+              style={activityAnchor.highlightStyle}
+              collapsable={false}
+            >
+              <TopBarMaterialIconButton
+                icon="timeline"
+                tint={tintActivity}
+                onPress={() => router.push('/(main)/activity')}
+              />
+            </View>
             <TopBarIconButton
               icon="history"
               tint={tintHistory}

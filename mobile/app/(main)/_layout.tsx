@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { MainAdBannerHost } from '../../src/components/ads';
+import { TourController } from '../../src/components/tour/TourProvider';
 import { useHouseholdStore, useShoppingStore, useActivityStore } from '../../src/hooks';
 
 export default function MainLayout() {
@@ -21,6 +22,7 @@ export default function MainLayout() {
 
   return (
     <MainAdBannerHost>
+      <TourController />
       <Stack
         screenOptions={{
           headerShown: false,

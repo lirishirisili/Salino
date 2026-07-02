@@ -11,7 +11,6 @@ import com.salino.sali.data.model.SuggestionItem
 import com.salino.sali.domain.repository.ActivityRepository
 import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.data.service.ItemNameAutocompleteStore
-import com.salino.sali.domain.repository.OnboardingRepository
 import com.salino.sali.domain.repository.ShoppingRepository
 import com.salino.sali.domain.repository.SuggestionsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +33,6 @@ data class ShoppingListState(
     val selectedCategory: ItemCategory? = null,
     val currentUserId: String = "",
     val currentUserName: String = "",
-    val showShoppingListGuide: Boolean = false
 )
 
 @HiltViewModel
@@ -43,7 +41,6 @@ class ShoppingListViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val suggestionsRepository: SuggestionsRepository,
     private val activityRepository: ActivityRepository,
-    private val onboardingRepository: OnboardingRepository,
     private val autocompleteStore: ItemNameAutocompleteStore
 ) : ViewModel() {
 
@@ -77,21 +74,17 @@ class ShoppingListViewModel @Inject constructor(
             }
 
             householdId = user.activeHouseholdId
-            val showGuide = onboardingRepository.shouldShowShoppingListGuide()
             _uiState.value = _uiState.value.copy(
                 currentUserId = user.id,
                 currentUserName = user.displayName,
-                showShoppingListGuide = showGuide
             )
 
-            // Observe active items
             launch {
                 shoppingRepository.observeActiveItems(householdId).collect { items ->
                     _uiState.update { it.copy(activeItems = items, isLoading = false) }
                 }
             }
 
-            // Observe bought items (recent first on main list; UI paginates)
             launch {
                 shoppingRepository.observeBoughtItems(householdId).collect { items ->
                     _uiState.update {
@@ -112,16 +105,7 @@ class ShoppingListViewModel @Inject constructor(
                 }
             }
 
-            // Force fresh Firestore listeners after sign-in to pick up
-            // the latest auth token and avoid stale/empty results.
             shoppingRepository.forceRefreshSync(householdId)
-        }
-    }
-
-    fun dismissShoppingListGuide() {
-        viewModelScope.launch {
-            onboardingRepository.markShoppingListGuideSeen()
-            _uiState.update { it.copy(showShoppingListGuide = false) }
         }
     }
 
@@ -200,7 +184,6 @@ class ShoppingListViewModel @Inject constructor(
         }
     }
 
-    /** Filtered active items — only re-emits when activeItems, searchQuery, or selectedCategory change */
     val filteredActiveItems: Flow<List<ShoppingItem>> = combine(
         _uiState.map { it.activeItems }.distinctUntilChanged(),
         _uiState.map { it.searchQuery }.distinctUntilChanged(),

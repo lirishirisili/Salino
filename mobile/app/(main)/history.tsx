@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { useTourAnchor } from '../../src/features/tour';
 import {
   CategoryChip,
   EmptyState,
@@ -24,6 +25,7 @@ export default function HistoryScreen() {
   const colors = useThemeColors();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const { boughtItems, markAsActive } = useShoppingStore();
+  const historyTitleAnchor = useTourAnchor('history.title');
 
   const days = useMemo(() => {
     // Group by date label (matches Android dayGroups)
@@ -50,7 +52,9 @@ export default function HistoryScreen() {
 
   return (
     <SalinoGradientBackground>
-      <SalinoWebInnerTopBar title={t('history_title')} onBack={() => router.back()} />
+      <View ref={historyTitleAnchor.ref} style={historyTitleAnchor.highlightStyle} collapsable={false}>
+        <SalinoWebInnerTopBar title={t('history_title')} onBack={() => router.back()} />
+      </View>
       {boughtItems.length === 0 ? (
         <View
           style={{

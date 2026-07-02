@@ -1,4 +1,4 @@
-﻿package com.salino.sali.ui.screens.settings
+package com.salino.sali.ui.screens.settings
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -11,6 +11,10 @@ import kotlin.system.exitProcess
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.DisposableEffect
+import com.salino.sali.feature.tour.LocalTourViewModel
+import com.salino.sali.feature.tour.TourAnchorId
+import com.salino.sali.feature.tour.tourAnchor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -34,6 +38,7 @@ import com.salino.sali.R
 import com.salino.sali.ui.components.BrandLogo
 import com.salino.sali.ui.components.LoadingIndicator
 import com.salino.sali.ui.components.SalinoGradientBackground
+import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
 import com.salino.sali.ui.components.SalinoWebAppBarTitle
 import com.salino.sali.ui.components.SalinoWebTokens
@@ -49,6 +54,8 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val tourViewModel = LocalTourViewModel.current
+    val scrollState = rememberScrollState()
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showLanguageChangeDialog by remember { mutableStateOf(false) }
     var pendingLanguageTag by remember { mutableStateOf<String?>(null) }
@@ -59,6 +66,16 @@ fun SettingsScreen(
 
     LaunchedEffect(uiState.hasLeftHousehold) {
         if (uiState.hasLeftHousehold) onHouseholdLeft()
+    }
+
+    DisposableEffect(scrollState, tourViewModel) {
+        val registry = tourViewModel.anchorRegistry
+        registry.registerScrollHandler(TourAnchorId.SettingsInvite) {
+            scrollState.scrollTo(scrollState.maxValue / 3)
+        }
+        onDispose {
+            registry.unregisterScrollHandler(TourAnchorId.SettingsInvite)
+        }
     }
 
     if (showSignOutDialog) {
@@ -210,7 +227,7 @@ fun SettingsScreen(
                     .navigationBarsPadding()
                     .salinoWebMaxWidth()
                     .padding(horizontal = SalinoWebTokens.HorizontalPadding)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 uiState.household?.let { household ->
@@ -233,6 +250,7 @@ fun SettingsScreen(
                         )
                         HorizontalDivider()
                         ListItem(
+                            modifier = Modifier.tourAnchor(TourAnchorId.SettingsInvite),
                             headlineContent = { Text(stringResource(R.string.settings_invite_code)) },
                             supportingContent = { Text(uiState.inviteCode, style = MaterialTheme.typography.titleMedium) },
                             trailingContent = {
@@ -309,6 +327,29 @@ fun SettingsScreen(
                     ) {
                         Text(stringResource(R.string.settings_sign_out))
                     }
+                }
+
+                SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.tour_replay_section),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.tour_replay_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    SalinoPrimaryButton(
+                        text = stringResource(R.string.tour_replay),
+                        onClick = {
+                            tourViewModel.requestReplay()
+                            onNavigateBack()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
 
                 // Language picker
