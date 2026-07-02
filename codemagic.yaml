@@ -8,9 +8,8 @@ workflows:
       node: 22
       cocoapods: default
       groups:
-        # App Store Connect API key (same vars as Aria's `basic` group):
-        # APP_STORE_CONNECT_PRIVATE_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID
-        - app-store-connect
+        # App Store Connect API key (APP_STORE_CONNECT_* vars):
+        - basic
       vars:
         EXPO_DIR: mobile
         BUNDLE_ID: com.salino.sali
