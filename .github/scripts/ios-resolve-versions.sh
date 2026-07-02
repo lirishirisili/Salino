@@ -9,6 +9,50 @@ source "$SCRIPT_DIR/ci-env.sh"
 ci_install_cli_tools
 ci_verify_asc_secrets
 
+# Codemagic auto-increments BUILD_NUMBER across runs — use it directly.
+if [ -n "${CM_BUILD_ID:-}" ]; then
+  export BUILD_NUMBER="${BUILD_NUMBER:?BUILD_NUMBER must be set on Codemagic}"
+  echo "Codemagic BUILD_NUMBER=$BUILD_NUMBER"
+
+  MARKETING="${IOS_MARKETING_VERSION:-}"
+  if [ -z "$MARKETING" ] && [ -f "$REPO_ROOT/$EXPO_DIR/app.json" ]; then
+    MARKETING=$(node -e "const j=require(process.argv[1]); console.log(j.expo.version||'')" "$REPO_ROOT/$EXPO_DIR/app.json")
+  fi
+  if [ -z "$MARKETING" ]; then
+    echo "ERROR: Could not determine marketing version from app.json" >&2
+    exit 1
+  fi
+
+  export MARKETING_MIN="${IOS_MARKETING_VERSION_MIN:-1.3.20}"
+  MARKETING=$(node -e "
+function parts(s) {
+  return String(s).trim().split('.').map((n) => parseInt(n, 10) || 0);
+}
+function compare(a, b) {
+  const pa = parts(a);
+  const pb = parts(b);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const da = pa[i] || 0;
+    const db = pb[i] || 0;
+    if (da > db) return 1;
+    if (da < db) return -1;
+  }
+  return 0;
+}
+function maxSemver(a, b) {
+  return compare(a, b) >= 0 ? a : b;
+}
+const requested = process.argv[1];
+const min = process.env.MARKETING_MIN || '1.3.20';
+console.log(maxSemver(requested, min));
+" "$MARKETING")
+
+  export IOS_MARKETING_VERSION="$MARKETING"
+  echo "Resolved IOS_MARKETING_VERSION=$IOS_MARKETING_VERSION (min=$MARKETING_MIN)"
+  return 0 2>/dev/null || exit 0
+fi
+
 FLOOR="${IOS_BUILD_NUMBER_FLOOR:-22}"
 OFFSET="${IOS_BUILD_NUMBER_OFFSET:-21}"
 RUN_NUM="${GITHUB_RUN_NUMBER:-1}"

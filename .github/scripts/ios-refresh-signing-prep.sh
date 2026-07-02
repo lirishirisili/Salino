@@ -8,18 +8,24 @@ source "$SCRIPT_DIR/ci-env.sh"
 
 : "${BUNDLE_ID:?BUNDLE_ID is required}"
 
+ci_write_asc_key_file
+
 BUNDLE_ID_RESOURCE=$(
   app-store-connect bundle-ids list \
+    --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+    --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+    --private-key @file:"$ASC_KEY_FILE" \
     --bundle-id-identifier "$BUNDLE_ID" \
     --strict-match-identifier \
     --json \
-  | jq -r '.[0].id'
-)
+  | jq -r '.[0].id // empty'
+) || true
 
-if [ -z "$BUNDLE_ID_RESOURCE" ] || [ "$BUNDLE_ID_RESOURCE" = "null" ]; then
-  echo "ERROR: could not resolve Bundle ID resource for $BUNDLE_ID" >&2
-  exit 1
+if [ -z "$BUNDLE_ID_RESOURCE" ]; then
+  echo "Skip purge: Bundle ID resource not resolved (fetch-signing-files will create it)."
+  exit 0
 fi
+
 echo "Resolved Bundle ID resource: $BUNDLE_ID_RESOURCE"
 
 echo "--- Capabilities currently enabled on $BUNDLE_ID BEFORE enable call ---"
@@ -49,27 +55,29 @@ if ! grep -qE 'APPLE_ID_AUTH|SIGN_IN_WITH_APPLE' /tmp/caps_after.json; then
 fi
 echo "OK: Sign in with Apple is enabled on $BUNDLE_ID."
 
+set +o pipefail
 app-store-connect bundle-ids profiles \
   --bundle-ids "$BUNDLE_ID_RESOURCE" \
   --type IOS_APP_STORE \
-  --json \
-  | jq -r '.[].id' \
+  --json 2>/dev/null \
+  | jq -r '.[]?.id // empty' 2>/dev/null \
   | while read -r PROFILE_ID; do
       [ -z "$PROFILE_ID" ] && continue
       echo "Deleting stale IOS_APP_STORE profile: $PROFILE_ID"
-      app-store-connect profiles delete "$PROFILE_ID" --ignore-not-found
+      app-store-connect profiles delete "$PROFILE_ID" --ignore-not-found || true
     done
 
 for CERT_TYPE in DISTRIBUTION IOS_DISTRIBUTION; do
   app-store-connect certificates list \
     --type "$CERT_TYPE" \
-    --json \
-    | jq -r '.[].id' \
+    --json 2>/dev/null \
+    | jq -r '.[]?.id // empty' 2>/dev/null \
     | while read -r CERT_ID; do
         [ -z "$CERT_ID" ] && continue
         echo "Revoking orphan $CERT_TYPE certificate: $CERT_ID"
-        app-store-connect certificates delete "$CERT_ID" --ignore-not-found
+        app-store-connect certificates delete "$CERT_ID" --ignore-not-found || true
       done
 done
+set -o pipefail
 
 echo "Signing prep finished."

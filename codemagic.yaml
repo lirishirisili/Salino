@@ -8,295 +8,31 @@ workflows:
       node: 22
       cocoapods: default
       groups:
-        # Must exist in Codemagic → Teams → Integrations → Environment variables.
-        # Provides APP_STORE_CONNECT_PRIVATE_KEY, _KEY_IDENTIFIER, _ISSUER_ID.
+        # App Store Connect API key (same vars as Aria's `basic` group):
+        # APP_STORE_CONNECT_PRIVATE_KEY, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID
         - app-store-connect
-        # Provides the signing certificate password (if any) for Codemagic CLI.
-        - ios-code-signing
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.salino.sali
       vars:
         EXPO_DIR: mobile
-        # `expo prebuild` derives these from app.json `expo.name` = "Haserli".
-        XCODE_PROJECT: mobile/ios/Haserli.xcodeproj
-        XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
-        XCODE_SCHEME: Haserli
         BUNDLE_ID: com.salino.sali
+        BUILD_DIR: $CM_BUILD_DIR
         SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataSimulator
         APPETIZE_ZIP: $CM_BUILD_DIR/Haserli-simulator-appetize.zip
+        APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
+        # Do NOT use `ios_signing` here — profiles are created at build time via
+        # App Store Connect API (see .github/scripts/ios-testflight-run.sh), like Aria.
     scripts:
-      - name: Install JS dependencies
+      - name: Run iOS TestFlight pipeline
         script: |
           set -euxo pipefail
-          cd "$EXPO_DIR"
-          npm ci
-
-      - name: Run expo prebuild for iOS
-        # Generates mobile/ios/ from app.json + plugins. `--clean` ensures the
-        # build never sees stale state from a previous run on the same machine.
-        script: |
-          set -euxo pipefail
-          cd "$EXPO_DIR"
-          CI=1 npx expo prebuild --platform ios --clean
-
-      - name: Install CocoaPods
-        script: |
-          set -euxo pipefail
-          cd "$EXPO_DIR/ios"
-          pod install --repo-update
-
-      - name: Set CFBundleVersion to Codemagic build number
-        # $BUILD_NUMBER auto-increments across all Codemagic runs of this app,
-        # so each upload to App Store Connect gets a unique value (ASC rejects
-        # duplicates). The marketing version (CFBundleShortVersionString) stays
-        # as defined in mobile/app.json.
-        script: |
-          set -euxo pipefail
-          cd "$EXPO_DIR/ios"
-          agvtool new-version -all "$BUILD_NUMBER"
-
-      - name: Refresh App ID, purge stale profiles & orphan distribution certs
-        # This step makes the iOS pipeline self-healing against two classes
-        # of App Store Connect drift that otherwise force manual cleanup in
-        # the Apple Developer Portal between builds:
-        #
-        # (a) Capability drift. Provisioning profiles are a snapshot of the
-        #     App ID's capabilities at the moment they were issued. The
-        #     first time we add a new entitlement to the app (e.g.
-        #     `com.apple.developer.applesignin` from
-        #     `expo-apple-authentication` + `usesAppleSignIn: true` in
-        #     `app.json`) the previously-issued IOS_APP_STORE profile
-        #     becomes stale and the next `xcodebuild archive` fails with
-        #     "Provisioning profile <X> doesn't include the Y capability".
-        #
-        # (b) Certificate quota. Apple caps active Distribution
-        #     certificates at 2 per team. Each Codemagic run generates a
-        #     fresh 2048-bit RSA private key (we have nowhere to persist
-        #     it between ephemeral mac_mini instances without bringing the
-        #     user into the loop), which means *no* previously-issued
-        #     Distribution certificate ever matches it. As soon as both
-        #     slots are full, `fetch-signing-files --create` fails with
-        #     HTTP 409 "You already have a current Distribution
-        #     certificate". The only certs we can purge here are the ones
-        #     whose private key we don't have — which is, by construction,
-        #     every existing Distribution certificate.
-        #
-        # Pipeline:
-        #   1. Resolve the Bundle ID resource id (App Store Connect's API
-        #      addresses Bundle IDs by an alphanumeric internal id, not by
-        #      the dotted "com.foo.bar" string).
-        #   2. Enable Sign in with Apple on the App ID (idempotent; the CLI
-        #      is tolerant of the capability already being on, but we guard
-        #      with `||` so a transient failure can't abort the build).
-        #   3. Delete every IOS_APP_STORE provisioning profile bound to
-        #      that Bundle ID, so the next `fetch-signing-files --create`
-        #      regenerates one matching the *current* capability set.
-        #   4. Revoke every DISTRIBUTION / IOS_DISTRIBUTION certificate so
-        #      the next `fetch-signing-files --create` is guaranteed to be
-        #      under Apple's quota.
-        #
-        # SAFETY: revoking a Distribution certificate disables further
-        # *signing* with that key, but it does NOT invalidate binaries
-        # already uploaded to TestFlight or the App Store — existing
-        # installs keep working. Use this workflow as the only producer of
-        # iOS App Store builds for this Bundle ID.
-        #
-        # If you add another capability via an Expo plugin in the future
-        # (Push Notifications, Associated Domains, ...), just add another
-        # `--capability` line below — `jq` and the Codemagic CLI are
-        # preinstalled on the macOS image so no extra setup is required.
-        script: |
-          set -euxo pipefail
-
-          BUNDLE_ID_RESOURCE=$(
-            app-store-connect bundle-ids list \
-              --bundle-id-identifier "$BUNDLE_ID" \
-              --strict-match-identifier \
-              --json \
-            | jq -r '.[0].id'
-          )
-
-          if [ -z "$BUNDLE_ID_RESOURCE" ] || [ "$BUNDLE_ID_RESOURCE" = "null" ]; then
-            echo "ERROR: could not resolve Bundle ID resource for $BUNDLE_ID" >&2
-            exit 1
-          fi
-          echo "Resolved Bundle ID resource: $BUNDLE_ID_RESOURCE"
-
-          echo "--- Capabilities currently enabled on $BUNDLE_ID BEFORE enable call ---"
-          app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
-            | tee /tmp/caps_before.json
-          echo "---"
-
-          # Try to enable Sign in with Apple. We deliberately swallow
-          # non-zero exit codes here because the CLI may legitimately
-          # report failure when the capability is already on the App ID;
-          # the authoritative check is the verification block below that
-          # re-reads the capability list and fails the build if "Sign In
-          # with Apple" is still missing.
-          #
-          # `--log-api-calls --verbose` dumps the raw HTTP request and
-          # Apple's response into the log. This is essential when the CLI
-          # silently fails: Apple's APPLE_ID_AUTH capability requires the
-          # `settings` field to specify APPLE_ID_AUTH_APP_CONSENT =
-          # PRIMARY_APP_ID, and depending on the CLI version that body
-          # field is not exposed via `--capability`. When the call fails
-          # the response payload tells us *why* — typically a 400 with
-          # "Settings is required when enabling APPLE_ID_AUTH".
-          set +e
-          app-store-connect bundle-ids enable-capabilities \
-            "$BUNDLE_ID_RESOURCE" \
-            --capability "Sign In with Apple" \
-            --log-api-calls --verbose \
-            2>&1
-          ENABLE_EXIT=$?
-          set -e
-          echo "enable-capabilities exited with status $ENABLE_EXIT"
-
-          echo "--- Capabilities currently enabled on $BUNDLE_ID AFTER enable call ---"
-          app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
-            | tee /tmp/caps_after.json
-          echo "---"
-
-          # Fail loudly if Sign in with Apple still isn't enabled. Apple
-          # and the Codemagic CLI both serialize this capability under
-          # the type token "APPLE_ID_AUTH" (the human-readable label
-          # "Sign In with Apple" is only used as an input alias for
-          # `enable-capabilities`). Use grep over the raw JSON so the
-          # check stays resilient to upstream CLI/API schema tweaks.
-          if ! grep -qE 'APPLE_ID_AUTH|SIGN_IN_WITH_APPLE' /tmp/caps_after.json; then
-            echo "ERROR: Sign in with Apple is NOT enabled on $BUNDLE_ID." >&2
-            echo "       The provisioning profile regenerated below would" >&2
-            echo "       lack the com.apple.developer.applesignin entitlement" >&2
-            echo "       and 'xcodebuild archive' would fail." >&2
-            echo "       Capability list dump above shows the current state." >&2
-            echo "" >&2
-            echo "Manual recovery (one-time, then re-run this workflow):" >&2
-            echo "  1. https://developer.apple.com/account/resources/identifiers/list" >&2
-            echo "  2. Click $BUNDLE_ID" >&2
-            echo "  3. Check 'Sign In with Apple' and Save" >&2
-            exit 1
-          fi
-          echo "OK: Sign in with Apple is enabled on $BUNDLE_ID."
-
-          app-store-connect bundle-ids profiles \
-            --bundle-ids "$BUNDLE_ID_RESOURCE" \
-            --type IOS_APP_STORE \
-            --json \
-            | jq -r '.[].id' \
-            | while read -r PROFILE_ID; do
-                [ -z "$PROFILE_ID" ] && continue
-                echo "Deleting stale IOS_APP_STORE profile: $PROFILE_ID"
-                app-store-connect profiles delete "$PROFILE_ID" --ignore-not-found
-              done
-
-          # Free up Distribution certificate slots. We loop the two type
-          # filters separately because the CLI's `--type` argument accepts
-          # one value at a time for `certificates list`; a cert that
-          # somehow appears under both filters is harmless to "double
-          # delete" thanks to `--ignore-not-found`.
-          for CERT_TYPE in DISTRIBUTION IOS_DISTRIBUTION; do
-            app-store-connect certificates list \
-              --type "$CERT_TYPE" \
-              --json \
-              | jq -r '.[].id' \
-              | while read -r CERT_ID; do
-                  [ -z "$CERT_ID" ] && continue
-                  echo "Revoking orphan $CERT_TYPE certificate: $CERT_ID"
-                  app-store-connect certificates delete "$CERT_ID" --ignore-not-found
-                done
-          done
-
-      - name: Fetch & install code signing files
-        # Pulls (or creates) an Apple Distribution certificate and an App Store
-        # provisioning profile for com.salino.sali via the App Store Connect API.
-        #
-        # The Codemagic CLI needs a local PEM private key to associate the
-        # distribution certificate with — without it you get
-        # "Cannot save Signing Certificates without certificate private key".
-        #
-        # NOTE on the `@file:` prefix: current Codemagic CLI versions reject a
-        # bare path argument to `--certificate-key`; they treat the value as
-        # raw PEM content unless prefixed with `@file:` (read from disk) or
-        # `@env:` (read from env var). A bare path errors out with
-        # "Provided value '<path>' is not valid".
-        #
-        # Each run generates a fresh 2048-bit RSA key, which causes a new
-        # distribution certificate to be issued in App Store Connect. Apple
-        # caps active Distribution certs at 2 per team, but the previous
-        # "Refresh App ID, purge stale profiles & orphan distribution
-        # certs" step revokes every existing Distribution cert before this
-        # runs, so the slot is always free.
-        script: |
-          set -euxo pipefail
-          keychain initialize
-          openssl genrsa -out /tmp/certificate_key.pem 2048
-          ls -la /tmp/certificate_key.pem
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create \
-            --certificate-key @file:/tmp/certificate_key.pem \
-            --verbose
-          keychain add-certificates
-          xcode-project use-profiles --project "$XCODE_PROJECT" --verbose
-
-      - name: Archive
-        script: |
-          set -euxo pipefail
-          xcodebuild archive \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath "$CM_BUILD_DIR/build.xcarchive" \
-            CODE_SIGN_STYLE=Manual
-
-      - name: Export IPA
-        script: |
-          set -euxo pipefail
-          xcodebuild -exportArchive \
-            -archivePath "$CM_BUILD_DIR/build.xcarchive" \
-            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
-            -exportOptionsPlist "$HOME/export_options.plist"
-
-      # Appetize.io needs a Simulator .app zip — the IPA above is device-only.
-      - name: Build iOS Simulator zip for Appetize
-        script: |
-          set -euxo pipefail
-          xcodebuild build \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Release \
-            -sdk iphonesimulator \
-            -derivedDataPath "$SIMULATOR_DERIVED_DATA" \
-            CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO
-
-          APP_PATH=$(
-            find "$SIMULATOR_DERIVED_DATA" -type d -name "*.app" -path "*iphonesimulator*" \
-              | head -1
-          )
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Could not find Simulator .app bundle" >&2
-            find "$SIMULATOR_DERIVED_DATA" -name "*.app" >&2 || true
-            exit 1
-          fi
-          echo "Packaging for Appetize: $APP_PATH"
-          APP_NAME=$(basename "$APP_PATH")
-          cd "$(dirname "$APP_PATH")"
-          rm -f "$APPETIZE_ZIP"
-          zip -ry "$APPETIZE_ZIP" "$APP_NAME"
-          ls -la "$APPETIZE_ZIP"
-
+          chmod +x .github/scripts/*.sh
+          bash .github/scripts/setup-codemagic-cli.sh
+          bash .github/scripts/ios-testflight-run.sh
     artifacts:
-      - $CM_BUILD_DIR/build/ios/ipa/*.ipa
+      - $CM_BUILD_DIR/ios/ipa/*.ipa
       - $CM_BUILD_DIR/Haserli-simulator-appetize.zip
       - $CM_BUILD_DIR/build.xcarchive
       - /tmp/xcodebuild_logs/*.log
-
     publishing:
-      # Codemagic handles the App Store Connect upload natively. The build
-      # appears on TestFlight ~10–30 minutes after `BUILD SUCCESSFUL`.
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
@@ -304,8 +40,6 @@ workflows:
         submit_to_testflight: true
 
   # Appetize.io requires an iOS *Simulator* build (.app inside a .zip).
-  # The TestFlight workflow above produces a device IPA — that will NOT run
-  # on Appetize ("App is not a Simulator build"). Use this workflow instead.
   ios-simulator-appetize:
     name: iOS — Simulator (Appetize)
     instance_type: mac_mini_m2
@@ -316,63 +50,21 @@ workflows:
       cocoapods: default
       vars:
         EXPO_DIR: mobile
-        XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
-        XCODE_SCHEME: Haserli
+        BUILD_DIR: $CM_BUILD_DIR
         SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataSimulator
         APPETIZE_ZIP: $CM_BUILD_DIR/Haserli-simulator-appetize.zip
+        APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
     scripts:
-      - name: Install JS dependencies
+      - name: Run iOS Simulator (Appetize) pipeline
         script: |
           set -euxo pipefail
-          cd "$EXPO_DIR"
-          npm ci
-
-      - name: Run expo prebuild for iOS
-        script: |
-          set -euxo pipefail
-          cd "$EXPO_DIR"
-          CI=1 npx expo prebuild --platform ios --clean
-
-      - name: Install CocoaPods
-        script: |
-          set -euxo pipefail
-          cd "$EXPO_DIR/ios"
-          pod install --repo-update
-
-      - name: Build for iOS Simulator and zip for Appetize
-        script: |
-          set -euxo pipefail
-          xcodebuild build \
-            -workspace "$XCODE_WORKSPACE" \
-            -scheme "$XCODE_SCHEME" \
-            -configuration Release \
-            -sdk iphonesimulator \
-            -derivedDataPath "$SIMULATOR_DERIVED_DATA" \
-            CODE_SIGNING_ALLOWED=NO \
-            ONLY_ACTIVE_ARCH=NO
-
-          APP_PATH=$(
-            find "$SIMULATOR_DERIVED_DATA" -type d -name "*.app" -path "*iphonesimulator*" \
-              | head -1
-          )
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Could not find Simulator .app bundle under $SIMULATOR_DERIVED_DATA" >&2
-            find "$SIMULATOR_DERIVED_DATA" -name "*.app" >&2 || true
-            exit 1
-          fi
-          echo "Packaging: $APP_PATH"
-          APP_NAME=$(basename "$APP_PATH")
-          cd "$(dirname "$APP_PATH")"
-          rm -f "$APPETIZE_ZIP"
-          zip -ry "$APPETIZE_ZIP" "$APP_NAME"
-          ls -la "$APPETIZE_ZIP"
-
+          chmod +x .github/scripts/*.sh
+          bash .github/scripts/setup-codemagic-cli.sh
+          bash .github/scripts/ios-simulator-appetize-run.sh
     artifacts:
       - $CM_BUILD_DIR/Haserli-simulator-appetize.zip
 
-  # Codemagic App Preview → Quick launch needs an unsigned Simulator .app
-  # artifact (see docs.codemagic.io/yaml-testing/app-preview). This is NOT
-  # the Appetize zip workflow above — publish the .app bundle itself.
+  # Codemagic App Preview → Quick launch needs an unsigned Simulator .app artifact.
   ios-simulator-app-preview:
     name: iOS — Simulator (App Preview)
     instance_type: mac_mini_m2
@@ -383,8 +75,7 @@ workflows:
       cocoapods: default
       vars:
         EXPO_DIR: mobile
-        XCODE_WORKSPACE: mobile/ios/Haserli.xcworkspace
-        XCODE_SCHEME: Haserli
+        BUILD_DIR: $CM_BUILD_DIR
         SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataAppPreview
         APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
     scripts:
@@ -407,13 +98,14 @@ workflows:
           pod install --repo-update
 
       - name: Build Simulator .app for App Preview
-        # Debug expects a running Metro packager (red screen in App Preview).
-        # Release runs Expo's export:embed step and ships JS inside the .app.
         script: |
           set -euxo pipefail
+          chmod +x .github/scripts/*.sh
+          # shellcheck source=ci-env.sh
+          source .github/scripts/ci-env.sh
           export CI=1
           xcodebuild build \
-            -workspace "$XCODE_WORKSPACE" \
+            -workspace "$XCODE_WORKSPACE_ABS" \
             -scheme "$XCODE_SCHEME" \
             -configuration Release \
             -sdk iphonesimulator \
@@ -433,11 +125,9 @@ workflows:
             exit 1
           fi
           if ! find "$APP_PATH" \( -name '*.jsbundle' -o -name '*.hbc' \) -print -quit | grep -q .; then
-            echo "ERROR: No embedded JS bundle in $APP_PATH (App Preview cannot reach Metro)" >&2
-            find "$APP_PATH" -maxdepth 3 -type f >&2 | head -40
+            echo "ERROR: No embedded JS bundle in $APP_PATH" >&2
             exit 1
           fi
-          echo "Simulator app: $APP_PATH"
           mkdir -p "$APP_PREVIEW_DIR"
           APP_NAME=$(basename "$APP_PATH")
           rm -rf "$APP_PREVIEW_DIR/$APP_NAME"

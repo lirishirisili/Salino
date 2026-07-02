@@ -46,7 +46,10 @@ app-store-connect fetch-signing-files "$BUNDLE_ID" \
   --certificate-key @file:/tmp/certificate_key.pem \
   --verbose
 keychain add-certificates
-xcode-project use-profiles --project "$XCODE_PROJECT_ABS" --verbose
+xcode-project use-profiles \
+  --project "$XCODE_PROJECT_ABS" \
+  --export-options-plist "$HOME/export_options.plist" \
+  --verbose
 
 if [ ! -f "$HOME/export_options.plist" ]; then
   echo "ERROR: export_options.plist missing after xcode-project use-profiles" >&2

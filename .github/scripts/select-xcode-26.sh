@@ -8,6 +8,14 @@ if [ -n "${GITHUB_ENV:-}" ]; then
 fi
 echo "Using TOOLCHAINS=$TOOLCHAINS"
 
+# Codemagic sets xcode: latest on the image — no manual xcode-select needed.
+if [ -n "${CM_BUILD_ID:-}" ]; then
+  echo "Codemagic runner — using default Xcode from image"
+  xcodebuild -version
+  xcodebuild -showsdks 2>/dev/null | grep -E 'iphoneos|iphonesimulator' || true
+  exit 0
+fi
+
 selected=""
 for app in \
   /Applications/Xcode_26.4.app \
