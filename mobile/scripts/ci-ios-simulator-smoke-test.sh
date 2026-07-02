@@ -25,7 +25,7 @@ pick_device() {
   xcrun simctl list devices available \
     | grep -F "$SIMULATOR_NAME" \
     | grep -E "Booted|Shutdown" \
-    | head -1 \
+    | { head -1 || true; } \
     | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/' || true
 }
 
@@ -34,8 +34,8 @@ if [ -z "$DEVICE_ID" ]; then
   DEVICE_ID=$(
     xcrun simctl list devices available \
       | grep -E "Booted|Shutdown" \
-      | head -1 \
-      | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/'
+      | { head -1 || true; } \
+      | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/' || true
   )
 fi
 

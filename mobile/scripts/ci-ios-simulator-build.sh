@@ -49,7 +49,7 @@ xcodebuild build \
 APP_PATH="$(
   find "$SIMULATOR_DERIVED_DATA/Build/Products" "$SIMULATOR_DERIVED_DATA" \
     -type d -name "*.app" -path "*iphonesimulator*" 2>/dev/null \
-    | head -1
+    | head -1 || true
 )"
 if [ -z "$APP_PATH" ]; then
   echo "ERROR: Could not find Simulator .app bundle" >&2
@@ -59,7 +59,7 @@ fi
 
 if ! find "$APP_PATH" \( -name '*.jsbundle' -o -name '*.hbc' \) -print -quit | grep -q .; then
   echo "ERROR: No embedded JS bundle in $APP_PATH (Appetize cannot reach Metro)" >&2
-  find "$APP_PATH" -maxdepth 3 -type f >&2 | head -40
+  find "$APP_PATH" -maxdepth 3 -type f >&2 | head -40 || true
   exit 1
 fi
 

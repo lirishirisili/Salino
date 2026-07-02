@@ -20,7 +20,7 @@ if [ ! -d "$APP_PATH" ]; then
   APP_PATH="$(
     find "$SIMULATOR_DERIVED_DATA/Build/Products" "$SIMULATOR_DERIVED_DATA" \
       -type d -name "${XCODE_SCHEME}.app" -path "*iphonesimulator*" 2>/dev/null \
-      | head -1
+      | head -1 || true
   )"
 fi
 if [ ! -d "$APP_PATH" ]; then

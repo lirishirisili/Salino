@@ -34,7 +34,8 @@ echo "Creating $APPETIZE_ZIP_ABS ..."
 )
 
 echo "Zip contents (must show ${APP_NAME}/ at root):"
-unzip -Z1 "$APPETIZE_ZIP_ABS" | head -25
+# head closes the pipe early; ignore SIGPIPE (exit 141) under pipefail
+unzip -Z1 "$APPETIZE_ZIP_ABS" | head -25 || true
 
 zip_entries="$(unzip -Z1 "$APPETIZE_ZIP_ABS")"
 if [ -z "$zip_entries" ]; then
@@ -44,7 +45,7 @@ fi
 
 if ! printf '%s\n' "$zip_entries" | grep -q "^${APP_NAME}/"; then
   echo "ERROR: ${APP_NAME}/ not found at zip root (Appetize: No .app folder found)" >&2
-  printf '%s\n' "$zip_entries" | head -10 >&2
+  printf '%s\n' "$zip_entries" | head -10 >&2 || true
   exit 1
 fi
 
