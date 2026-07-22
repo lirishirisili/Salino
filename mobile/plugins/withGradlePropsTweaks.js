@@ -31,6 +31,22 @@ const OVERRIDES = [
     key: 'reactNativeArchitectures',
     value: 'arm64-v8a',
   },
+  // Google Play (from Aug 31, 2026): updates must target API 36 (Android 16).
+  {
+    type: 'property',
+    key: 'android.compileSdkVersion',
+    value: '36',
+  },
+  {
+    type: 'property',
+    key: 'android.targetSdkVersion',
+    value: '36',
+  },
+  {
+    type: 'property',
+    key: 'android.buildToolsVersion',
+    value: '36.0.0',
+  },
 ];
 
 function withGradlePropsTweaks(config) {
