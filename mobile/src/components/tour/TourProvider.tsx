@@ -39,6 +39,8 @@ function goRouteIfNeeded(
   target: TourRoute,
   current: TourRoute | null,
 ) {
+  // Segments not settled yet — wait rather than navigate blindly (can duplicate routes).
+  if (current === null) return;
   if (current === target) return;
   router.navigate(ROUTE_PATHS[target]);
 }
@@ -68,21 +70,24 @@ export function TourController() {
   const uid = useAuthStore((s) => s.user?.uid);
   const isSignedIn = useAuthStore((s) => s.isSignedIn);
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  // Wait for the first Firestore snapshot before auto-starting — empty local
+  // cache must not look "ready" or existing users briefly see tour demo data.
   const hasReceivedRemoteSnapshot = useShoppingStore((s) => s.hasReceivedRemoteSnapshot);
-  const shoppingLoading = useShoppingStore((s) => s.isLoading);
-  const shoppingListReady = hasReceivedRemoteSnapshot || !shoppingLoading;
+  const shoppingListReady = hasReceivedRemoteSnapshot;
 
   const active = useTourStore((s) => s.active);
   const stepIndex = useTourStore((s) => s.stepIndex);
   const replayRequested = useTourStore((s) => s.replayRequested);
+  const bootstrapStatus = useTourStore((s) => s.bootstrapStatus);
   const start = useTourStore((s) => s.start);
   const stop = useTourStore((s) => s.stop);
   const clearReplayRequest = useTourStore((s) => s.clearReplayRequest);
   const next = useTourStore((s) => s.next);
-  const setStepIndex = useTourStore((s) => s.setStepIndex);
   const setActiveAnchorId = useTourStore((s) => s.setActiveAnchorId);
   const showOverlay = useTourStore((s) => s.showOverlay);
   const hideOverlay = useTourStore((s) => s.hideOverlay);
+  const markBootstrapDone = useTourStore((s) => s.markBootstrapDone);
+  const resetBootstrap = useTourStore((s) => s.resetBootstrap);
 
   const steps = useMemo(() => stepsForUser(), []);
   const currentStep: TourStep | null = steps[stepIndex] ?? null;
@@ -90,6 +95,7 @@ export function TourController() {
   const [, setReady] = useState(false);
   const autoStartChecked = useRef(false);
   const autoStartPending = useRef(false);
+  const autoStartRequestId = useRef(0);
   const lastAutoStartHouseholdId = useRef<string | null>(null);
   const lastPreparedStepId = useRef<string | null>(null);
 
@@ -121,11 +127,12 @@ export function TourController() {
       stop();
       setReady(false);
       lastPreparedStepId.current = null;
+      markBootstrapDone();
       if (completed && uid) {
         await markTourCompleted(uid);
       }
     },
-    [stop, uid],
+    [stop, uid, markBootstrapDone],
   );
 
   const handleSkip = useCallback(() => {
@@ -140,36 +147,61 @@ export function TourController() {
     next();
   }, [stepIndex, steps.length, next, finishTour]);
 
+  // Tour disabled → notifications may proceed immediately.
+  useEffect(() => {
+    if (!TOUR_ENABLED && bootstrapStatus !== 'done') {
+      markBootstrapDone();
+    }
+  }, [bootstrapStatus, markBootstrapDone]);
+
   useEffect(() => {
     if (activeHouseholdId && activeHouseholdId !== lastAutoStartHouseholdId.current) {
       autoStartChecked.current = false;
       autoStartPending.current = false;
       lastAutoStartHouseholdId.current = activeHouseholdId;
+      if (!active) {
+        resetBootstrap();
+      }
     }
-  }, [activeHouseholdId]);
+  }, [activeHouseholdId, active, resetBootstrap]);
 
   useEffect(() => {
     if (!TOUR_ENABLED || autoStartChecked.current || autoStartPending.current) return;
     if (!isSignedIn || !activeHouseholdId || !shoppingListReady || !isOnShoppingList || !uid) return;
 
-    let cancelled = false;
+    const requestId = ++autoStartRequestId.current;
     autoStartPending.current = true;
 
     void hasCompletedTour(uid).then((done) => {
+      if (requestId !== autoStartRequestId.current) return;
       autoStartPending.current = false;
-      if (cancelled || autoStartChecked.current) return;
+      if (autoStartChecked.current) return;
       autoStartChecked.current = true;
-      if (!done) {
-        InteractionManager.runAfterInteractions(() => {
-          requestAnimationFrame(() => start());
-        });
+      if (done) {
+        markBootstrapDone();
+        return;
       }
+      InteractionManager.runAfterInteractions(() => {
+        requestAnimationFrame(() => start());
+      });
     });
 
     return () => {
-      cancelled = true;
+      // Invalidate in-flight check and clear pending so a remount can retry.
+      if (requestId === autoStartRequestId.current) {
+        autoStartRequestId.current += 1;
+        autoStartPending.current = false;
+      }
     };
-  }, [isSignedIn, activeHouseholdId, shoppingListReady, isOnShoppingList, uid, start]);
+  }, [
+    isSignedIn,
+    activeHouseholdId,
+    shoppingListReady,
+    isOnShoppingList,
+    uid,
+    start,
+    markBootstrapDone,
+  ]);
 
   useEffect(() => {
     if (!replayRequested || !isSignedIn || !activeHouseholdId || !shoppingListReady) return;

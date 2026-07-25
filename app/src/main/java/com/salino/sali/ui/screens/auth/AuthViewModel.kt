@@ -9,7 +9,6 @@ import com.salino.sali.util.validatePassword
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,11 +35,10 @@ class AuthViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             authRepository.signInWithGoogle(idToken)
-                .onSuccess {
-                    val user = authRepository.observeCurrentUser().first()
+                .onSuccess { user ->
                     _uiState.value = AuthUiState(
                         isAuthenticated = true,
-                        hasHousehold = !user?.activeHouseholdId.isNullOrBlank()
+                        hasHousehold = !user.activeHouseholdId.isNullOrBlank()
                     )
                 }
                 .onFailure { error ->
@@ -76,10 +74,10 @@ class AuthViewModel @Inject constructor(
                     if (authRepository.isPasswordProvider && !authRepository.isEmailVerified) {
                         _uiState.value = AuthUiState(needsEmailVerification = true)
                     } else {
-                        val user = authRepository.observeCurrentUser().first()
+                        val profile = authRepository.getOrCreateUserProfile().getOrThrow()
                         _uiState.value = AuthUiState(
                             isAuthenticated = true,
-                            hasHousehold = !user?.activeHouseholdId.isNullOrBlank()
+                            hasHousehold = !profile.activeHouseholdId.isNullOrBlank()
                         )
                     }
                 }

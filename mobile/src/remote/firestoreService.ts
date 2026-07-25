@@ -10,6 +10,8 @@ import {
   query,
   orderBy,
   where,
+  arrayUnion,
+  arrayRemove,
   Timestamp,
   Unsubscribe,
   writeBatch,
@@ -17,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { ShoppingItem, Household, HouseholdMember, ActivityLog, RecurringItem } from '../models';
+import type { NotificationPreferences } from '../models/types';
 
 // Collection references
 export const usersCol = () => collection(db, 'users');
@@ -222,6 +225,40 @@ export const firestoreSetUser = async (userId: string, data: Record<string, unkn
 
 export const firestoreDeleteUser = async (userId: string) => {
   await deleteDoc(doc(db, 'users', userId));
+};
+
+// Push notification token + preferences
+export const firestoreAddFcmToken = async (userId: string, token: string) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, { fcmTokens: arrayUnion(token) }, { merge: true });
+};
+
+export const firestoreRemoveFcmToken = async (userId: string, token: string) => {
+  const ref = doc(db, 'users', userId);
+  await updateDoc(ref, { fcmTokens: arrayRemove(token) });
+};
+
+export const firestoreUpdateNotificationPrefs = async (
+  userId: string,
+  prefs: Partial<NotificationPreferences>
+) => {
+  const ref = doc(db, 'users', userId);
+  const payload: Record<string, unknown> = {};
+  (Object.keys(prefs) as (keyof NotificationPreferences)[]).forEach((key) => {
+    payload[`notificationPreferences.${key}`] = prefs[key];
+  });
+  await setDoc(
+    ref,
+    { notificationPreferences: prefs },
+    { merge: true }
+  ).catch(async () => {
+    await updateDoc(ref, payload);
+  });
+};
+
+export const firestoreSetUserLanguage = async (userId: string, language: string) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, { language }, { merge: true });
 };
 
 export const firestoreGetMemberCount = async (householdId: string): Promise<number> => {

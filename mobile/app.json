@@ -2,7 +2,7 @@
   "expo": {
     "name": "Haserli",
     "slug": "haserli",
-    "version": "1.3.23",
+    "version": "1.3.25",
     "orientation": "portrait",
     "scheme": "haserli",
     "userInterfaceStyle": "automatic",
@@ -86,7 +86,14 @@
           }
         }
       ],
-      "./plugins/withIosModularHeaders"
+      "./plugins/withIosModularHeaders",
+      "@react-native-firebase/messaging",
+      [
+        "expo-notifications",
+        {
+          "color": "#78D1BF"
+        }
+      ]
     ],
     "extra": {
       "googleWebClientId": "937718857697-kctiik5thjkjhnoljqb7hga6nsioi9jb.apps.googleusercontent.com",

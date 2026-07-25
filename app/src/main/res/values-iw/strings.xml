@@ -264,4 +264,19 @@
     <string name="tour_preview_item_milk">חלב</string>
     <string name="tour_preview_item_bread">לחם</string>
     <string name="tour_preview_item_dish_soap">נוזל כלים</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_shopping_updates">עדכוני קניות</string>
+    <string name="notification_channel_shopping_updates_desc">התראות כשמישהו מוסיף פריט לרשימת הבית</string>
+    <string name="settings_notifications_section">התראות</string>
+    <string name="settings_notifications_disabled_hint">ההתראות כבויות. הפעל אותן בהגדרות המכשיר כדי לקבל עדכונים על משק הבית.</string>
+    <string name="settings_notifications_open_settings">פתח הגדרות</string>
+    <string name="settings_notifications_item_added">פריט נוסף</string>
+    <string name="settings_notifications_item_added_desc">כשמישהו מוסיף פריט לרשימה</string>
+    <string name="settings_notifications_urgent_item">פריט דחוף</string>
+    <string name="settings_notifications_urgent_item_desc">כשמישהו מוסיף פריט דחוף</string>
+    <string name="settings_notifications_shopping_complete">הקניות הושלמו</string>
+    <string name="settings_notifications_shopping_complete_desc">כשכל הפריטים נקנו</string>
+    <string name="settings_notifications_member_joined">חבר חדש</string>
+    <string name="settings_notifications_member_joined_desc">כשמישהו מצטרף למשק הבית</string>
 </resources>

@@ -6,7 +6,6 @@ import com.salino.sali.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,11 +42,15 @@ class SplashViewModel @Inject constructor(
             }
 
             try {
-                val user = authRepository.observeCurrentUser().first()
-                _destination.value = when {
-                    user == null -> SplashDestination.Auth
-                    user.activeHouseholdId.isNullOrBlank() -> SplashDestination.HouseholdSetup
-                    else -> SplashDestination.ShoppingList
+                // Must use the authoritative server profile — never observeCurrentUser().first().
+                // On a fresh install the Firestore cache can emit a null/partial user before the
+                // server snapshot arrives (or after an FCM merge write), which would falsely send
+                // an existing household member to HouseholdSetup.
+                val user = authRepository.getOrCreateUserProfile().getOrThrow()
+                _destination.value = if (user.activeHouseholdId.isNullOrBlank()) {
+                    SplashDestination.HouseholdSetup
+                } else {
+                    SplashDestination.ShoppingList
                 }
             } catch (_: Exception) {
                 _destination.value = SplashDestination.Auth

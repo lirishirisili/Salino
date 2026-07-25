@@ -227,5 +227,20 @@
   "onboarding_list_settings_title": "Ваши настройки",
   "onboarding_list_settings_body": "Управление участниками, код приглашения и название дома.",
   "onboarding_list_extras_title": "Режим покупок",
-  "onboarding_list_extras_body": "Нажмите здесь в магазине — отмечайте товары прямо во время покупок!"
+  "onboarding_list_extras_body": "Нажмите здесь в магазине — отмечайте товары прямо во время покупок!",
+  "push_item_added_title": "Хасерли",
+  "push_item_added_body": "{{name}} добавил(а): {{item}}",
+  "notification_channel_shopping_updates": "Обновления покупок",
+  "notification_channel_shopping_updates_desc": "Уведомления, когда кто-то добавляет товар в список дома",
+  "settings_notifications_section": "Уведомления",
+  "settings_notifications_disabled_hint": "Уведомления отключены. Включите их в настройках устройства, чтобы получать обновления семьи.",
+  "settings_notifications_open_settings": "Открыть настройки",
+  "settings_notifications_item_added": "Товар добавлен",
+  "settings_notifications_item_added_desc": "Когда кто-то добавляет товар в список",
+  "settings_notifications_urgent_item": "Срочный товар",
+  "settings_notifications_urgent_item_desc": "Когда кто-то добавляет срочный товар",
+  "settings_notifications_shopping_complete": "Покупки завершены",
+  "settings_notifications_shopping_complete_desc": "Когда все товары куплены",
+  "settings_notifications_member_joined": "Новый участник",
+  "settings_notifications_member_joined_desc": "Когда кто-то присоединяется к семье"
 }

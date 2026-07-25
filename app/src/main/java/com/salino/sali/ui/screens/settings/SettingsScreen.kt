@@ -1,11 +1,19 @@
 package com.salino.sali.ui.screens.settings
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.salino.sali.MainActivity
 import kotlin.system.exitProcess
 import androidx.compose.foundation.layout.*
@@ -59,6 +67,27 @@ fun SettingsScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showLanguageChangeDialog by remember { mutableStateOf(false) }
     var pendingLanguageTag by remember { mutableStateOf<String?>(null) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        viewModel.setNotificationsPermitted(
+            NotificationManagerCompat.from(context).areNotificationsEnabled()
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        val enabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        if (!enabled &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            viewModel.setNotificationsPermitted(enabled)
+        }
+    }
 
     LaunchedEffect(uiState.isSignedOut) {
         if (uiState.isSignedOut) onSignedOut()
@@ -331,6 +360,72 @@ fun SettingsScreen(
 
                 SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
                     Text(
+                        text = stringResource(R.string.settings_notifications_section),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    if (!uiState.notificationsPermitted) {
+                        Text(
+                            text = stringResource(R.string.settings_notifications_disabled_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.settings_notifications_open_settings))
+                        }
+                    }
+                    NotificationToggleRow(
+                        title = stringResource(R.string.settings_notifications_item_added),
+                        subtitle = stringResource(R.string.settings_notifications_item_added_desc),
+                        checked = uiState.notificationPreferences.itemAdded,
+                        enabled = uiState.notificationsPermitted,
+                        onCheckedChange = {
+                            viewModel.setNotificationPreference(NotificationType.ITEM_ADDED, it)
+                        }
+                    )
+                    HorizontalDivider()
+                    NotificationToggleRow(
+                        title = stringResource(R.string.settings_notifications_urgent_item),
+                        subtitle = stringResource(R.string.settings_notifications_urgent_item_desc),
+                        checked = uiState.notificationPreferences.urgentItem,
+                        enabled = uiState.notificationsPermitted,
+                        onCheckedChange = {
+                            viewModel.setNotificationPreference(NotificationType.URGENT_ITEM, it)
+                        }
+                    )
+                    HorizontalDivider()
+                    NotificationToggleRow(
+                        title = stringResource(R.string.settings_notifications_shopping_complete),
+                        subtitle = stringResource(R.string.settings_notifications_shopping_complete_desc),
+                        checked = uiState.notificationPreferences.shoppingComplete,
+                        enabled = uiState.notificationsPermitted,
+                        onCheckedChange = {
+                            viewModel.setNotificationPreference(NotificationType.SHOPPING_COMPLETE, it)
+                        }
+                    )
+                    HorizontalDivider()
+                    NotificationToggleRow(
+                        title = stringResource(R.string.settings_notifications_member_joined),
+                        subtitle = stringResource(R.string.settings_notifications_member_joined_desc),
+                        checked = uiState.notificationPreferences.memberJoined,
+                        enabled = uiState.notificationsPermitted,
+                        onCheckedChange = {
+                            viewModel.setNotificationPreference(NotificationType.MEMBER_JOINED, it)
+                        }
+                    )
+                }
+
+                SalinoSurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
                         text = stringResource(R.string.tour_replay_section),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary
@@ -422,6 +517,27 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun NotificationToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = { Text(subtitle) },
+        trailingContent = {
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled
+            )
+        }
+    )
 }
 
 private fun normalizeLanguageTag(tag: String?): String? {

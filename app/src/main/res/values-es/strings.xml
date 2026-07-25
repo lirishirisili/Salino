@@ -255,4 +255,19 @@
     <string name="tour_step_history_body">Everything you\'ve bought, grouped by day. Tap an item to put it back on the list.</string>
     <string name="tour_step_done_title">You\'re all set!</string>
     <string name="tour_step_done_body">You\'ve seen the main parts of Haserli. Happy shopping!</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_shopping_updates">Novedades de compras</string>
+    <string name="notification_channel_shopping_updates_desc">Avisos cuando alguien agrega un artículo a la lista del hogar</string>
+    <string name="settings_notifications_section">Notificaciones</string>
+    <string name="settings_notifications_disabled_hint">Las notificaciones están desactivadas. Actívalas en los ajustes de tu dispositivo para recibir novedades del hogar.</string>
+    <string name="settings_notifications_open_settings">Abrir ajustes</string>
+    <string name="settings_notifications_item_added">Artículo agregado</string>
+    <string name="settings_notifications_item_added_desc">Cuando alguien agrega un artículo a la lista</string>
+    <string name="settings_notifications_urgent_item">Artículo urgente</string>
+    <string name="settings_notifications_urgent_item_desc">Cuando alguien agrega un artículo urgente</string>
+    <string name="settings_notifications_shopping_complete">Compra completada</string>
+    <string name="settings_notifications_shopping_complete_desc">Cuando se han comprado todos los artículos</string>
+    <string name="settings_notifications_member_joined">Nuevo miembro</string>
+    <string name="settings_notifications_member_joined_desc">Cuando alguien se une al hogar</string>
 </resources>

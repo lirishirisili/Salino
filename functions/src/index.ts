@@ -1,8 +1,13 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { getMessaging, Message } from "firebase-admin/messaging";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import {
+  onDocumentCreated,
+  onDocumentUpdated,
+} from "firebase-functions/v2/firestore";
 
 initializeApp();
 
@@ -211,5 +216,312 @@ export const classifyItemCategory = onCall(
 
     await writeCache(normalized, category);
     return { category };
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Push notifications
+// ---------------------------------------------------------------------------
+
+const NOTIFICATION_REGION = "europe-west1";
+const NOTIFICATION_CHANNEL_ID = "shopping_updates";
+
+type NotificationType =
+  | "itemAdded"
+  | "urgentItem"
+  | "shoppingComplete"
+  | "memberJoined";
+
+const SUPPORTED_LANGS = ["en", "he", "ar", "fr", "es", "ru", "am"] as const;
+
+/** Localized app name, mirrors app.json branding per language. */
+const APP_NAME: Record<string, string> = {
+  en: "Haserli",
+  he: "חסרלי",
+  ar: "حصرلي",
+  fr: "Haserli",
+  es: "Haserli",
+  ru: "Хасерли",
+  am: "ሃሰርሊ",
+};
+
+/** Localized notification body templates. {{name}} and {{item}} are replaced. */
+const NOTIFICATION_BODIES: Record<NotificationType, Record<string, string>> = {
+  itemAdded: {
+    en: "{{name}} added: {{item}}",
+    he: "{{name}} הוסיף/ה: {{item}}",
+    ar: "{{name}} أضاف: {{item}}",
+    fr: "{{name}} a ajouté : {{item}}",
+    es: "{{name}} añadió: {{item}}",
+    ru: "{{name}} добавил(а): {{item}}",
+    am: "{{name}} ጨመረ፦ {{item}}",
+  },
+  urgentItem: {
+    en: "{{name}} added an urgent item: {{item}}",
+    he: "{{name}} הוסיף/ה פריט דחוף: {{item}}",
+    ar: "{{name}} أضاف عنصرًا عاجلاً: {{item}}",
+    fr: "{{name}} a ajouté un article urgent : {{item}}",
+    es: "{{name}} añadió un artículo urgente: {{item}}",
+    ru: "{{name}} добавил(а) срочный товар: {{item}}",
+    am: "{{name}} አስቸኳይ ንጥል ጨመረ፦ {{item}}",
+  },
+  shoppingComplete: {
+    en: "{{name}} finished the shopping!",
+    he: "{{name}} סיים/ה את הקניות!",
+    ar: "{{name}} أنهى التسوق!",
+    fr: "{{name}} a terminé les courses !",
+    es: "¡{{name}} terminó las compras!",
+    ru: "{{name}} завершил(а) покупки!",
+    am: "{{name}} ግዢውን ጨረሰ!",
+  },
+  memberJoined: {
+    en: "{{name}} joined the household",
+    he: "{{name}} הצטרף/ה למשק הבית",
+    ar: "{{name}} انضم إلى المنزل",
+    fr: "{{name}} a rejoint le foyer",
+    es: "{{name}} se unió al hogar",
+    ru: "{{name}} присоединился(ась) к семье",
+    am: "{{name}} ወደ ቤተሰቡ ተቀላቀለ",
+  },
+};
+
+function normalizeLang(lang: unknown): string {
+  if (typeof lang !== "string") return "en";
+  const short = lang.trim().toLowerCase().split(/[-_]/)[0];
+  return (SUPPORTED_LANGS as readonly string[]).includes(short) ? short : "en";
+}
+
+function buildBody(
+  type: NotificationType,
+  lang: string,
+  params: { name: string; item?: string }
+): string {
+  const table = NOTIFICATION_BODIES[type];
+  const template = table[lang] ?? table.en;
+  return template
+    .replace("{{name}}", params.name)
+    .replace("{{item}}", params.item ?? "");
+}
+
+/**
+ * Sends a localized push notification to every household member (except
+ * `excludeUid`) who has enabled the given notification type. Invalid tokens are
+ * pruned from the recipient's profile.
+ */
+async function sendToHouseholdMembers(
+  householdId: string,
+  excludeUid: string,
+  type: NotificationType,
+  params: { name: string; item?: string }
+): Promise<void> {
+  const db = getFirestore();
+
+  const membersSnap = await db
+    .collection("households")
+    .doc(householdId)
+    .collection("members")
+    .get();
+
+  const recipientIds = membersSnap.docs
+    .map((d) => d.id)
+    .filter((id) => id && id !== excludeUid);
+
+  if (recipientIds.length === 0) return;
+
+  const messages: Message[] = [];
+  const tokenOwners: { uid: string; token: string }[] = [];
+
+  await Promise.all(
+    recipientIds.map(async (uid) => {
+      const userSnap = await db.collection("users").doc(uid).get();
+      if (!userSnap.exists) return;
+
+      const data = userSnap.data() ?? {};
+      const tokens: string[] = Array.isArray(data.fcmTokens)
+        ? (data.fcmTokens as unknown[]).filter(
+            (t): t is string => typeof t === "string" && t.length > 0
+          )
+        : [];
+      if (tokens.length === 0) return;
+
+      const prefs = (data.notificationPreferences ?? {}) as Record<string, unknown>;
+      // Preferences default to enabled when unset.
+      if (prefs[type] === false) return;
+
+      const lang = normalizeLang(data.language);
+      const title = APP_NAME[lang] ?? APP_NAME.en;
+      const body = buildBody(type, lang, params);
+
+      for (const token of tokens) {
+        messages.push({
+          token,
+          notification: { title, body },
+          data: { type, householdId },
+          android: {
+            priority: type === "urgentItem" ? "high" : "normal",
+            notification: {
+              channelId: NOTIFICATION_CHANNEL_ID,
+              priority: type === "urgentItem" ? "high" : "default",
+            },
+          },
+          apns: {
+            payload: {
+              aps: {
+                sound: "default",
+              },
+            },
+          },
+        });
+        tokenOwners.push({ uid, token });
+      }
+    })
+  );
+
+  if (messages.length === 0) return;
+
+  const response = await getMessaging().sendEach(messages);
+
+  const invalidByUser: Record<string, string[]> = {};
+  response.responses.forEach((resp, idx) => {
+    if (resp.success) return;
+    const code = resp.error?.code;
+    if (
+      code === "messaging/invalid-registration-token" ||
+      code === "messaging/registration-token-not-registered"
+    ) {
+      const owner = tokenOwners[idx];
+      (invalidByUser[owner.uid] ??= []).push(owner.token);
+    }
+  });
+
+  await Promise.all(
+    Object.entries(invalidByUser).map(([uid, tokens]) =>
+      db
+        .collection("users")
+        .doc(uid)
+        .update({ fcmTokens: FieldValue.arrayRemove(...tokens) })
+        .catch(() => undefined)
+    )
+  );
+}
+
+/** Resolves a member display name, falling back to the members collection. */
+async function resolveMemberName(
+  householdId: string,
+  uid: string | undefined,
+  fallbackName: string | undefined
+): Promise<string> {
+  if (fallbackName && fallbackName.trim().length > 0) return fallbackName;
+  if (!uid) return "Someone";
+  try {
+    const memberSnap = await getFirestore()
+      .collection("households")
+      .doc(householdId)
+      .collection("members")
+      .doc(uid)
+      .get();
+    const name = memberSnap.data()?.displayName as string | undefined;
+    if (name && name.trim().length > 0) return name;
+  } catch {
+    // ignore lookup failures
+  }
+  return "Someone";
+}
+
+export const onItemAdded = onDocumentCreated(
+  {
+    document: "households/{householdId}/items/{itemId}",
+    region: NOTIFICATION_REGION,
+    maxInstances: 10,
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
+    const item = snap.data();
+    if (!item) return;
+
+    const householdId = event.params.householdId;
+    const addedBy = (item.addedBy as string | undefined) ?? "";
+    const name = await resolveMemberName(
+      householdId,
+      addedBy,
+      item.addedByName as string | undefined
+    );
+    const itemName = (item.name as string | undefined) ?? "";
+    const isUrgent = item.isUrgent === true;
+
+    await sendToHouseholdMembers(
+      householdId,
+      addedBy,
+      isUrgent ? "urgentItem" : "itemAdded",
+      { name, item: itemName }
+    );
+  }
+);
+
+export const onItemUpdated = onDocumentUpdated(
+  {
+    document: "households/{householdId}/items/{itemId}",
+    region: NOTIFICATION_REGION,
+    maxInstances: 10,
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    // Only react when an item transitions into BOUGHT.
+    if (before.status === after.status) return;
+    if (after.status !== "BOUGHT") return;
+
+    const householdId = event.params.householdId;
+    const db = getFirestore();
+
+    const itemsSnap = await db
+      .collection("households")
+      .doc(householdId)
+      .collection("items")
+      .get();
+
+    if (itemsSnap.empty) return;
+    const allBought = itemsSnap.docs.every(
+      (d) => (d.data().status as string | undefined) === "BOUGHT"
+    );
+    if (!allBought) return;
+
+    const boughtBy = (after.boughtBy as string | undefined) ?? "";
+    const name = await resolveMemberName(
+      householdId,
+      boughtBy,
+      after.boughtByName as string | undefined
+    );
+
+    await sendToHouseholdMembers(householdId, boughtBy, "shoppingComplete", {
+      name,
+    });
+  }
+);
+
+export const onMemberJoined = onDocumentCreated(
+  {
+    document: "households/{householdId}/members/{userId}",
+    region: NOTIFICATION_REGION,
+    maxInstances: 10,
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
+    const member = snap.data();
+    if (!member) return;
+
+    const householdId = event.params.householdId;
+    const userId = event.params.userId;
+    const name = (member.displayName as string | undefined) ?? "Someone";
+
+    // When a household is created the owner is the only member, so there are no
+    // other recipients and nothing is sent.
+    await sendToHouseholdMembers(householdId, userId, "memberJoined", { name });
   }
 );

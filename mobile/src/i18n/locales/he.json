@@ -264,5 +264,20 @@
   "tour.preview.suggestion.tomatoes": "עגבניות",
   "tour.preview.item.milk": "חלב",
   "tour.preview.item.bread": "לחם",
-  "tour.preview.item.dish_soap": "נוזל כלים"
+  "tour.preview.item.dish_soap": "נוזל כלים",
+  "push_item_added_title": "חסרלי",
+  "push_item_added_body": "{{name}} הוסיף/ה: {{item}}",
+  "notification_channel_shopping_updates": "עדכוני קניות",
+  "notification_channel_shopping_updates_desc": "התראות כשמישהו מוסיף פריט לרשימת הבית",
+  "settings_notifications_section": "התראות",
+  "settings_notifications_disabled_hint": "ההתראות כבויות. הפעל אותן בהגדרות המכשיר כדי לקבל עדכונים על משק הבית.",
+  "settings_notifications_open_settings": "פתח הגדרות",
+  "settings_notifications_item_added": "פריט נוסף",
+  "settings_notifications_item_added_desc": "כשמישהו מוסיף פריט לרשימה",
+  "settings_notifications_urgent_item": "פריט דחוף",
+  "settings_notifications_urgent_item_desc": "כשמישהו מוסיף פריט דחוף",
+  "settings_notifications_shopping_complete": "הקניות הושלמו",
+  "settings_notifications_shopping_complete_desc": "כשכל הפריטים נקנו",
+  "settings_notifications_member_joined": "חבר חדש",
+  "settings_notifications_member_joined_desc": "כשמישהו מצטרף למשק הבית"
 }

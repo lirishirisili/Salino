@@ -227,5 +227,20 @@
   "onboarding_list_settings_title": "ቅንብሮችዎ",
   "onboarding_list_settings_body": "አባላትን፣ የመጋበዣ ኮድ፣ እና የቤት ስም ያስተዳድሩ።",
   "onboarding_list_extras_title": "የግዢ ሁነታ",
-  "onboarding_list_extras_body": "በመደብር ውስጥ እዚህ ይጫኑ — ሲገዙ ምልክት ያድርጉ!"
+  "onboarding_list_extras_body": "በመደብር ውስጥ እዚህ ይጫኑ — ሲገዙ ምልክት ያድርጉ!",
+  "push_item_added_title": "ሃሰርሊ",
+  "push_item_added_body": "{{name}} አክሏል፦ {{item}}",
+  "notification_channel_shopping_updates": "የግዢ ዝመናዎች",
+  "notification_channel_shopping_updates_desc": "አንድ ሰው በቤተሰብ ዝርዝር ላይ ዕቃ ሲጨምር ማሳዎቂያዎች",
+  "settings_notifications_section": "ማሳወቂያዎች",
+  "settings_notifications_disabled_hint": "ማሳወቂያዎች ጠፍተዋል። የቤተሰብ ዝማኔዎችን ለማግኘት በመሣሪያዎ ቅንብሮች ውስጥ ያብሩ።",
+  "settings_notifications_open_settings": "ቅንብሮችን ክፈት",
+  "settings_notifications_item_added": "ዕቃ ተጨመረ",
+  "settings_notifications_item_added_desc": "አንድ ሰው ዕቃ ወደ ዝርዝሩ ሲጨምር",
+  "settings_notifications_urgent_item": "አስቸኳይ ዕቃ",
+  "settings_notifications_urgent_item_desc": "አንድ ሰው አስቸኳይ ዕቃ ሲጨምር",
+  "settings_notifications_shopping_complete": "ግዢ ተጠናቀቀ",
+  "settings_notifications_shopping_complete_desc": "ሁሉም ዕቃዎች ሲገዙ",
+  "settings_notifications_member_joined": "አዲስ አባል",
+  "settings_notifications_member_joined_desc": "አንድ ሰው ወደ ቤተሰቡ ሲቀላቀል"
 }

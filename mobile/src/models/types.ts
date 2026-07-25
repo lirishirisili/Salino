@@ -35,12 +35,29 @@ export interface HouseholdMember {
   joinedAt: Timestamp | null;
 }
 
+export interface NotificationPreferences {
+  itemAdded: boolean;
+  urgentItem: boolean;
+  shoppingComplete: boolean;
+  memberJoined: boolean;
+}
+
 export interface UserProfile {
   id: string;
   displayName: string;
   email: string;
   activeHouseholdId: string | null;
+  fcmTokens?: string[];
+  notificationPreferences?: NotificationPreferences;
+  language?: string;
 }
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
+  itemAdded: true,
+  urgentItem: true,
+  shoppingComplete: true,
+  memberJoined: true,
+};
 
 export interface ActivityLog {
   id: string;

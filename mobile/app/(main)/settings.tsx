@@ -11,14 +11,15 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, TextInput, Dialog, Portal, Button } from 'react-native-paper';
+import { Text, TextInput, Dialog, Portal, Button, Switch } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import { useAuthStore, useHouseholdStore } from '../../src/hooks';
+import { useAuthStore, useHouseholdStore, useNotificationStore } from '../../src/hooks';
+import type { NotificationPreferences } from '../../src/models/types';
 import { clearTourCompleted, useTourAnchor, useTourScroller, useTourStore } from '../../src/features/tour';
 import { changeLanguage, SUPPORTED_LANGUAGES, isRTL } from '../../src/i18n';
 import {
@@ -41,6 +42,9 @@ export default function SettingsScreen() {
     leaveHousehold,
     updateHouseholdName,
   } = useHouseholdStore();
+  const notificationPrefs = useNotificationStore((s) => s.preferences);
+  const setNotificationPref = useNotificationStore((s) => s.setPreference);
+  const notificationsPermitted = useNotificationStore((s) => s.permissionGranted);
 
   const [showLeave, setShowLeave] = useState(false);
   const [showSignOut, setShowSignOut] = useState(false);
@@ -338,6 +342,54 @@ export default function SettingsScreen() {
                 { color: colors.primary } as any,
               ]}
             >
+              {t('settings_notifications_section')}
+            </Text>
+            <View style={{ height: 6 }} />
+            {!notificationsPermitted && (
+              <>
+                <Text
+                  style={[
+                    Typography.bodyMedium,
+                    { color: colors.onSurfaceVariant, marginTop: 6 } as any,
+                  ]}
+                >
+                  {t('settings_notifications_disabled_hint')}
+                </Text>
+                <View style={{ height: 8 }} />
+                <Button
+                  mode="outlined"
+                  icon="bell-ring-outline"
+                  onPress={() => Linking.openSettings().catch(() => undefined)}
+                >
+                  {t('settings_notifications_open_settings')}
+                </Button>
+              </>
+            )}
+            <View style={{ height: 8 }} />
+            {NOTIFICATION_TOGGLES.map((toggle, index) => (
+              <View key={toggle.key}>
+                {index > 0 && <Divider />}
+                <ToggleRow
+                  icon={toggle.icon}
+                  title={t(toggle.titleKey)}
+                  subtitle={t(toggle.subtitleKey)}
+                  value={notificationPrefs[toggle.key]}
+                  disabled={!notificationsPermitted}
+                  onValueChange={(v) => setNotificationPref(toggle.key, v)}
+                />
+              </View>
+            ))}
+          </SalinoSurfaceCard>
+
+          <View style={{ height: 14 }} />
+
+          <SalinoSurfaceCard>
+            <Text
+              style={[
+                Typography.titleLarge,
+                { color: colors.primary } as any,
+              ]}
+            >
               {t('tour.replaySection')}
             </Text>
             <Text
@@ -508,6 +560,81 @@ function Row({
     </View>
   );
 }
+
+function ToggleRow({
+  icon,
+  title,
+  subtitle,
+  value,
+  disabled,
+  onValueChange,
+}: {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  title: string;
+  subtitle: string;
+  value: boolean;
+  disabled?: boolean;
+  onValueChange: (value: boolean) => void;
+}) {
+  const colors = useThemeColors();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        gap: 12,
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <MaterialCommunityIcons name={icon} size={22} color={colors.onSurfaceVariant} />
+      <View style={{ flex: 1 }}>
+        <Text style={[Typography.titleSmall, { color: colors.onSurface } as any]}>{title}</Text>
+        <Text
+          style={[
+            Typography.bodySmall,
+            { color: colors.onSurfaceVariant, marginTop: 2 } as any,
+          ]}
+        >
+          {subtitle}
+        </Text>
+      </View>
+      <Switch value={value} onValueChange={onValueChange} disabled={disabled} />
+    </View>
+  );
+}
+
+const NOTIFICATION_TOGGLES: {
+  key: keyof NotificationPreferences;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  titleKey: string;
+  subtitleKey: string;
+}[] = [
+  {
+    key: 'itemAdded',
+    icon: 'cart-plus',
+    titleKey: 'settings_notifications_item_added',
+    subtitleKey: 'settings_notifications_item_added_desc',
+  },
+  {
+    key: 'urgentItem',
+    icon: 'alert-circle-outline',
+    titleKey: 'settings_notifications_urgent_item',
+    subtitleKey: 'settings_notifications_urgent_item_desc',
+  },
+  {
+    key: 'shoppingComplete',
+    icon: 'check-circle-outline',
+    titleKey: 'settings_notifications_shopping_complete',
+    subtitleKey: 'settings_notifications_shopping_complete_desc',
+  },
+  {
+    key: 'memberJoined',
+    icon: 'account-plus-outline',
+    titleKey: 'settings_notifications_member_joined',
+    subtitleKey: 'settings_notifications_member_joined_desc',
+  },
+];
 
 function Divider() {
   const colors = useThemeColors();

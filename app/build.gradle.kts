@@ -15,8 +15,8 @@ android {
         applicationId = "com.salino.sali"
         minSdk = 26
         targetSdk = 36
-        versionCode = 52
-        versionName = "1.3.24"
+        versionCode = 53
+        versionName = "1.3.25"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.functions)
+    implementation(libs.firebase.messaging)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

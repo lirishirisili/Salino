@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
-import { I18nManager, LogBox, useColorScheme, View } from 'react-native';
+import { LogBox, useColorScheme, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -25,6 +25,7 @@ export default function RootLayout() {
   const [i18nReady, setI18nReady] = useState(false);
   const initialize = useAuthStore((s) => s.initialize);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const hasBootstrapped = useAuthStore((s) => s.hasBootstrapped);
 
   useEffect(() => {
     void (async () => {
@@ -45,12 +46,16 @@ export default function RootLayout() {
       authTimeout = setTimeout(() => {
         const state = useAuthStore.getState();
         if (state.isLoading) {
-          useAuthStore.setState({ isLoading: false, isSignedIn: false });
+          useAuthStore.setState({
+            isLoading: false,
+            isSignedIn: false,
+            hasBootstrapped: true,
+          });
         }
       }, 8000);
     } catch (e: unknown) {
       console.error('Auth init error:', e);
-      useAuthStore.setState({ isLoading: false });
+      useAuthStore.setState({ isLoading: false, hasBootstrapped: true });
     }
 
     (async () => {
@@ -96,7 +101,10 @@ export default function RootLayout() {
     }
   }, [i18nReady]);
 
-  if (!i18nReady || isLoading) {
+  // Only block the whole UI during the INITIAL boot. Once bootstrapped, keep
+  // the navigator mounted even if auth re-fires — unmounting remounts the stack
+  // and duplicates shopping-list on the Android back stack.
+  if (!i18nReady || (isLoading && !hasBootstrapped)) {
     return (
       <SafeAreaProvider style={{ flex: 1 }}>
         <PaperProvider theme={paperTheme}>

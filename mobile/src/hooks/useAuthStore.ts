@@ -4,12 +4,19 @@ import { authRepository } from '../repositories';
 import { UserProfile } from '../models';
 import { resetSessionState } from '../session/resetSession';
 import { useHouseholdStore } from './useHouseholdStore';
+import { useNotificationStore } from './useNotificationStore';
 import { localGetActiveHouseholdId } from '../local/storage';
+import { unregisterNotifications } from '../services/notificationService';
 
 interface AuthState {
   user: User | null;
   profile: UserProfile | null;
   isLoading: boolean;
+  /**
+   * True after the first auth callback finishes. Keeps the root navigator mounted
+   * across later auth refreshes so the back stack is not remounted/duplicated.
+   */
+  hasBootstrapped: boolean;
   /** True while a sign-in/register action is in flight (not app bootstrap). */
   isSubmitting: boolean;
   error: string | null;
@@ -38,6 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   isLoading: true,
+  hasBootstrapped: false,
   isSubmitting: false,
   error: null,
   isSignedIn: false,
@@ -53,6 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isSignedIn: false,
           isLoading: false,
           isSubmitting: false,
+          hasBootstrapped: true,
         });
         return;
       }
@@ -62,6 +71,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       previousAuthUid = user.uid;
 
+      const alreadyBootstrapped = get().hasBootstrapped;
       set({ isSignedIn: true, user });
 
       // FAST PATH: read cached householdId from local storage and preload items
@@ -72,14 +82,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (cachedHouseholdId) {
           await useHouseholdStore.getState().setActiveHouseholdFromProfile(cachedHouseholdId);
           fastPathDone = true;
-          set({ isLoading: false, isSubmitting: false });
+          // Do not clear isSubmitting here — a sign-in action may still be in
+          // flight and /auth waits for the final set() below before navigating.
+          set({ isLoading: false });
         }
       } catch {
         // Fast path failed — fall through to network path.
       }
 
+      // After the first boot, never flip isLoading back to true — that unmounts
+      // the root navigator and duplicates screens on the back stack.
       if (!fastPathDone) {
-        set({ isLoading: true, isSubmitting: true });
+        if (alreadyBootstrapped) {
+          set({ isSubmitting: true });
+        } else {
+          set({ isLoading: true, isSubmitting: true });
+        }
       }
 
       // BACKGROUND: verify profile from Firestore (creates if needed)
@@ -104,7 +122,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         useHouseholdStore.getState().reset();
       }
 
-      set({ user, profile, isSignedIn: true, isLoading: false, isSubmitting: false });
+      set({
+        user,
+        profile,
+        isSignedIn: true,
+        isLoading: false,
+        isSubmitting: false,
+        hasBootstrapped: true,
+      });
     });
     return unsubscribe;
   },
@@ -170,6 +195,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
+    // Remove this device's push token before the session is torn down.
+    await unregisterNotifications().catch(() => undefined);
+    useNotificationStore.getState().reset();
     await authRepository.signOut();
     previousAuthUid = null;
     set({ user: null, profile: null, isSignedIn: false });
@@ -178,6 +206,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   deleteAccount: async () => {
     set({ isLoading: true, error: null });
     try {
+      await unregisterNotifications().catch(() => undefined);
+      useNotificationStore.getState().reset();
       await authRepository.deleteAccount();
       previousAuthUid = null;
       set({ user: null, profile: null, isSignedIn: false, isLoading: false });

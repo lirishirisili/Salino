@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 import type { TourAnchorId } from './types';
 
+export type TourBootstrapStatus = 'pending' | 'running' | 'done';
+
 interface OverlayData {
   title: string;
   body: string;
@@ -16,6 +18,8 @@ interface TourState {
   replayRequested: boolean;
   activeAnchorId: TourAnchorId | null;
   overlay: OverlayData | null;
+  /** Post-login gate for deferred notification permission. */
+  bootstrapStatus: TourBootstrapStatus;
   start: () => void;
   requestReplay: () => void;
   clearReplayRequest: () => void;
@@ -26,6 +30,9 @@ interface TourState {
   setActiveAnchorId: (id: TourAnchorId | null) => void;
   showOverlay: (data: OverlayData) => void;
   hideOverlay: () => void;
+  setBootstrapStatus: (status: TourBootstrapStatus) => void;
+  markBootstrapDone: () => void;
+  resetBootstrap: () => void;
 }
 
 export const useTourStore = create<TourState>((set, get) => ({
@@ -34,8 +41,17 @@ export const useTourStore = create<TourState>((set, get) => ({
   replayRequested: false,
   activeAnchorId: null,
   overlay: null,
+  bootstrapStatus: 'pending',
 
-  start: () => set({ active: true, stepIndex: 0, replayRequested: false, activeAnchorId: null }),
+  start: () =>
+    set({
+      active: true,
+      stepIndex: 0,
+      replayRequested: false,
+      activeAnchorId: null,
+      overlay: null,
+      bootstrapStatus: 'running',
+    }),
 
   requestReplay: () => set({ replayRequested: true }),
 
@@ -48,6 +64,7 @@ export const useTourStore = create<TourState>((set, get) => ({
       replayRequested: false,
       activeAnchorId: null,
       overlay: null,
+      bootstrapStatus: 'done',
     }),
 
   next: () => {
@@ -62,6 +79,7 @@ export const useTourStore = create<TourState>((set, get) => ({
       replayRequested: false,
       activeAnchorId: null,
       overlay: null,
+      bootstrapStatus: 'done',
     }),
 
   setStepIndex: (index) => set({ stepIndex: index, activeAnchorId: null, overlay: null }),
@@ -71,4 +89,14 @@ export const useTourStore = create<TourState>((set, get) => ({
   showOverlay: (data) => set({ overlay: data }),
 
   hideOverlay: () => set({ overlay: null }),
+
+  setBootstrapStatus: (status) => set({ bootstrapStatus: status }),
+
+  markBootstrapDone: () => {
+    if (get().bootstrapStatus !== 'done') {
+      set({ bootstrapStatus: 'done' });
+    }
+  },
+
+  resetBootstrap: () => set({ bootstrapStatus: 'pending' }),
 }));

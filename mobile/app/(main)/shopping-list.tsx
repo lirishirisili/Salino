@@ -52,10 +52,10 @@ export default function ShoppingListScreen() {
     markAsActive,
     deleteItem,
     hasReceivedRemoteSnapshot,
-    isLoading,
   } = useShoppingStore();
 
   const tourActive = useTourStore((s) => s.active);
+  const tourOverlay = useTourStore((s) => s.overlay);
 
   const [boughtExpanded, setBoughtExpanded] = useState(false);
   const [boughtVisibleCount, setBoughtVisibleCount] = useState(BOUGHT_ITEMS_PAGE_SIZE);
@@ -132,12 +132,16 @@ export default function ShoppingListScreen() {
   };
 
   const hasAnyItems = activeItems.length > 0 || sortedBoughtItems.length > 0;
-  const showInitialLoading = !hasReceivedRemoteSnapshot && !hasAnyItems && isLoading;
+  // Wait for the first remote snapshot on a cold cache — do not treat
+  // preload isLoading=false as "ready to show an empty list".
+  const showInitialLoading = !hasReceivedRemoteSnapshot && !hasAnyItems;
   const isListEmptyForTour =
     activeItems.length === 0 && sortedBoughtItems.length === 0 && suggestions.length === 0;
   const isEmpty =
     hasReceivedRemoteSnapshot && filteredActive.length === 0 && sortedBoughtItems.length === 0;
-  const showTourPreview = tourActive && isListEmptyForTour;
+  // Only show demo content once the tour sheet is visible — avoids orphan "דוגמה"
+  // UI while overlay prepare is still running (or blocked by a system dialog).
+  const showTourPreview = tourActive && tourOverlay != null && isListEmptyForTour;
 
   const previewItems = useMemo(() => buildTourPreviewItems(t), [t]);
   const listSuggestions = showTourPreview ? buildTourPreviewSuggestions(t) : suggestions;

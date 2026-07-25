@@ -16,13 +16,18 @@ data class User(
 
     val email: String = "",
 
-    val activeHouseholdId: String? = null
+    val activeHouseholdId: String? = null,
+
+    val fcmTokens: List<String> = emptyList(),
+
+    val notificationPreferences: NotificationPreferences? = null,
+
+    val language: String? = null
 
 ) {
 
     // No-arg constructor for Firestore deserialization
 
-    constructor() : this("", "", "", null)
+    constructor() : this("", "", "", null, emptyList(), null, null)
 
 }
-

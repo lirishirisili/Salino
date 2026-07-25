@@ -227,5 +227,20 @@
   "onboarding_list_settings_title": "Vos paramètres",
   "onboarding_list_settings_body": "Gérez les membres, le code d'invitation et le nom du foyer.",
   "onboarding_list_extras_title": "Mode courses",
-  "onboarding_list_extras_body": "Appuyez ici au magasin — cochez les articles en faisant vos courses !"
+  "onboarding_list_extras_body": "Appuyez ici au magasin — cochez les articles en faisant vos courses !",
+  "push_item_added_title": "Haserli",
+  "push_item_added_body": "{{name}} a ajouté : {{item}}",
+  "notification_channel_shopping_updates": "Mises à jour des courses",
+  "notification_channel_shopping_updates_desc": "Alertes lorsqu’une personne ajoute un article à la liste du foyer",
+  "settings_notifications_section": "Notifications",
+  "settings_notifications_disabled_hint": "Les notifications sont désactivées. Activez-les dans les réglages de votre appareil pour recevoir les mises à jour du foyer.",
+  "settings_notifications_open_settings": "Ouvrir les réglages",
+  "settings_notifications_item_added": "Article ajouté",
+  "settings_notifications_item_added_desc": "Quand quelqu’un ajoute un article à la liste",
+  "settings_notifications_urgent_item": "Article urgent",
+  "settings_notifications_urgent_item_desc": "Quand quelqu’un ajoute un article urgent",
+  "settings_notifications_shopping_complete": "Courses terminées",
+  "settings_notifications_shopping_complete_desc": "Quand tous les articles ont été achetés",
+  "settings_notifications_member_joined": "Nouveau membre",
+  "settings_notifications_member_joined_desc": "Quand quelqu’un rejoint le foyer"
 }

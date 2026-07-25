@@ -252,4 +252,19 @@
     <string name="tour_step_history_body">Everything you\'ve bought, grouped by day. Tap an item to put it back on the list.</string>
     <string name="tour_step_done_title">You\'re all set!</string>
     <string name="tour_step_done_body">You\'ve seen the main parts of Haserli. Happy shopping!</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_shopping_updates">የግዢ ዝማኔዎች</string>
+    <string name="notification_channel_shopping_updates_desc">አንድ ሰው በቤተሰብ ዝርዝር ላይ ዕቃ ሲጨምር ማሳወቂያዎች</string>
+    <string name="settings_notifications_section">ማሳወቂያዎች</string>
+    <string name="settings_notifications_disabled_hint">ማሳወቂያዎች ጠፍተዋል። የቤተሰብ ዝማኔዎችን ለማግኘት በመሣሪያዎ ቅንብሮች ውስጥ ያብሩ።</string>
+    <string name="settings_notifications_open_settings">ቅንብሮችን ክፈት</string>
+    <string name="settings_notifications_item_added">ዕቃ ተጨመረ</string>
+    <string name="settings_notifications_item_added_desc">አንድ ሰው ዕቃ ወደ ዝርዝሩ ሲጨምር</string>
+    <string name="settings_notifications_urgent_item">አስቸኳይ ዕቃ</string>
+    <string name="settings_notifications_urgent_item_desc">አንድ ሰው አስቸኳይ ዕቃ ሲጨምር</string>
+    <string name="settings_notifications_shopping_complete">ግዢ ተጠናቀቀ</string>
+    <string name="settings_notifications_shopping_complete_desc">ሁሉም ዕቃዎች ሲገዙ</string>
+    <string name="settings_notifications_member_joined">አዲስ አባል</string>
+    <string name="settings_notifications_member_joined_desc">አንድ ሰው ወደ ቤተሰቡ ሲቀላቀል</string>
 </resources>

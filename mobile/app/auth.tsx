@@ -16,12 +16,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import {
   GoogleSignin,
   statusCodes,
   type SignInResponse,
 } from '@react-native-google-signin/google-signin';
-import { useAuthStore } from '../src/hooks';
+import { useAuthStore, useHouseholdStore } from '../src/hooks';
 import {
   BrandLogo,
   SalinoGradientBackground,
@@ -79,14 +80,41 @@ export default function AuthScreen() {
     sendPasswordReset,
     error,
     isSubmitting,
+    isSignedIn,
+    user,
+    profile,
     clearError,
   } = useAuthStore();
+  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
 
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
+
+  // After Google/email/Apple sign-in the root navigator stays mounted (back-stack
+  // fix), so nothing remounts through index. Leave /auth explicitly once the
+  // auth observer finishes loading the profile/household.
+  useEffect(() => {
+    if (!isSignedIn || isSubmitting) return;
+
+    const needsEmailVerification =
+      !!user &&
+      !user.emailVerified &&
+      user.providerData?.[0]?.providerId === 'password';
+    if (needsEmailVerification) {
+      router.replace('/verify-email');
+      return;
+    }
+
+    if (activeHouseholdId || profile?.activeHouseholdId) {
+      router.replace('/(main)/shopping-list');
+      return;
+    }
+
+    router.replace('/household-setup');
+  }, [isSignedIn, isSubmitting, user, profile?.activeHouseholdId, activeHouseholdId]);
 
   useEffect(() => {
     let mounted = true;

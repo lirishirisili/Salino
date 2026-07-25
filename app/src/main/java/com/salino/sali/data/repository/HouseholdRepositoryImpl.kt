@@ -12,7 +12,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,8 +29,7 @@ class HouseholdRepositoryImpl @Inject constructor(
     private val memberListeners = mutableMapOf<String, ListenerRegistration>()
 
     override suspend fun createHousehold(name: String): Result<Household> = runCatching {
-        val user = authRepository.observeCurrentUser().first()
-            ?: throw IllegalStateException("Not signed in")
+        val user = authRepository.getOrCreateUserProfile().getOrThrow()
         val household = remoteDataSource.createHousehold(
             userId = user.id,
             displayName = user.displayName,
@@ -42,8 +40,7 @@ class HouseholdRepositoryImpl @Inject constructor(
     }
 
     override suspend fun joinHousehold(inviteCode: String): Result<Household> = runCatching {
-        val user = authRepository.observeCurrentUser().first()
-            ?: throw IllegalStateException("Not signed in")
+        val user = authRepository.getOrCreateUserProfile().getOrThrow()
         val household = remoteDataSource.joinHousehold(
             userId = user.id,
             displayName = user.displayName,
@@ -84,13 +81,13 @@ class HouseholdRepositoryImpl @Inject constructor(
     }
 
     override suspend fun leaveHousehold(householdId: String): Result<Unit> = runCatching {
-        val user = authRepository.observeCurrentUser().first()
+        val userId = authRepository.currentUserId
             ?: throw IllegalStateException("Not signed in")
         householdListeners[householdId]?.remove()
         householdListeners.remove(householdId)
         memberListeners[householdId]?.remove()
         memberListeners.remove(householdId)
-        remoteDataSource.leaveHousehold(householdId, user.id)
+        remoteDataSource.leaveHousehold(householdId, userId)
         localDataSource.clearHouseholdData(householdId)
     }
 

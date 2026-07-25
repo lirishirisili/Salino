@@ -227,5 +227,20 @@
   "onboarding_list_settings_title": "Tus ajustes",
   "onboarding_list_settings_body": "Administra miembros, código de invitación y nombre del hogar.",
   "onboarding_list_extras_title": "Modo compras",
-  "onboarding_list_extras_body": "Toca aquí en la tienda — ¡marca artículos mientras compras!"
+  "onboarding_list_extras_body": "Toca aquí en la tienda — ¡marca artículos mientras compras!",
+  "push_item_added_title": "Haserli",
+  "push_item_added_body": "{{name}} agregó: {{item}}",
+  "notification_channel_shopping_updates": "Actualizaciones de compras",
+  "notification_channel_shopping_updates_desc": "Avisos cuando alguien agrega un artículo a la lista del hogar",
+  "settings_notifications_section": "Notificaciones",
+  "settings_notifications_disabled_hint": "Las notificaciones están desactivadas. Actívalas en los ajustes de tu dispositivo para recibir novedades del hogar.",
+  "settings_notifications_open_settings": "Abrir ajustes",
+  "settings_notifications_item_added": "Artículo agregado",
+  "settings_notifications_item_added_desc": "Cuando alguien agrega un artículo a la lista",
+  "settings_notifications_urgent_item": "Artículo urgente",
+  "settings_notifications_urgent_item_desc": "Cuando alguien agrega un artículo urgente",
+  "settings_notifications_shopping_complete": "Compra completada",
+  "settings_notifications_shopping_complete_desc": "Cuando se han comprado todos los artículos",
+  "settings_notifications_member_joined": "Nuevo miembro",
+  "settings_notifications_member_joined_desc": "Cuando alguien se une al hogar"
 }

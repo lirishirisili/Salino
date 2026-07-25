@@ -5,12 +5,14 @@ import androidx.room.Room
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.messaging.FirebaseMessaging
 import com.salino.sali.data.local.CategoryClassificationCache
 import com.salino.sali.data.local.CategoryClassificationStore
 import com.salino.sali.data.local.SalinoDatabase
 import com.salino.sali.data.repository.ActivityRepositoryImpl
 import com.salino.sali.data.repository.AuthRepositoryImpl
 import com.salino.sali.data.repository.HouseholdRepositoryImpl
+import com.salino.sali.data.repository.NotificationRepository
 import com.salino.sali.data.repository.RecurringRepositoryImpl
 import com.salino.sali.data.repository.ShoppingRepositoryImpl
 import com.salino.sali.data.repository.SuggestionsRepositoryImpl
@@ -66,6 +68,10 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideFirebaseMessaging(): FirebaseMessaging = FirebaseMessaging.getInstance()
+
+    @Provides
+    @Singleton
     fun provideDatabase(@ApplicationContext context: Context): SalinoDatabase =
         Room.databaseBuilder(context, SalinoDatabase::class.java, "salino.db")
             .fallbackToDestructiveMigration()
@@ -98,8 +104,9 @@ object AppModule {
     fun provideAuthRepository(
         auth: FirebaseAuth,
         firestore: FirebaseFirestore,
-        database: SalinoDatabase
-    ): AuthRepository = AuthRepositoryImpl(auth, firestore, database)
+        database: SalinoDatabase,
+        notificationRepository: NotificationRepository
+    ): AuthRepository = AuthRepositoryImpl(auth, firestore, database, notificationRepository)
 
     @Provides
     @Singleton

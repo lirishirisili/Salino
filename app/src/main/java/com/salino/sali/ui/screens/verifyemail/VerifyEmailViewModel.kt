@@ -6,7 +6,6 @@ import com.salino.sali.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -38,11 +37,11 @@ class VerifyEmailViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isChecking = true, errorMessage = null)
             val verified = authRepository.reloadUser()
             if (verified) {
-                val user = authRepository.observeCurrentUser().first()
+                val profile = authRepository.getOrCreateUserProfile().getOrNull()
                 _uiState.value = _uiState.value.copy(
                     isChecking = false,
                     isVerified = true,
-                    hasHousehold = !user?.activeHouseholdId.isNullOrBlank()
+                    hasHousehold = !profile?.activeHouseholdId.isNullOrBlank()
                 )
             } else {
                 _uiState.value = _uiState.value.copy(isChecking = false)
