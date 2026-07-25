@@ -56,6 +56,26 @@ if [ ! -f "$HOME/export_options.plist" ]; then
   exit 1
 fi
 
+echo "=== Verify App Store profile includes Push (aps-environment) ==="
+PROFILE_DIR="${HOME}/Library/Developer/Xcode/UserData/Provisioning Profiles"
+FOUND_APS=0
+shopt -s nullglob
+for profile in "$PROFILE_DIR"/*.mobileprovision; do
+  if security cms -D -i "$profile" 2>/dev/null | grep -q "aps-environment"; then
+    echo "OK: $(basename "$profile") includes aps-environment"
+    FOUND_APS=1
+  else
+    echo "WARN: $(basename "$profile") missing aps-environment"
+  fi
+done
+shopt -u nullglob
+if [ "$FOUND_APS" -ne 1 ]; then
+  echo "ERROR: No installed provisioning profile includes aps-environment." >&2
+  echo "       Enable Push Notifications on App ID com.salino.sali in Apple Developer," >&2
+  echo "       delete old App Store profiles, then re-run." >&2
+  exit 1
+fi
+
 echo "=== Archive ==="
 xcodebuild archive \
   -workspace "$XCODE_WORKSPACE_ABS" \
