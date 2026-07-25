@@ -34,10 +34,54 @@ jobs:
       - name: Build Simulator zip
         run: bash .github/scripts/ios-simulator-appetize-run.sh
 
-      - name: Upload Appetize zip
+      # Bypass GitHub Actions artifact quota: publish a temporary download URL
+      # in the job Summary / notice so you can upload to Appetize immediately.
+      - name: Publish download link (bypass artifact quota)
+        id: publish
+        env:
+          APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          ZIP="build/Haserli-simulator-appetize.zip"
+          test -f "$ZIP"
+          ls -lh "$ZIP"
+
+          URL=""
+          if [ -n "${APPETIZE_API_TOKEN:-}" ]; then
+            echo "Uploading directly to Appetize..."
+            RESP=$(curl -sS -X POST "https://api.appetize.io/v1/apps" \
+              -F "file=@${ZIP}" \
+              -F "platform=ios" \
+              -F "token=${APPETIZE_API_TOKEN}" || true)
+            echo "$RESP"
+            URL=$(python3 -c 'import json,sys; d=json.loads(sys.stdin.read() or "{}"); print(d.get("publicURL") or d.get("appURL") or "")' <<<"$RESP" || true)
+          fi
+
+          if [ -z "$URL" ]; then
+            echo "Uploading zip to temporary host (24h)..."
+            URL=$(curl -sS -F "reqtype=fileupload" -F "time=24h" -F "fileToUpload=@${ZIP}" \
+              "https://litterbox.catbox.moe/resources/internals/api.php")
+          fi
+
+          if [ -z "$URL" ] || [[ "$URL" != http* ]]; then
+            echo "ERROR: could not publish download URL (got: ${URL:-empty})" >&2
+            exit 1
+          fi
+
+          echo "DOWNLOAD_URL=$URL" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Appetize zip ready"
+            echo ""
+            echo "1. Download: \`$URL\`"
+            echo "2. Upload that zip at https://appetize.io/"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Appetize zip::$URL"
+
+      - name: Upload Appetize zip (optional; ignores quota errors)
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: haserli-simulator-appetize-${{ github.run_number }}
           path: build/Haserli-simulator-appetize.zip
-          if-no-files-found: error
-          retention-days: 14
+          if-no-files-found: warn
+          retention-days: 3
