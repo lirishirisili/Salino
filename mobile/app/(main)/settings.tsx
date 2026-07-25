@@ -1,7 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
+  AppStateStatus,
   DevSettings,
   I18nManager,
   Linking,
@@ -16,7 +18,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useAuthStore, useHouseholdStore, useNotificationStore } from '../../src/hooks';
 import type { NotificationPreferences } from '../../src/models/types';
@@ -30,6 +32,10 @@ import {
 } from '../../src/components';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
+import {
+  ensureFcmTokenRegistered,
+  getNotificationPermissionGranted,
+} from '../../src/services/notificationService';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -44,7 +50,31 @@ export default function SettingsScreen() {
   } = useHouseholdStore();
   const notificationPrefs = useNotificationStore((s) => s.preferences);
   const setNotificationPref = useNotificationStore((s) => s.setPreference);
+  const setPermissionGranted = useNotificationStore((s) => s.setPermissionGranted);
   const notificationsPermitted = useNotificationStore((s) => s.permissionGranted);
+
+  const refreshNotificationPermission = useCallback(async () => {
+    const granted = await getNotificationPermissionGranted();
+    setPermissionGranted(granted);
+    if (granted) {
+      await ensureFcmTokenRegistered();
+    }
+  }, [setPermissionGranted]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshNotificationPermission();
+    }, [refreshNotificationPermission])
+  );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        void refreshNotificationPermission();
+      }
+    });
+    return () => sub.remove();
+  }, [refreshNotificationPermission]);
 
   const [showLeave, setShowLeave] = useState(false);
   const [showSignOut, setShowSignOut] = useState(false);

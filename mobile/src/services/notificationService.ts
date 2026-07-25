@@ -41,21 +41,40 @@ async function setupNotificationChannel(): Promise<void> {
   });
 }
 
+function isPermissionGranted(
+  settings: Notifications.NotificationPermissionsStatus
+): boolean {
+  return (
+    settings.granted ||
+    settings.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL
+  );
+}
+
+/**
+ * Reads current OS notification permission without prompting.
+ * Does not depend on FCM token registration success.
+ */
+export async function getNotificationPermissionGranted(): Promise<boolean> {
+  if (!isSupportedPlatform()) return false;
+  try {
+    const settings = await Notifications.getPermissionsAsync();
+    return isPermissionGranted(settings);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Requests notification permission. Returns true if granted (or provisional on iOS).
  */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!isSupportedPlatform()) return false;
   const settings = await Notifications.getPermissionsAsync();
-  let granted =
-    settings.granted ||
-    settings.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+  let granted = isPermissionGranted(settings);
 
   if (!granted && settings.canAskAgain) {
     const request = await Notifications.requestPermissionsAsync();
-    granted =
-      request.granted ||
-      request.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+    granted = isPermissionGranted(request);
   }
   return granted;
 }
@@ -74,6 +93,20 @@ async function registerToken(): Promise<void> {
   await firestoreAddFcmToken(uid, token);
   // Keep the user's language in sync so server-side notifications are localized.
   await firestoreSetUserLanguage(uid, i18n.language || 'en').catch(() => undefined);
+}
+
+/**
+ * Registers the FCM token when OS permission is already known to be granted.
+ * Failures are swallowed — they must not affect the permission UI.
+ */
+export async function ensureFcmTokenRegistered(): Promise<void> {
+  if (!isSupportedPlatform()) return;
+  try {
+    await bootstrapNotificationInfrastructure();
+    await registerToken();
+  } catch (e) {
+    if (__DEV__) console.warn('[notifications] FCM token register failed', e);
+  }
 }
 
 function attachListeners(): void {
@@ -131,24 +164,31 @@ export async function bootstrapNotificationInfrastructure(): Promise<void> {
 }
 
 /**
- * Requests permission and registers the FCM token. Call only after the
- * post-login tour has settled so the OS dialog does not interrupt onboarding.
+ * Requests permission and best-effort registers the FCM token. Call only after
+ * the post-login tour has settled so the OS dialog does not interrupt onboarding.
+ * Returns OS permission status only — token failures do not flip this to false.
  */
 export async function requestPermissionAndRegister(): Promise<boolean> {
   if (!isSupportedPlatform()) return false;
 
   try {
     await bootstrapNotificationInfrastructure();
-
-    const granted = await requestNotificationPermission();
-    if (!granted) return false;
-
-    await registerToken();
-    return true;
   } catch (e) {
-    if (__DEV__) console.warn('[notifications] permission/register failed', e);
+    if (__DEV__) console.warn('[notifications] infrastructure bootstrap failed', e);
+  }
+
+  let granted = false;
+  try {
+    granted = await requestNotificationPermission();
+  } catch (e) {
+    if (__DEV__) console.warn('[notifications] permission request failed', e);
     return false;
   }
+
+  if (granted) {
+    await ensureFcmTokenRegistered();
+  }
+  return granted;
 }
 
 /**

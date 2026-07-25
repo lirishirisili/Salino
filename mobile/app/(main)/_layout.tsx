@@ -11,6 +11,7 @@ import {
 } from '../../src/hooks';
 import {
   bootstrapNotificationInfrastructure,
+  getNotificationPermissionGranted,
   requestPermissionAndRegister,
 } from '../../src/services/notificationService';
 
@@ -42,7 +43,9 @@ export default function MainLayout() {
   useEffect(() => {
     void bootstrapNotificationInfrastructure();
     void loadPreferences();
-  }, [loadPreferences]);
+    // Reflect current OS permission immediately (before any prompt).
+    void getNotificationPermissionGranted().then(setPermissionGranted);
+  }, [loadPreferences, setPermissionGranted]);
 
   // Ask for notification permission only after the post-login tour has settled
   // (completed previously, finished/skipped, or disabled).
@@ -51,6 +54,7 @@ export default function MainLayout() {
     permissionRequestedRef.current = true;
     let cancelled = false;
     (async () => {
+      // OS permission only — FCM register failures must not clear the UI flag.
       const granted = await requestPermissionAndRegister();
       if (!cancelled) setPermissionGranted(granted);
     })();
