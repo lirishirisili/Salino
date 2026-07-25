@@ -33,10 +33,15 @@ app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
   | tee /tmp/caps_before.json
 echo "---"
 
+# Capabilities required by the Expo app (Apple Sign-In + push via expo-notifications /
+# @react-native-firebase/messaging). Stale profiles without these cause archive errors:
+#   Provisioning profile doesn't include the Push Notifications capability
+#   Provisioning profile doesn't include the aps-environment entitlement
 set +e
 app-store-connect bundle-ids enable-capabilities \
   "$BUNDLE_ID_RESOURCE" \
   --capability "Sign In with Apple" \
+  --capability "Push Notifications" \
   --log-api-calls --verbose \
   2>&1
 ENABLE_EXIT=$?
@@ -54,6 +59,13 @@ if ! grep -qE 'APPLE_ID_AUTH|SIGN_IN_WITH_APPLE' /tmp/caps_after.json; then
   exit 1
 fi
 echo "OK: Sign in with Apple is enabled on $BUNDLE_ID."
+
+if ! grep -qE 'PUSH_NOTIFICATIONS|PUSH_NOTIFICATION' /tmp/caps_after.json; then
+  echo "ERROR: Push Notifications is NOT enabled on $BUNDLE_ID." >&2
+  echo "       Manual recovery: enable Push Notifications on the App ID in Apple Developer." >&2
+  exit 1
+fi
+echo "OK: Push Notifications is enabled on $BUNDLE_ID."
 
 set +o pipefail
 app-store-connect bundle-ids profiles \

@@ -18,7 +18,7 @@ Single script: `.github/scripts/ios-testflight-run.sh`
 3. `pod install --repo-update`
 4. Resolve build number (TestFlight latest + 1, minimum **22**) + marketing version from `app.json`
 5. `agvtool` for `CFBundleShortVersionString` + `CFBundleVersion`
-6. Refresh App ID (Sign in with Apple) + purge profiles/certs
+6. Refresh App ID (Sign in with Apple + Push Notifications) + purge profiles/certs
 7. `fetch-signing-files` + keychain + `xcode-project use-profiles`
 8. `xcodebuild archive` + export IPA
 9. Simulator build (embedded JS) → smoke test on macOS Simulator → **Appetize zip**
@@ -92,6 +92,7 @@ When Apple approves a new train, raise `IOS_MARKETING_VERSION_MIN` and `expo.ver
 - **`.p8 lines: 1`** — secret was pasted as one line. Re-paste with real line breaks or use GitHub’s multiline secret editor.
 - **401 / invalid credentials** — Key ID must match the `.p8` file (wrong `AuthKey_*.p8` for the Key ID).
 - **Sign in with Apple missing** — enable on `com.salino.sali` in Apple Developer, then re-run.
+- **Push Notifications / `aps-environment` missing** — `expo-notifications` requires Push on the App ID. CI enables it in `ios-refresh-signing-prep.sh` and recreates the App Store profile; if archive still fails, enable Push Notifications manually on the App ID and delete old provisioning profiles.
 
 ## Runner
 
