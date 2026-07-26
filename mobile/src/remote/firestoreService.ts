@@ -243,17 +243,13 @@ export const firestoreUpdateNotificationPrefs = async (
   prefs: Partial<NotificationPreferences>
 ) => {
   const ref = doc(db, 'users', userId);
+  // Use dotted paths so toggling one key does not wipe the rest of the map
+  // (Firestore merge replaces nested maps as a whole).
   const payload: Record<string, unknown> = {};
   (Object.keys(prefs) as (keyof NotificationPreferences)[]).forEach((key) => {
     payload[`notificationPreferences.${key}`] = prefs[key];
   });
-  await setDoc(
-    ref,
-    { notificationPreferences: prefs },
-    { merge: true }
-  ).catch(async () => {
-    await updateDoc(ref, payload);
-  });
+  await updateDoc(ref, payload);
 };
 
 export const firestoreSetUserLanguage = async (userId: string, language: string) => {

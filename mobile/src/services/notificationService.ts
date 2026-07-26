@@ -76,6 +76,14 @@ export async function requestNotificationPermission(): Promise<boolean> {
     const request = await Notifications.requestPermissionsAsync();
     granted = isPermissionGranted(request);
   }
+
+  // Also align RN Firebase messaging permission state on iOS.
+  if (Platform.OS === 'ios' && granted) {
+    await messaging()
+      .requestPermission()
+      .catch(() => undefined);
+  }
+
   return granted;
 }
 
@@ -84,7 +92,18 @@ async function registerToken(): Promise<void> {
   if (!uid) return;
 
   if (Platform.OS === 'ios') {
+    // On iOS, FCM getToken() requires a valid APNs token first.
     await messaging().registerDeviceForRemoteMessages().catch(() => undefined);
+
+    let apnsToken = await messaging().getAPNSToken().catch(() => null);
+    for (let attempt = 0; !apnsToken && attempt < 12; attempt += 1) {
+      await new Promise((r) => setTimeout(r, 400));
+      apnsToken = await messaging().getAPNSToken().catch(() => null);
+    }
+    if (!apnsToken) {
+      console.warn('[notifications] iOS: no APNs token yet — FCM token not registered');
+      return;
+    }
   }
 
   const token = await messaging().getToken();

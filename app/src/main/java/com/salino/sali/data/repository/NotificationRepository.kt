@@ -66,11 +66,9 @@ class NotificationRepository @Inject constructor(
      */
     suspend fun updatePreference(key: String, value: Boolean): Result<Unit> = runCatching {
         val uid = auth.currentUser?.uid ?: return@runCatching
+        // Dotted field path keeps other preference keys intact under merge.
         firestore.collection(USERS).document(uid)
-            .set(
-                mapOf("notificationPreferences" to mapOf(key to value)),
-                SetOptions.merge()
-            )
+            .update(mapOf("notificationPreferences.$key" to value))
             .await()
     }
 

@@ -326,10 +326,15 @@ async function sendToHouseholdMembers(
     .map((d) => d.id)
     .filter((id) => id && id !== excludeUid);
 
-  if (recipientIds.length === 0) return;
+  if (recipientIds.length === 0) {
+    console.info(`[push] ${type} household=${householdId}: no recipients (solo or empty)`);
+    return;
+  }
 
   const messages: Message[] = [];
   const tokenOwners: { uid: string; token: string }[] = [];
+  let skippedNoToken = 0;
+  let skippedPrefsOff = 0;
 
   await Promise.all(
     recipientIds.map(async (uid) => {
@@ -342,11 +347,17 @@ async function sendToHouseholdMembers(
             (t): t is string => typeof t === "string" && t.length > 0
           )
         : [];
-      if (tokens.length === 0) return;
+      if (tokens.length === 0) {
+        skippedNoToken += 1;
+        return;
+      }
 
       const prefs = (data.notificationPreferences ?? {}) as Record<string, unknown>;
       // Preferences default to disabled when unset (opt-in via Settings).
-      if (prefs[type] !== true) return;
+      if (prefs[type] !== true) {
+        skippedPrefsOff += 1;
+        return;
+      }
 
       const lang = normalizeLang(data.language);
       const title = APP_NAME[lang] ?? APP_NAME.en;
@@ -365,8 +376,12 @@ async function sendToHouseholdMembers(
             },
           },
           apns: {
+            headers: {
+              "apns-priority": "10",
+            },
             payload: {
               aps: {
+                alert: { title, body },
                 sound: "default",
               },
             },
@@ -377,13 +392,27 @@ async function sendToHouseholdMembers(
     })
   );
 
-  if (messages.length === 0) return;
+  if (messages.length === 0) {
+    console.info(
+      `[push] ${type} household=${householdId}: 0 messages ` +
+        `(recipients=${recipientIds.length}, noToken=${skippedNoToken}, prefsOff=${skippedPrefsOff})`
+    );
+    return;
+  }
 
   const response = await getMessaging().sendEach(messages);
+  const failCount = response.responses.filter((r) => !r.success).length;
+  console.info(
+    `[push] ${type} household=${householdId}: sent=${response.successCount} failed=${failCount} ` +
+      `(noToken=${skippedNoToken}, prefsOff=${skippedPrefsOff})`
+  );
 
   const invalidByUser: Record<string, string[]> = {};
   response.responses.forEach((resp, idx) => {
     if (resp.success) return;
+    console.warn(
+      `[push] send fail uid=${tokenOwners[idx]?.uid} code=${resp.error?.code} msg=${resp.error?.message}`
+    );
     const code = resp.error?.code;
     if (
       code === "messaging/invalid-registration-token" ||
