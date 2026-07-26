@@ -345,8 +345,8 @@ async function sendToHouseholdMembers(
       if (tokens.length === 0) return;
 
       const prefs = (data.notificationPreferences ?? {}) as Record<string, unknown>;
-      // Preferences default to enabled when unset.
-      if (prefs[type] === false) return;
+      // Preferences default to disabled when unset (opt-in via Settings).
+      if (prefs[type] !== true) return;
 
       const lang = normalizeLang(data.language);
       const title = APP_NAME[lang] ?? APP_NAME.en;

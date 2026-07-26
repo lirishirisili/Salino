@@ -53,10 +53,10 @@ export interface UserProfile {
 }
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  itemAdded: true,
-  urgentItem: true,
-  shoppingComplete: true,
-  memberJoined: true,
+  itemAdded: false,
+  urgentItem: false,
+  shoppingComplete: false,
+  memberJoined: false,
 };
 
 export interface ActivityLog {
