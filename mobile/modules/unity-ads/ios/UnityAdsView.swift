@@ -2,16 +2,37 @@ import ExpoModulesCore
 import UIKit
 import UnityAds
 
-class UnityAdsView: ExpoView, UADSBannerViewDelegate {
+private final class BannerShowDelegate: NSObject, UADSBannerAdDelegate {
+  var onFailed: ((String) -> Void)?
+
+  func bannerImpression(_ banner: UADSBannerAd) {}
+
+  func bannerDidClick(_ banner: UADSBannerAd) {}
+
+  func bannerDidFailShow(_ banner: UADSBannerAd, error: any UnityAdsError) {
+    onFailed?(error.message ?? "Unity banner failed to show")
+  }
+}
+
+class UnityAdsView: ExpoView {
   let onAdLoaded = EventDispatcher()
   let onAdFailedToLoad = EventDispatcher()
 
   private var placementId: String?
-  private var bannerView: UADSBannerView?
+  private var bannerAd: UADSBannerAd?
+  private var bannerChild: UIView?
+  private let showDelegate = BannerShowDelegate()
 
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
     clipsToBounds = true
+    showDelegate.onFailed = { [weak self] message in
+      guard let self else { return }
+      self.onAdFailedToLoad([
+        "placementId": self.placementId ?? "",
+        "message": message
+      ])
+    }
   }
 
   func setPlacementId(_ nextPlacementId: String?) {
@@ -24,30 +45,7 @@ class UnityAdsView: ExpoView, UADSBannerViewDelegate {
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    bannerView?.frame = bounds
-  }
-
-  func bannerViewDidLoad(_ bannerView: UADSBannerView!) {
-    onAdLoaded([
-      "placementId": placementId ?? ""
-    ])
-  }
-
-  func bannerViewDidClick(_ bannerView: UADSBannerView!) {}
-
-  func bannerViewDidLeaveApplication(_ bannerView: UADSBannerView!) {}
-
-  func bannerViewDidError(_ bannerView: UADSBannerView!, error: UADSBannerError!) {
-    let message: String
-    if let error {
-      message = error.localizedDescription
-    } else {
-      message = "Unknown Unity banner error"
-    }
-    onAdFailedToLoad([
-      "placementId": placementId ?? "",
-      "message": message
-    ])
+    bannerChild?.frame = bounds
   }
 
   private func loadBanner() {
@@ -56,22 +54,47 @@ class UnityAdsView: ExpoView, UADSBannerViewDelegate {
       return
     }
 
-    let banner = UADSBannerView(
+    let config = UADSBannerLoadConfigurationBuilder(
       placementId: placementId,
-      size: CGSize(width: 320, height: 50)
-    )
-    banner.delegate = self
-    banner.frame = bounds
-    banner.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    addSubview(banner)
-    bannerView = banner
-    banner.load()
+      bannerSize: CGSize(width: 320, height: 50),
+      delegate: showDelegate
+    ).build()
+
+    UADSBannerAd.load(config) { [weak self] ad, error in
+      guard let self else { return }
+
+      if let error {
+        self.onAdFailedToLoad([
+          "placementId": placementId,
+          "message": error.message ?? "Unknown Unity banner load error"
+        ])
+        return
+      }
+
+      guard let ad else {
+        self.onAdFailedToLoad([
+          "placementId": placementId,
+          "message": "Unity Ads returned no banner ad"
+        ])
+        return
+      }
+
+      let adView = ad.view
+      adView.frame = self.bounds
+      adView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      self.addSubview(adView)
+      self.bannerChild = adView
+      self.bannerAd = ad
+      self.onAdLoaded([
+        "placementId": placementId
+      ])
+    }
   }
 
   private func clearBanner() {
-    bannerView?.delegate = nil
-    bannerView?.removeFromSuperview()
-    bannerView = nil
+    bannerChild?.removeFromSuperview()
+    bannerChild = nil
+    bannerAd = nil
   }
 
   deinit {
