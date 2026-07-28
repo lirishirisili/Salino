@@ -17,7 +17,7 @@ export type UnityAdsBannerViewProps = ViewProps & {
 };
 
 const NativeView: React.ComponentType<UnityAdsBannerViewProps> =
-  requireNativeViewManager('UnityAds');
+  requireNativeViewManager('ExpoUnityAds');
 
 export default function UnityAdsBannerView(props: UnityAdsBannerViewProps) {
   return <NativeView {...props} />;

@@ -11,7 +11,7 @@ import com.unity3d.ads.UnityAds
 
 class UnityAdsModule : Module() {
   override fun definition() = ModuleDefinition {
-    Name("UnityAds")
+    Name("ExpoUnityAds")
 
     AsyncFunction("initialize") { gameId: String, testMode: Boolean, promise: Promise ->
       if (isInitialized && initializedGameId == gameId) {

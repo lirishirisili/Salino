@@ -4,7 +4,7 @@ type NativeUnityAdsModule = {
   initialize(gameId: string, testMode: boolean): Promise<boolean>;
 };
 
-const NativeUnityAds = requireOptionalNativeModule<NativeUnityAdsModule>('UnityAds');
+const NativeUnityAds = requireOptionalNativeModule<NativeUnityAdsModule>('ExpoUnityAds');
 
 export async function initializeUnityAdsAsync(
   gameId: string,

@@ -3,7 +3,7 @@ import UnityAds
 
 public class UnityAdsModule: Module {
   public func definition() -> ModuleDefinition {
-    Name("UnityAds")
+    Name("ExpoUnityAds")
 
     AsyncFunction("initialize") { (gameId: String, testMode: Bool, promise: Promise) in
       if Self.isInitialized, Self.initializedGameId == gameId {
