@@ -1,0 +1,13 @@
+{
+  "name": "unity-ads",
+  "version": "1.0.0",
+  "description": "Local Expo module for Unity Ads initialization and banners.",
+  "main": "index.ts",
+  "private": true,
+  "keywords": [
+    "expo",
+    "react-native",
+    "unity-ads"
+  ],
+  "license": "UNLICENSED"
+}

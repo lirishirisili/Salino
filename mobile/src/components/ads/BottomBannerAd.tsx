@@ -1,31 +1,29 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { UnityAdsBannerView } from '../../../modules/unity-ads';
 import {
-  BannerAd,
-  BannerAdSize,
-  TestIds,
-  useForeground,
-} from 'react-native-google-mobile-ads';
-import { ADMOB_BANNER_RESERVED_HEIGHT, ADMOB_BANNER_UNIT_ID } from '../../config/admob';
-import { initMobileAds } from '../../services/initMobileAds';
+  UNITY_ADS_BANNER_PLACEMENT_ID,
+  UNITY_ADS_BANNER_RESERVED_HEIGHT,
+} from '../../config/unityAds';
+import { initUnityAds } from '../../services/initUnityAds';
 
 type BottomBannerAdProps = {
   visible?: boolean;
 };
 
+const BANNER_LOAD_TIMEOUT_MS = 12_000;
+
 export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   const insets = useSafeAreaInsets();
-  const bannerRef = useRef<BannerAd>(null);
   const [failed, setFailed] = useState(false);
   const [sdkReady, setSdkReady] = useState(false);
-
-  const unitId = __DEV__ ? TestIds.BANNER : ADMOB_BANNER_UNIT_ID;
+  const [adLoaded, setAdLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    initMobileAds().then((ok) => {
+    initUnityAds().then((ok) => {
       if (!cancelled && ok) {
         setSdkReady(true);
       }
@@ -35,13 +33,16 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     };
   }, []);
 
-  useForeground(
-    useCallback(() => {
-      if (Platform.OS === 'ios') {
-        bannerRef.current?.load();
-      }
-    }, []),
-  );
+  useEffect(() => {
+    if (!sdkReady || failed || adLoaded) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      console.warn('Unity banner load timed out');
+      setFailed(true);
+    }, BANNER_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [sdkReady, failed, adLoaded]);
 
   if (
     !visible ||
@@ -57,18 +58,27 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     <View
       style={[
         styles.wrap,
-        {
-          height: ADMOB_BANNER_RESERVED_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
-        },
+        adLoaded
+          ? {
+              height: UNITY_ADS_BANNER_RESERVED_HEIGHT + insets.bottom,
+              paddingBottom: insets.bottom,
+            }
+          : styles.loadingSlot,
       ]}
-      pointerEvents="box-none"
+      pointerEvents={adLoaded ? 'box-none' : 'none'}
     >
-      <BannerAd
-        ref={bannerRef}
-        unitId={unitId}
-        size={BannerAdSize.BANNER}
-        onAdFailedToLoad={() => setFailed(true)}
+      <UnityAdsBannerView
+        placementId={UNITY_ADS_BANNER_PLACEMENT_ID}
+        style={styles.banner}
+        onAdLoaded={() => {
+          setFailed(false);
+          setAdLoaded(true);
+        }}
+        onAdFailedToLoad={(event) => {
+          console.warn('Unity banner failed:', event?.nativeEvent);
+          setAdLoaded(false);
+          setFailed(true);
+        }}
       />
     </View>
   );
@@ -81,5 +91,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     backgroundColor: 'transparent',
+  },
+  // Keep a measurable 320x50 host while loading without taking list layout space.
+  loadingSlot: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: UNITY_ADS_BANNER_RESERVED_HEIGHT,
+    opacity: 0,
+  },
+  banner: {
+    width: 320,
+    height: UNITY_ADS_BANNER_RESERVED_HEIGHT,
+    alignSelf: 'center',
   },
 });

@@ -65,15 +65,6 @@
           }
         }
       ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-1194823418071986~13363777409",
-          "iosAppId": "ca-app-pub-1194823418071986~9075266622",
-          "userTrackingUsageDescription": "Used to deliver more relevant ads."
-        }
-      ],
-      "./plugins/withAdMobAndroidManifest",
       "expo-tracking-transparency",
       [
         "@react-native-firebase/app",

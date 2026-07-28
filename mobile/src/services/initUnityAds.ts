@@ -5,7 +5,8 @@ import {
   requestTrackingPermissionsAsync,
 } from 'expo-tracking-transparency';
 import { AppState, AppStateStatus, Platform } from 'react-native';
-import mobileAds from 'react-native-google-mobile-ads';
+import { initializeUnityAdsAsync, isUnityAdsAvailable } from '../../modules/unity-ads';
+import { UNITY_ADS_GAME_ID } from '../config/unityAds';
 
 let initPromise: Promise<boolean> | null = null;
 
@@ -49,14 +50,13 @@ function waitForActiveState(): Promise<void> {
   });
 }
 
-/** iOS ATT prompt must appear before AdMob init (App Store Guideline 2.1). */
+/** iOS ATT prompt should appear before ads initialization. */
 async function ensureIosTrackingPermission(): Promise<void> {
   if (Platform.OS !== 'ios') {
     return;
   }
   try {
     await waitForActiveState();
-    // Small delay to ensure the app is fully rendered and visible to the user.
     await new Promise((r) => setTimeout(r, ATT_PROMPT_DELAY_MS));
     const { status } = await getTrackingPermissionsAsync();
     if (status === PermissionStatus.UNDETERMINED) {
@@ -68,20 +68,29 @@ async function ensureIosTrackingPermission(): Promise<void> {
 }
 
 /**
- * Initialize Google Mobile Ads once per app session.
+ * Initialize Unity Ads once per app session.
  * @returns whether the SDK initialized successfully (false in Expo Go or on failure).
+ *
+ * Note: debug APKs embed a production JS bundle where `__DEV__` is false. The native
+ * Android module still forces Unity test mode when the package is debuggable.
  */
-export function initMobileAds(): Promise<boolean> {
-  if (Constants.appOwnership === 'expo') {
+export function initUnityAds(): Promise<boolean> {
+  if (Constants.appOwnership === 'expo' || !isUnityAdsAvailable()) {
     return Promise.resolve(false);
   }
   if (!initPromise) {
     initPromise = ensureIosTrackingPermission()
-      .then(() => withTimeout(mobileAds().initialize(), ADS_INIT_TIMEOUT_MS, 'AdMob init'))
+      .then(() =>
+        withTimeout(
+          initializeUnityAdsAsync(UNITY_ADS_GAME_ID, __DEV__),
+          ADS_INIT_TIMEOUT_MS,
+          'Unity Ads init',
+        ),
+      )
       .then(() => true)
       .catch((err) => {
         initPromise = null;
-        console.warn('AdMob init failed:', err);
+        console.warn('Unity Ads init failed:', err);
         return false;
       });
   }

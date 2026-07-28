@@ -112,8 +112,8 @@ dependencies {
     // Google Sign-In
     implementation(libs.play.services.auth)
 
-    // AdMob
-    implementation(libs.play.services.ads)
+    // Unity Ads
+    implementation(libs.unity.ads)
 
     // Testing
     testImplementation("junit:junit:4.13.2")

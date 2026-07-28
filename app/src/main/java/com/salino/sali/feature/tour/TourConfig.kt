@@ -15,7 +15,7 @@ const val TOUR_TOP_BAR_HEIGHT = 100
 /** Bottom FAB row clearance on shopping list. */
 const val TOUR_FAB_ROW_HEIGHT = 80
 
-/** Standard AdMob banner height + padding estimate (dp). */
+    /** Standard bottom banner height + padding estimate (dp). */
 const val TOUR_AD_BANNER_HEIGHT = 58
 
 /** Approximate height of the tour bottom/top sheet card (dp). */

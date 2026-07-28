@@ -8,5 +8,6 @@
 # Keep data model classes for Firestore serialization
 -keep class com.salino.sali.data.model.** { *; }
 
-# AdMob
--keep class com.google.android.gms.ads.** { *; }
+# Unity Ads
+-keep class com.unity3d.ads.** { *; }
+-keep class com.unity3d.services.** { *; }

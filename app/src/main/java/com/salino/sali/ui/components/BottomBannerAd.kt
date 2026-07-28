@@ -3,6 +3,7 @@ package com.salino.sali.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,13 +12,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.LoadAdError
 import com.salino.sali.BuildConfig
-import com.salino.sali.util.AdMobConfig
+import com.salino.sali.util.UnityAdsConfig
+import com.unity3d.services.banners.BannerErrorInfo
+import com.unity3d.services.banners.BannerView
+import com.unity3d.services.banners.UnityBannerSize
 
 /**
  * @param collapseWhenFailed When true, reserved height is removed if the ad fails to load
@@ -30,37 +29,50 @@ fun BottomBannerAd(
     collapseWhenFailed: Boolean = false,
     onAdVisible: ((Boolean) -> Unit)? = null,
 ) {
-    val unitId = remember {
-        if (BuildConfig.DEBUG) AdMobConfig.TEST_BANNER_AD_UNIT_ID else AdMobConfig.BANNER_AD_UNIT_ID
-    }
     var adLoaded by remember { mutableStateOf(false) }
-
     val showSlot = !collapseWhenFailed || adLoaded
 
     LaunchedEffect(showSlot) {
         onAdVisible?.invoke(showSlot)
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            onAdVisible?.invoke(false)
+        }
+    }
+
     AndroidView(
         modifier = modifier
             .fillMaxWidth()
             .height(
-                if (showSlot) AdMobConfig.BANNER_HEIGHT_DP.dp else 0.dp,
+                if (showSlot) UnityAdsConfig.BANNER_HEIGHT_DP.dp else 0.dp,
             ),
         factory = { ctx ->
-            AdView(ctx).apply {
-                setAdSize(AdSize.BANNER)
-                adUnitId = unitId
-                adListener = object : AdListener() {
-                    override fun onAdLoaded() {
+            BannerView(
+                ctx,
+                UnityAdsConfig.BANNER_PLACEMENT_ID,
+                UnityBannerSize(320, 50),
+            ).apply {
+                listener = object : BannerView.IListener {
+                    override fun onBannerLoaded(bannerAdView: BannerView) {
                         adLoaded = true
                     }
 
-                    override fun onAdFailedToLoad(error: LoadAdError) {
+                    override fun onBannerFailedToLoad(
+                        bannerAdView: BannerView,
+                        errorInfo: BannerErrorInfo,
+                    ) {
                         adLoaded = false
                     }
+
+                    override fun onBannerClick(bannerAdView: BannerView) = Unit
+
+                    override fun onBannerShown(bannerAdView: BannerView) = Unit
+
+                    override fun onBannerLeftApplication(bannerAdView: BannerView) = Unit
                 }
-                loadAd(AdRequest.Builder().build())
+                load()
             }
         },
     )

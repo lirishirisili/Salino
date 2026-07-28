@@ -15,7 +15,7 @@ export const TOUR_TOP_BAR_HEIGHT = 100;
 /** Bottom FAB row clearance on shopping list. */
 export const TOUR_FAB_ROW_HEIGHT = 80;
 
-/** Standard AdMob banner height + padding estimate. */
+/** Standard bottom banner height + padding estimate. */
 export const TOUR_AD_BANNER_HEIGHT = 58;
 
 /** Approximate height of the tour bottom/top sheet card (px). */

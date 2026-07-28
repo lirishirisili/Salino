@@ -2,9 +2,6 @@ package com.salino.sali
 
 import android.app.Application
 import android.util.Log
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -13,6 +10,9 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.salino.sali.data.service.SalinoMessagingService
 import com.salino.sali.di.AutocompleteWarmupEntryPoint
+import com.salino.sali.util.UnityAdsConfig
+import com.unity3d.ads.IUnityAdsInitializationListener
+import com.unity3d.ads.UnityAds
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.EntryPointAccessors
 import java.util.Locale
@@ -30,16 +30,25 @@ class SalinoApp : Application() {
             Log.e(TAG, "Firebase Analytics init failed", e)
         }
         try {
-            if (BuildConfig.DEBUG) {
-                MobileAds.setRequestConfiguration(
-                    RequestConfiguration.Builder()
-                        .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
-                        .build(),
-                )
-            }
-            MobileAds.initialize(applicationContext) { }
+            UnityAds.initialize(
+                applicationContext,
+                UnityAdsConfig.ANDROID_GAME_ID,
+                BuildConfig.DEBUG,
+                object : IUnityAdsInitializationListener {
+                    override fun onInitializationComplete() {
+                        Log.d(TAG, "Unity Ads initialized")
+                    }
+
+                    override fun onInitializationFailed(
+                        error: UnityAds.UnityAdsInitializationError,
+                        message: String,
+                    ) {
+                        Log.e(TAG, "Unity Ads init failed: $error - $message")
+                    }
+                },
+            )
         } catch (e: Throwable) {
-            Log.e(TAG, "AdMob init failed", e)
+            Log.e(TAG, "Unity Ads init failed", e)
         }
         try {
             EntryPointAccessors.fromApplication(this, AutocompleteWarmupEntryPoint::class.java)
