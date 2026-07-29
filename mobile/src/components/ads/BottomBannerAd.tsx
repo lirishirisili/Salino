@@ -13,13 +13,15 @@ type BottomBannerAdProps = {
   visible?: boolean;
 };
 
-const BANNER_LOAD_TIMEOUT_MS = 12_000;
+const BANNER_LOAD_TIMEOUT_MS = 15_000;
+const MAX_LOAD_ATTEMPTS = 3;
 
 export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   const insets = useSafeAreaInsets();
   const [failed, setFailed] = useState(false);
   const [sdkReady, setSdkReady] = useState(false);
   const [adLoaded, setAdLoaded] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,11 +40,17 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
       return;
     }
     const timer = setTimeout(() => {
+      if (attempt + 1 < MAX_LOAD_ATTEMPTS) {
+        console.warn(`Unity banner load timed out; retry ${attempt + 1}`);
+        setAdLoaded(false);
+        setAttempt((value) => value + 1);
+        return;
+      }
       console.warn('Unity banner load timed out');
       setFailed(true);
     }, BANNER_LOAD_TIMEOUT_MS);
     return () => clearTimeout(timer);
-  }, [sdkReady, failed, adLoaded]);
+  }, [sdkReady, failed, adLoaded, attempt]);
 
   if (
     !visible ||
@@ -68,6 +76,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
       pointerEvents={adLoaded ? 'box-none' : 'none'}
     >
       <UnityAdsBannerView
+        key={`unity-banner-${attempt}`}
         placementId={UNITY_ADS_BANNER_PLACEMENT_ID}
         style={styles.banner}
         onAdLoaded={() => {
@@ -77,6 +86,10 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
         onAdFailedToLoad={(event) => {
           console.warn('Unity banner failed:', event?.nativeEvent);
           setAdLoaded(false);
+          if (attempt + 1 < MAX_LOAD_ATTEMPTS) {
+            setAttempt((value) => value + 1);
+            return;
+          }
           setFailed(true);
         }}
       />

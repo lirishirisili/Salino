@@ -1,5 +1,11 @@
 package com.salino.sali.ui.components
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.util.Log
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -12,11 +18,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.salino.sali.BuildConfig
 import com.salino.sali.util.UnityAdsConfig
-import com.unity3d.services.banners.BannerErrorInfo
-import com.unity3d.services.banners.BannerView
-import com.unity3d.services.banners.UnityBannerSize
+import com.unity3d.ads.BannerAd
+import com.unity3d.ads.BannerConfiguration
+import com.unity3d.ads.BannerShowListener
+import com.unity3d.ads.BannerSize
+import com.unity3d.ads.LoadListener
+import com.unity3d.ads.UnityAds
+import com.unity3d.ads.UnityAdsError
 
 /**
  * @param collapseWhenFailed When true, reserved height is removed if the ad fails to load
@@ -30,6 +39,7 @@ fun BottomBannerAd(
     onAdVisible: ((Boolean) -> Unit)? = null,
 ) {
     var adLoaded by remember { mutableStateOf(false) }
+    var loadFailed by remember { mutableStateOf(false) }
     val showSlot = !collapseWhenFailed || adLoaded
 
     LaunchedEffect(showSlot) {
@@ -42,6 +52,10 @@ fun BottomBannerAd(
         }
     }
 
+    if (collapseWhenFailed && loadFailed && !adLoaded) {
+        return
+    }
+
     AndroidView(
         modifier = modifier
             .fillMaxWidth()
@@ -49,31 +63,139 @@ fun BottomBannerAd(
                 if (showSlot) UnityAdsConfig.BANNER_HEIGHT_DP.dp else 0.dp,
             ),
         factory = { ctx ->
-            BannerView(
-                ctx,
-                UnityAdsConfig.BANNER_PLACEMENT_ID,
-                UnityBannerSize(320, 50),
-            ).apply {
-                listener = object : BannerView.IListener {
-                    override fun onBannerLoaded(bannerAdView: BannerView) {
-                        adLoaded = true
-                    }
-
-                    override fun onBannerFailedToLoad(
-                        bannerAdView: BannerView,
-                        errorInfo: BannerErrorInfo,
-                    ) {
-                        adLoaded = false
-                    }
-
-                    override fun onBannerClick(bannerAdView: BannerView) = Unit
-
-                    override fun onBannerShown(bannerAdView: BannerView) = Unit
-
-                    override fun onBannerLeftApplication(bannerAdView: BannerView) = Unit
-                }
-                load()
+            FrameLayout(ctx).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
+                tag = BannerHostController(
+                    host = this,
+                    onLoaded = { adLoaded = true; loadFailed = false },
+                    onFailed = { adLoaded = false; loadFailed = true },
+                ).also { it.start() }
             }
         },
+        onRelease = { view ->
+            (view.tag as? BannerHostController)?.destroy()
+        },
     )
+}
+
+private class BannerHostController(
+    private val host: FrameLayout,
+    private val onLoaded: () -> Unit,
+    private val onFailed: () -> Unit,
+) {
+    private var bannerAd: BannerAd? = null
+    private var destroyed = false
+    private var attempt = 0
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    fun start() {
+        attemptLoad()
+    }
+
+    fun destroy() {
+        destroyed = true
+        handler.removeCallbacksAndMessages(null)
+        host.removeAllViews()
+        bannerAd = null
+    }
+
+    private fun attemptLoad() {
+        if (destroyed) return
+        if (!UnityAds.isInitialized) {
+            if (attempt < MAX_INIT_WAIT_ATTEMPTS) {
+                attempt += 1
+                handler.postDelayed({ attemptLoad() }, RETRY_DELAY_MS)
+            } else {
+                Log.w(TAG, "Unity Ads not initialized; giving up banner load")
+                onFailed()
+            }
+            return
+        }
+
+        val activity = host.context.findActivity()
+        if (activity == null) {
+            Log.e(TAG, "No Activity for Unity banner")
+            onFailed()
+            return
+        }
+
+        val showListener = object : BannerShowListener {
+            override fun onImpression(ad: BannerAd) = Unit
+            override fun onClicked(ad: BannerAd) = Unit
+            override fun onFailedToShow(ad: BannerAd, error: UnityAdsError) {
+                Log.e(TAG, "Banner failed to show: ${error.code} ${error.message}")
+                if (!destroyed) onFailed()
+            }
+        }
+
+        val config = BannerConfiguration.Builder(
+            UnityAdsConfig.BANNER_PLACEMENT_ID,
+            BannerSize(320, 50),
+            showListener,
+        ).build()
+
+        Log.i(TAG, "Loading Unity banner placement=${UnityAdsConfig.BANNER_PLACEMENT_ID}")
+        BannerAd.load(
+            config,
+            object : LoadListener<BannerAd> {
+                override fun onAdLoaded(ad: BannerAd?, error: UnityAdsError?) {
+                    if (destroyed) return
+                    host.post {
+                        if (destroyed) return@post
+                        if (ad == null || error != null) {
+                            Log.e(TAG, "Banner load failed: ${error?.code} ${error?.message}")
+                            scheduleRetryOrFail()
+                            return@post
+                        }
+                        val adView = ad.view
+                        if (adView == null) {
+                            Log.e(TAG, "Banner loaded without a view")
+                            scheduleRetryOrFail()
+                            return@post
+                        }
+                        bannerAd = ad
+                        host.removeAllViews()
+                        (adView.parent as? ViewGroup)?.removeView(adView)
+                        host.addView(
+                            adView,
+                            FrameLayout.LayoutParams(
+                                FrameLayout.LayoutParams.MATCH_PARENT,
+                                FrameLayout.LayoutParams.MATCH_PARENT,
+                            ),
+                        )
+                        onLoaded()
+                    }
+                }
+            },
+        )
+    }
+
+    private fun scheduleRetryOrFail() {
+        if (destroyed) return
+        if (attempt < MAX_LOAD_ATTEMPTS) {
+            attempt += 1
+            handler.postDelayed({ attemptLoad() }, RETRY_DELAY_MS * attempt)
+        } else {
+            onFailed()
+        }
+    }
+
+    companion object {
+        private const val TAG = "UnityAdsBanner"
+        private const val MAX_INIT_WAIT_ATTEMPTS = 40
+        private const val MAX_LOAD_ATTEMPTS = 3
+        private const val RETRY_DELAY_MS = 2_000L
+    }
+}
+
+private fun Context.findActivity(): Activity? {
+    var current: Context? = this
+    while (current is ContextWrapper) {
+        if (current is Activity) return current
+        current = current.baseContext
+    }
+    return current as? Activity
 }

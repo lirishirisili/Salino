@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router, useFocusEffect } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import Constants from 'expo-constants';
 import { useAuthStore, useHouseholdStore, useNotificationStore } from '../../src/hooks';
 import type { NotificationPreferences } from '../../src/models/types';
 import { clearTourCompleted, useTourAnchor, useTourScroller, useTourStore } from '../../src/features/tour';
@@ -466,6 +467,26 @@ export default function SettingsScreen() {
               <MaterialCommunityIcons name="chevron-down" size={22} color={colors.onSurfaceVariant} />
             </Pressable>
           </SalinoSurfaceCard>
+
+          <Text
+            style={[
+              Typography.bodySmall,
+              {
+                color: colors.onSurfaceVariant,
+                opacity: 0.6,
+                textAlign: 'center',
+                marginTop: 20,
+                marginBottom: 8,
+              } as any,
+            ]}
+          >
+            {t('settings_version', {
+              version:
+                Constants.nativeApplicationVersion ??
+                Constants.expoConfig?.version ??
+                '',
+            })}
+          </Text>
         </View>
       </ScrollView>
 
