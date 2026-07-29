@@ -67,6 +67,20 @@ fun SettingsScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showLanguageChangeDialog by remember { mutableStateOf(false) }
     var pendingLanguageTag by remember { mutableStateOf<String?>(null) }
+    // Prefer PackageManager so Settings matches Android App Info (avoids stale BuildConfig).
+    val appVersionName = remember(context) {
+        runCatching {
+            val pm = context.packageManager
+            val packageName = context.packageName
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(packageName, 0)
+            }
+            info.versionName
+        }.getOrNull()?.takeIf { it.isNotBlank() } ?: com.salino.sali.BuildConfig.VERSION_NAME
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -508,7 +522,7 @@ fun SettingsScreen(
                 }
 
                 Text(
-                    text = stringResource(R.string.settings_version, com.salino.sali.BuildConfig.VERSION_NAME),
+                    text = stringResource(R.string.settings_version, appVersionName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
