@@ -62,6 +62,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     return null;
   }
 
+  // Only occupy layout space after a successful load; load off-screen until then.
   return (
     <View
       style={[
@@ -74,6 +75,8 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
           : styles.loadingSlot,
       ]}
       pointerEvents={adLoaded ? 'box-none' : 'none'}
+      accessibilityElementsHidden={!adLoaded}
+      importantForAccessibility={adLoaded ? 'auto' : 'no-hide-descendants'}
     >
       <UnityAdsBannerView
         key={`unity-banner-${attempt}`}
@@ -105,7 +108,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'transparent',
   },
-  // Keep a measurable 320x50 host while loading without taking list layout space.
+  // Load without reserving list/FAB layout space; expand only after onAdLoaded.
   loadingSlot: {
     position: 'absolute',
     bottom: 0,

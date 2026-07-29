@@ -28,14 +28,16 @@ import com.unity3d.ads.UnityAds
 import com.unity3d.ads.UnityAdsError
 
 /**
- * @param collapseWhenFailed When true, reserved height is removed if the ad fails to load
- *   (e.g. ad blocker). Other screens keep a fixed slot so layout stays stable when ads load slowly.
+ * Bottom Unity banner. By default takes no layout space until an ad actually loads,
+ * and collapses again if load/show fails — so empty slots never cut into the UI.
+ *
+ * @param collapseWhenFailed When true (default), hide the slot until load succeeds.
  * @param onAdVisible Called when visible slot height changes (after load success / failure).
  */
 @Composable
 fun BottomBannerAd(
     modifier: Modifier = Modifier,
-    collapseWhenFailed: Boolean = false,
+    collapseWhenFailed: Boolean = true,
     onAdVisible: ((Boolean) -> Unit)? = null,
 ) {
     var adLoaded by remember { mutableStateOf(false) }
@@ -52,6 +54,7 @@ fun BottomBannerAd(
         }
     }
 
+    // No empty reserved bar when ads are unavailable.
     if (collapseWhenFailed && loadFailed && !adLoaded) {
         return
     }
