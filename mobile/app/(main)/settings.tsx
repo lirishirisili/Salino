@@ -33,6 +33,7 @@ import {
 } from '../../src/components';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
+import { buildInviteUrl } from '../../src/constants/urls';
 import {
   ensureFcmTokenRegistered,
   getNotificationPermissionGranted,
@@ -105,8 +106,10 @@ export default function SettingsScreen() {
 
   const handleShareInvite = async () => {
     if (!household?.inviteCode) return;
+    const inviteUrl = buildInviteUrl(household.inviteCode);
     await Share.share({
-      message: t('settings_share_invite_message', { code: household.inviteCode }),
+      message: t('settings_share_invite_message', { code: household.inviteCode, url: inviteUrl }),
+      url: inviteUrl,
     });
   };
 

@@ -17,6 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,6 +46,7 @@ import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoWebSegmentedTabs
 import com.salino.sali.ui.components.SalinoWebTokens
 import com.salino.sali.ui.components.salinoWebOutlinedFieldColors
+import com.salino.sali.util.InviteDeepLinkHolder
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +58,28 @@ fun HouseholdSetupScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var householdName by remember { mutableStateOf("") }
     var inviteCode by remember { mutableStateOf("") }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(Unit) {
+        InviteDeepLinkHolder.consume()?.let { code ->
+            inviteCode = code
+            selectedTab = 1
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                InviteDeepLinkHolder.consume()?.let { code ->
+                    inviteCode = code
+                    selectedTab = 1
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(uiState.isComplete) {
         if (uiState.isComplete) {

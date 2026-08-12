@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LightTheme, DarkTheme } from '../src/theme';
 import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
-import { useAuthStore } from '../src/hooks';
+import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
 import { LoadingScreen, SalinoGradientBackground } from '../src/components';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
 import { initUnityAds } from '../src/services/initUnityAds';
@@ -26,6 +26,8 @@ export default function RootLayout() {
   const initialize = useAuthStore((s) => s.initialize);
   const isLoading = useAuthStore((s) => s.isLoading);
   const hasBootstrapped = useAuthStore((s) => s.hasBootstrapped);
+
+  useInviteDeepLinkListener();
 
   useEffect(() => {
     void (async () => {
@@ -131,6 +133,7 @@ export default function RootLayout() {
             >
               <Stack.Screen name="index" />
               <Stack.Screen name="auth" />
+              <Stack.Screen name="join/[inviteCode]" options={{ animation: 'none' }} />
               <Stack.Screen name="household-setup" />
               <Stack.Screen name="(main)" />
             </Stack>

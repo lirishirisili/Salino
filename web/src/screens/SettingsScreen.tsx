@@ -7,6 +7,7 @@ import {
   leaveHousehold,
 } from '../services/firestoreService';
 import { copyToClipboard } from '../utils';
+import { buildInviteUrl } from '../constants/storeLinks';
 import type { Household, HouseholdMember } from '../types';
 import { useI18n, SUPPORTED_LANGUAGES } from '../i18n/index';
 import type { StringKey } from '../i18n/index';
@@ -42,9 +43,11 @@ export default function SettingsScreen() {
 
   const handleShare = async () => {
     if (household?.inviteCode && navigator.share) {
+      const inviteUrl = buildInviteUrl(household.inviteCode);
       await navigator.share({
         title: t('app_name'),
-        text: t('settings_share_invite_message', household.inviteCode),
+        text: t('settings_share_invite_message', household.inviteCode, inviteUrl),
+        url: inviteUrl,
       });
     }
   };

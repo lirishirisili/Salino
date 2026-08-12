@@ -195,7 +195,7 @@ const en = {
   settings_edit_household_name: 'Edit household name',
   settings_leave_household: 'Leave household',
   settings_leave_household_confirm: 'Are you sure you want to leave this household? You can always join again with an invite code or create a new one.',
-  settings_share_invite_message: 'Join my household on Haserli! Use this invite code: {0}',
+  settings_share_invite_message: 'Join my household on Haserli! Invite code: {0}\n{1}',
   settings_sign_out: 'Sign out',
   settings_sign_out_confirm: 'Sign out of Haserli?',
   settings_version: 'Version {0}',

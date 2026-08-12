@@ -201,7 +201,7 @@
     <string name="settings_edit_household_name">עריכת שם הבית</string>
     <string name="settings_leave_household">עזיבת הבית</string>
     <string name="settings_leave_household_confirm">בטוח שאתה רוצה לעזוב את הבית? תמיד תוכל להצטרף שוב עם קוד הזמנה או ליצור בית חדש.</string>
-    <string name="settings_share_invite_message">הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: %1$s</string>
+    <string name="settings_share_invite_message">הצטרפו לבית שלי בחסרלי! קוד הזמנה: %1$s\n%2$s</string>
     <string name="settings_sign_out">התנתקות</string>
     <string name="settings_sign_out_confirm">להתנתק מחסרלי?</string>
     <string name="settings_version">גרסה %1$s</string>

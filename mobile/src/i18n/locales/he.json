@@ -182,7 +182,7 @@
   "settings_edit_household_name": "עריכת שם הבית",
   "settings_leave_household": "עזיבת הבית",
   "settings_leave_household_confirm": "בטוח שאתה רוצה לעזוב את הבית? תמיד תוכל להצטרף שוב עם קוד הזמנה או ליצור בית חדש.",
-  "settings_share_invite_message": "הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: {{code}}",
+  "settings_share_invite_message": "הצטרפו לבית שלי בחסרלי! קוד הזמנה: {{code}}\n{{url}}",
   "settings_sign_out": "התנתקות",
   "settings_sign_out_confirm": "להתנתק מחסרלי?",
   "settings_version": "גרסה {{version}}",

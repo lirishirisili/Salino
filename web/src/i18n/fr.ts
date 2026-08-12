@@ -175,7 +175,7 @@ const fr = {
   settings_edit_household_name: 'Modifier le nom du foyer',
   settings_leave_household: 'Quitter le foyer',
   settings_leave_household_confirm: "Voulez-vous vraiment quitter ce foyer ? Vous pourrez toujours revenir avec un code d'invitation ou en créer un nouveau.",
-  settings_share_invite_message: "Rejoignez mon foyer sur Haserli ! Utilisez le code d'invitation : {0}",
+  settings_share_invite_message: "Rejoignez mon foyer sur Haserli ! Code d'invitation : {0}\n{1}",
   settings_sign_out: 'Se déconnecter',
   settings_sign_out_confirm: 'Se déconnecter de Haserli ?',
   settings_version: 'Version {0}',

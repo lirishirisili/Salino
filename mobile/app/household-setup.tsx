@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,7 +13,7 @@ import { Text, TextInput } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useAuthStore, useHouseholdStore } from '../src/hooks';
+import { useAuthStore, useHouseholdStore, useInviteDeepLinkStore } from '../src/hooks';
 import { PRIVACY_POLICY_URL } from '../src/constants/legal';
 import {
   BrandLogo,
@@ -33,6 +33,15 @@ export default function HouseholdSetupScreen() {
   const [tab, setTab] = useState(0);
   const [householdName, setHouseholdName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const consumePendingInviteCode = useInviteDeepLinkStore((s) => s.consumePendingInviteCode);
+  const pendingInviteCode = useInviteDeepLinkStore((s) => s.pendingInviteCode);
+
+  useEffect(() => {
+    const code = consumePendingInviteCode();
+    if (!code) return;
+    setInviteCode(code);
+    setTab(1);
+  }, [consumePendingInviteCode, pendingInviteCode]);
 
   const goToShoppingList = () => {
     router.replace('/(main)/shopping-list');

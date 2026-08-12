@@ -175,7 +175,7 @@ const ar = {
   settings_edit_household_name: 'تعديل اسم البيت',
   settings_leave_household: 'مغادرة البيت',
   settings_leave_household_confirm: 'هل أنت متأكد من مغادرة هذا البيت؟ يمكنك العودة في أي وقت برمز دعوة أو إنشاء بيت جديد.',
-  settings_share_invite_message: 'انضم إلى بيتي في Haserli! استخدم رمز الدعوة: {0}',
+  settings_share_invite_message: 'انضم إلى بيتي في Haserli! رمز الدعوة: {0}\n{1}',
   settings_sign_out: 'تسجيل الخروج',
   settings_sign_out_confirm: 'تسجيل الخروج من Haserli؟',
   settings_version: 'الإصدار {0}',

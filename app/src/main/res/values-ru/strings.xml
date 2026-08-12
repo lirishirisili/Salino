@@ -199,7 +199,7 @@
     <string name="settings_edit_household_name">Изменить название дома</string>
     <string name="settings_leave_household">Покинуть дом</string>
     <string name="settings_leave_household_confirm">Вы уверены, что хотите покинуть этот дом? Вы всегда сможете вернуться по коду приглашения или создать новый дом.</string>
-    <string name="settings_share_invite_message">Присоединяйтесь к моему дому в Haserli! Используйте код приглашения: %1$s</string>
+    <string name="settings_share_invite_message">Присоединяйтесь к моему дому в Haserli! Код приглашения: %1$s\n%2$s</string>
     <string name="settings_sign_out">Выйти</string>
     <string name="settings_sign_out_confirm">Выйти из Haserli?</string>
     <string name="settings_version">Версия %1$s</string>

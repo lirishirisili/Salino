@@ -199,7 +199,7 @@
     <string name="settings_edit_household_name">Editar nombre del hogar</string>
     <string name="settings_leave_household">Abandonar hogar</string>
     <string name="settings_leave_household_confirm">¿Seguro que quieres abandonar este hogar? Siempre puedes volver con un código de invitación o crear uno nuevo.</string>
-    <string name="settings_share_invite_message">¡Únete a mi hogar en Haserli! Usa este código de invitación: %1$s</string>
+    <string name="settings_share_invite_message">¡Únete a mi hogar en Haserli! Código de invitación: %1$s\n%2$s</string>
     <string name="settings_sign_out">Cerrar sesión</string>
     <string name="settings_sign_out_confirm">¿Cerrar sesión en Haserli?</string>
     <string name="settings_version">Versión %1$s</string>

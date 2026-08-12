@@ -50,6 +50,7 @@ import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSurfaceCard
 import com.salino.sali.ui.components.SalinoWebAppBarTitle
 import com.salino.sali.ui.components.SalinoWebTokens
+import com.salino.sali.util.AppLinks
 import com.salino.sali.ui.components.salinoWebMaxWidth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -306,9 +307,17 @@ fun SettingsScreen(
                                         Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy))
                                     }
                                     IconButton(onClick = {
+                                        val inviteUrl = AppLinks.buildInviteUrl(uiState.inviteCode)
                                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"
-                                            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.settings_share_invite_message, uiState.inviteCode))
+                                            putExtra(
+                                                Intent.EXTRA_TEXT,
+                                                context.getString(
+                                                    R.string.settings_share_invite_message,
+                                                    uiState.inviteCode,
+                                                    inviteUrl
+                                                )
+                                            )
                                         }
                                         context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share)))
                                     }) {

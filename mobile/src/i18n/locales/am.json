@@ -177,7 +177,7 @@
   "settings_edit_household_name": "የቤት ስም አስተካክል",
   "settings_leave_household": "ቤት ለቅ",
   "settings_leave_household_confirm": "ይህን ቤት ለመልቀቅ እርግጠኛ ነዎት? ሁልጊዜ በኮድ መመለስ ወይም አዲስ መፍጠር ይችላሉ።",
-  "settings_share_invite_message": "ቤቴን በHaserli ተቀላቀሉ! ይህን ኮድ ተጠቀሙ: {{code}}",
+  "settings_share_invite_message": "ቤቴን በHaserli ተቀላቀሉ! የግብዣ ኮድ: {{code}}\n{{url}}",
   "settings_sign_out": "ውጣ",
   "settings_sign_out_confirm": "ከHaserli ይውጡ?",
   "settings_version": "ስሪት {{version}}",

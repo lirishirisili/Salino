@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["7BLH4NFZDD.com.salino.sali"],
+        "components": [
+          {
+            "/": "/join/*"
+          }
+        ]
+      }
+    ]
+  }
+}

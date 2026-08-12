@@ -175,7 +175,7 @@ const am = {
   settings_edit_household_name: 'የቤት ስም ያርትዑ',
   settings_leave_household: 'ቤቱን ይልቀቁ',
   settings_leave_household_confirm: 'ይህን ቤት መልቀቅ ይፈልጋሉ? ሁልጊዜ በግብዣ ኮድ መመለስ ወይም አዲስ መፍጠር ይችላሉ።',
-  settings_share_invite_message: 'በ Haserli ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ {0}',
+  settings_share_invite_message: 'በ Haserli ቤቴን ይቀላቀሉ! የግብዣ ኮድ: {0}\n{1}',
   settings_sign_out: 'ይውጡ',
   settings_sign_out_confirm: 'ከ Haserli ይውጡ?',
   settings_version: 'ስሪት {0}',

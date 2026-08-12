@@ -201,7 +201,7 @@
     <string name="settings_edit_household_name">Edit household name</string>
     <string name="settings_leave_household">Leave household</string>
     <string name="settings_leave_household_confirm">Are you sure you want to leave this household? You can always join again with an invite code or create a new one.</string>
-    <string name="settings_share_invite_message">Join my household on Haserli! Use this invite code: %1$s</string>
+    <string name="settings_share_invite_message">Join my household on Haserli! Invite code: %1$s\n%2$s</string>
     <string name="settings_sign_out">Sign out</string>
     <string name="settings_sign_out_confirm">Sign out of Haserli?</string>
     <string name="settings_version">Version %1$s</string>

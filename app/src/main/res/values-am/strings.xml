@@ -197,7 +197,7 @@
     <string name="settings_edit_household_name">የቤት ስም ያርትዑ</string>
     <string name="settings_leave_household">ቤቱን ይልቀቁ</string>
     <string name="settings_leave_household_confirm">ይህን ቤት መልቀቅ ይፈልጋሉ? ሁልጊዜ በግብዣ ኮድ መመለስ ወይም አዲስ መፍጠር ይችላሉ።</string>
-    <string name="settings_share_invite_message">በ Haserli ቤቴን ይቀላቀሉ! ይህን የግብዣ ኮድ ይጠቀሙ፡ %1$s</string>
+    <string name="settings_share_invite_message">በ Haserli ቤቴን ይቀላቀሉ! የግብዣ ኮድ: %1$s\n%2$s</string>
     <string name="settings_sign_out">ይውጡ</string>
     <string name="settings_sign_out_confirm">ከ Haserli ይውጡ?</string>
     <string name="settings_version">ስሪት %1$s</string>

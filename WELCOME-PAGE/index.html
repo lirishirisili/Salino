@@ -9,6 +9,7 @@
   <meta name="keywords" content="חסרלי, רשימת קניות משותפת, אפליקציית רשימת קניות, רשימת קניות לזוג, רשימת קניות למשפחה, רשימת קניות לבית, מצב סופר" />
   <meta name="author" content="חסרלי" />
   <meta name="theme-color" content="#0D9488" />
+  <base href="/" />
 
   <link rel="canonical" href="https://hsr.lirshir.com/" />
   <link rel="icon" type="image/png" href="favicon.png" />
@@ -416,6 +417,100 @@
       text-decoration: none;
     }
     .page-footer a:hover { text-decoration: underline; }
+    .deeplink-wrap {
+      min-height: 100dvh;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .deeplink-wrap[hidden] { display: none !important; }
+    html.join-route-pending #landing { display: none !important; }
+    html.join-route-pending #deeplink-wrap { display: flex !important; }
+    .deeplink-card {
+      text-align: center;
+    }
+    .deeplink-card .badge {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .deeplink-card h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+    .deeplink-card .about {
+      text-align: center;
+    }
+    .deeplink-card .meta {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(13, 148, 136, 0.14);
+    }
+    .deeplink-card .meta p {
+      font-size: 13px;
+      color: var(--on-surface-variant);
+      margin-bottom: 8px;
+    }
+    .deeplink-card .code {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: var(--primary);
+    }
+    .deeplink-card .actions {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .deeplink-card .primary,
+    .deeplink-card .secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+    }
+    .deeplink-card .primary {
+      background: var(--primary);
+      color: #fff;
+      width: min(100%, 320px);
+    }
+    .deeplink-card .secondary {
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--on-surface);
+      border: 1px solid rgba(13, 148, 136, 0.18);
+      width: min(100%, 320px);
+    }
+    .deeplink-card .footer-text {
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--on-surface-variant);
+      text-align: center;
+    }
+    .deeplink-card .store-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 4px;
+    }
     @media (max-width: 480px) {
       h1 { font-size: 20px; }
       h2 { font-size: 16px; }
@@ -431,6 +526,15 @@
   </style>
 </head>
 <body>
+  <script>
+    (function () {
+      var parts = location.pathname.replace(/^\/+|\/+$/g, "").split("/");
+      if (parts[0] === "join") {
+        document.documentElement.className = "join-route-pending";
+      }
+    })();
+  </script>
+  <div id="landing">
   <main class="card" id="top">
     <div class="brand">
       <div class="logo-wrap">
@@ -565,7 +669,52 @@
   <footer class="page-footer">
     <p>© חסרלי · <a href="https://hsr.lirshir.com/">hsr.lirshir.com</a></p>
   </footer>
+  </div>
 
+  <div id="deeplink-wrap" class="deeplink-wrap" hidden>
+    <main class="card deeplink-card">
+      <span id="app-badge" class="badge">חסרלי</span>
+      <h1 id="dl-title">הצטרפות לבית באפליקציה</h1>
+      <p id="dl-description" class="about">פתחו את חסרלי כדי לאשר את ההזמנה.</p>
+
+      <section id="dl-meta" class="meta" hidden>
+        <p id="dl-meta-label"></p>
+        <div id="dl-code" class="code" hidden></div>
+      </section>
+
+      <div class="actions">
+        <a id="dl-open-app" class="primary" href="haserli://">פתיחת האפליקציה</a>
+        <button id="dl-copy-code" class="secondary" type="button" hidden>העתקת קוד</button>
+
+        <div class="store-links">
+          <a
+            class="store-badge store-badge--apple"
+            id="dl-ios"
+            href="https://apps.apple.com/il/app/%D7%97%D7%A1%D7%A8%D7%9C%D7%99-%D7%A8%D7%A9%D7%99%D7%9E%D7%AA-%D7%A7%D7%A0%D7%99%D7%95%D7%AA/id6768352555?l=he"
+            rel="noopener"
+            aria-label="הורידו את חסרלי מ-App Store"
+          >
+            <img src="assets/app-store-badge.svg" alt="הורידו את חסרלי ב-App Store" width="180" height="60" />
+          </a>
+          <a
+            class="store-badge store-badge--google"
+            id="dl-android"
+            href="https://play.google.com/store/apps/details?id=com.salino.sali&amp;hl=he"
+            rel="noopener"
+            aria-label="הורידו את חסרלי מ-Google Play"
+          >
+            <img src="assets/google-play-badge.png" alt="הורידו את חסרלי ב-Google Play" width="180" height="60" />
+          </a>
+        </div>
+      </div>
+
+      <p id="dl-footer" class="footer-text">
+        אם האפליקציה לא נפתחת אוטומטית, השתמשו בכפתור למעלה או התקינו מהחנות למטה.
+      </p>
+    </main>
+  </div>
+
+  <script src="/link.js"></script>
   <script src="assets/screens-horizontal-scroll.js?v=5" defer></script>
 </body>
 </html>

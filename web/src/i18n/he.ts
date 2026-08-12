@@ -195,7 +195,7 @@ const he = {
   settings_edit_household_name: 'עריכת שם הבית',
   settings_leave_household: 'עזיבת הבית',
   settings_leave_household_confirm: 'בטוח שאתה רוצה לעזוב את הבית? תמיד תוכל להצטרף שוב עם קוד הזמנה או ליצור בית חדש.',
-  settings_share_invite_message: 'הצטרפו לבית שלי בחסרלי! השתמשו בקוד הזמנה: {0}',
+  settings_share_invite_message: 'הצטרפו לבית שלי בחסרלי! קוד הזמנה: {0}\n{1}',
   settings_sign_out: 'התנתקות',
   settings_sign_out_confirm: 'להתנתק מחסרלי?',
   settings_version: 'גרסה {0}',

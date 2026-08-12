@@ -175,7 +175,7 @@ const ru = {
   settings_edit_household_name: 'Изменить название дома',
   settings_leave_household: 'Покинуть дом',
   settings_leave_household_confirm: 'Вы уверены, что хотите покинуть этот дом? Вы всегда сможете вернуться по коду приглашения или создать новый дом.',
-  settings_share_invite_message: 'Присоединяйтесь к моему дому в Haserli! Используйте код приглашения: {0}',
+  settings_share_invite_message: 'Присоединяйтесь к моему дому в Haserli! Код приглашения: {0}\n{1}',
   settings_sign_out: 'Выйти',
   settings_sign_out_confirm: 'Выйти из Haserli?',
   settings_version: 'Версия {0}',

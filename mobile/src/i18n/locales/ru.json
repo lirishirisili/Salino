@@ -177,7 +177,7 @@
   "settings_edit_household_name": "Изменить название дома",
   "settings_leave_household": "Покинуть дом",
   "settings_leave_household_confirm": "Уверены, что хотите покинуть дом? Вы можете вернуться по коду или создать новый.",
-  "settings_share_invite_message": "Присоединяйтесь к моему дому в Haserli! Код приглашения: {{code}}",
+  "settings_share_invite_message": "Присоединяйтесь к моему дому в Haserli! Код приглашения: {{code}}\n{{url}}",
   "settings_sign_out": "Выйти",
   "settings_sign_out_confirm": "Выйти из Haserli?",
   "settings_version": "Версия {{version}}",

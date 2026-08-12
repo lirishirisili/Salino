@@ -14,6 +14,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { BrandLogo, SalinoPrimaryButton, SalinoSurfaceCard } from '../brand';
 import { BorderRadius, Layout, Typography, useThemeColors } from '../../theme';
+import { buildInviteUrl } from '../../constants/urls';
 
 export interface OnboardingGuideStep {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -51,8 +52,10 @@ export function OnboardingGuideDialog({
 
   const handleShare = async () => {
     if (!inviteCode) return;
+    const inviteUrl = buildInviteUrl(inviteCode);
     await Share.share({
-      message: t('settings_share_invite_message', { code: inviteCode }),
+      message: t('settings_share_invite_message', { code: inviteCode, url: inviteUrl }),
+      url: inviteUrl,
     });
   };
 

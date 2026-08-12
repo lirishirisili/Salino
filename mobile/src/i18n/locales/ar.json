@@ -177,7 +177,7 @@
   "settings_edit_household_name": "تعديل اسم البيت",
   "settings_leave_household": "مغادرة البيت",
   "settings_leave_household_confirm": "هل أنت متأكد من مغادرة البيت؟ يمكنك الانضمام مرة أخرى برمز دعوة أو إنشاء بيت جديد.",
-  "settings_share_invite_message": "انضموا لبيتي في حسرلي! استخدموا رمز الدعوة: {{code}}",
+  "settings_share_invite_message": "انضموا لبيتي في حسرلي! رمز الدعوة: {{code}}\n{{url}}",
   "settings_sign_out": "تسجيل الخروج",
   "settings_sign_out_confirm": "تسجيل الخروج من حسرلي؟",
   "settings_version": "الإصدار {{version}}",
