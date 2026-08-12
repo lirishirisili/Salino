@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Refresh App ID, purge stale profiles & orphan distribution certs.
-# Must enable Push Notifications BEFORE creating a new App Store profile —
-# otherwise archive fails with missing aps-environment.
+# Must enable required capabilities BEFORE creating a new App Store profile —
+# otherwise archive fails (e.g. missing aps-environment or associated-domains).
 set -euxo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -70,6 +70,10 @@ enable_one_capability "Push Notifications"
 echo "=== Enable Sign In with Apple ==="
 enable_one_capability "Sign In with Apple"
 
+# Required by expo associatedDomains (applinks:) from mobile/app.config.ts.
+echo "=== Enable Associated Domains (required for Universal Links) ==="
+enable_one_capability "Associated Domains"
+
 echo "--- Capabilities currently enabled on $BUNDLE_ID AFTER ---"
 app-store-connect bundle-ids capabilities "$BUNDLE_ID_RESOURCE" --json \
   | tee /tmp/caps_after.json
@@ -92,8 +96,19 @@ if ! grep -qE '"capabilityType"[[:space:]]*:[[:space:]]*"PUSH_NOTIFICATIONS"' /t
 fi
 echo "OK: Push Notifications is enabled on $BUNDLE_ID."
 
-# Profiles created before Push was enabled lack aps-environment — delete them all
-# so fetch-signing-files creates a fresh App Store profile with Push.
+if ! grep -qE '"capabilityType"[[:space:]]*:[[:space:]]*"ASSOCIATED_DOMAINS"' /tmp/caps_after.json; then
+  echo "ERROR: Associated Domains is NOT enabled on $BUNDLE_ID." >&2
+  echo "       Manual fix (required once):" >&2
+  echo "       1) https://developer.apple.com/account/resources/identifiers/list" >&2
+  echo "       2) Open App ID com.salino.sali" >&2
+  echo "       3) Enable Associated Domains → Save" >&2
+  echo "       4) Re-run this workflow" >&2
+  exit 1
+fi
+echo "OK: Associated Domains is enabled on $BUNDLE_ID."
+
+# Profiles created before required capabilities were enabled lack entitlements —
+# delete them so fetch-signing-files creates a fresh App Store profile.
 set +o pipefail
 app-store-connect bundle-ids profiles \
   --bundle-ids "$BUNDLE_ID_RESOURCE" \

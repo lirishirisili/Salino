@@ -93,6 +93,7 @@ When Apple approves a new train, raise `IOS_MARKETING_VERSION_MIN` and `expo.ver
 - **401 / invalid credentials** — Key ID must match the `.p8` file (wrong `AuthKey_*.p8` for the Key ID).
 - **Sign in with Apple missing** — enable on `com.salino.sali` in Apple Developer, then re-run.
 - **Push Notifications / `aps-environment` missing** — `expo-notifications` requires Push on the App ID. CI enables it in `ios-refresh-signing-prep.sh` and recreates the App Store profile; if archive still fails, enable Push Notifications manually on the App ID and delete old provisioning profiles.
+- **Associated Domains / `com.apple.developer.associated-domains` missing** — Universal Links (`applinks:` in `mobile/app.config.ts`) require Associated Domains on the App ID. CI enables it in `ios-refresh-signing-prep.sh` and recreates the App Store profile; if archive still fails, enable Associated Domains manually and delete old provisioning profiles.
 
 ## Runner
 
