@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Keyboard,
   KeyboardAvoidingView,
+  useWindowDimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -9,14 +10,14 @@ import {
   Switch,
   View,
 } from 'react-native';
-import { Text, TextInput } from 'react-native-paper';
+import { Button, Dialog, Portal, Text, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
-import { ItemCategory, ItemUnit } from '../../src/models';
-import { detectCategory } from '../../src/services';
+import { DuplicateReason, ItemCategory, ItemUnit, type DuplicateMatch, type ShoppingItem } from '../../src/models';
+import { detectCategory, findDuplicate } from '../../src/services';
 import {
   ItemNameAutocompleteField,
   SalinoGradientBackground,
@@ -41,7 +42,15 @@ const ALL_UNITS = Object.values(ItemUnit);
 const AUTOCOMPLETE_DEBOUNCE_MS = 80;
 const NAME_DERIVATIVES_DEBOUNCE_MS = 280;
 
+type SaveOverrides = {
+  name?: string;
+  quantity?: number;
+  unit?: ItemUnit | null;
+  category?: ItemCategory;
+};
+
 export default function AddItemScreen() {
+  const { height: windowHeight } = useWindowDimensions();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{
     prefillName?: string;
@@ -55,7 +64,7 @@ export default function AddItemScreen() {
   const isDark = useIsDark();
 
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
-  const { addItem, activeItems, boughtItems, recurringItems } = useShoppingStore();
+  const { addItem, updateItem, activeItems, boughtItems, recurringItems } = useShoppingStore();
 
   const [name, setName] = useState(params.prefillName || '');
   const [quantity, setQuantity] = useState(params.prefillQuantity || '1');
@@ -72,6 +81,18 @@ export default function AddItemScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autoDetected, setAutoDetected] = useState(false);
+
+  const [duplicateDialog, setDuplicateDialog] = useState<
+    null | { duplicateMatch: DuplicateMatch; addQuantity: number; overrides?: SaveOverrides }
+  >(null);
+
+  // If the soft keyboard is open (e.g. user typing), dismiss it when we show the dialog,
+  // so the dialog can fully fit on screen.
+  useEffect(() => {
+    if (duplicateDialog != null) {
+      Keyboard.dismiss();
+    }
+  }, [duplicateDialog]);
 
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [isAutocompleteVisible, setIsAutocompleteVisible] = useState(false);
@@ -148,7 +169,7 @@ export default function AddItemScreen() {
     [refreshAutocomplete, scheduleNameDerivatives],
   );
 
-  const saveItem = useCallback(
+  const performSave = useCallback(
     async (overrides?: {
       name?: string;
       quantity?: number;
@@ -192,7 +213,7 @@ export default function AddItemScreen() {
           });
         }
         router.back();
-      } catch (e) {
+      } catch {
         setError('generic');
       } finally {
         setIsSaving(false);
@@ -213,8 +234,73 @@ export default function AddItemScreen() {
     ],
   );
 
+  const mergeWithExisting = useCallback(
+    async (existing: ShoppingItem, addQuantity: number) => {
+      if (!activeHouseholdId || isSaving) return;
+      const mergedNote = existing.note.trim() ? existing.note : note.trim();
+      const mergedQuantity = existing.quantity + addQuantity;
+
+      setIsSaving(true);
+      setError(null);
+      try {
+        await updateItem(activeHouseholdId, {
+          ...existing,
+          quantity: mergedQuantity,
+          note: mergedNote,
+        });
+        if (isRecurring) {
+          const { recurringRepository } = await import('../../src/repositories');
+          await recurringRepository.upsertRecurringItem(activeHouseholdId, {
+            name: existing.name,
+            quantity: mergedQuantity,
+            unit: existing.unit,
+            category: existing.category,
+            note: mergedNote,
+            intervalDays: parseInt(intervalDays) || 7,
+          });
+        }
+        router.back();
+      } catch {
+        setError('generic');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [activeHouseholdId, intervalDays, isRecurring, isSaving, note, updateItem],
+  );
+
+  const attemptSave = useCallback(
+    (overrides?: SaveOverrides) => {
+      const itemName = (overrides?.name ?? name).trim();
+      if (!itemName) {
+        setError('empty_name');
+        return;
+      }
+      if (!activeHouseholdId || isSaving) return;
+
+      const itemQuantity = overrides?.quantity ?? (parseFloat(quantity) || 1);
+      const dup = findDuplicate(itemName, activeItems);
+      if (dup?.reason === DuplicateReason.EXACT_DUPLICATE) {
+        setDuplicateDialog({ duplicateMatch: dup, addQuantity: itemQuantity, overrides });
+        return;
+      }
+
+      void performSave(overrides);
+    },
+    [
+      activeHouseholdId,
+      activeItems,
+      isSaving,
+      mergeWithExisting,
+      name,
+      performSave,
+      quantity,
+      t,
+    ],
+  );
+
   const handleSave = () => {
-    void saveItem();
+    attemptSave();
   };
 
   const handleSuggestionSelected = useCallback(
@@ -232,7 +318,7 @@ export default function AddItemScreen() {
         }
       }
 
-      void saveItem({
+      attemptSave({
         name: suggestion.displayName,
         quantity: suggestion.quantity ?? (parseFloat(quantity) || 1),
         unit:
@@ -242,7 +328,7 @@ export default function AddItemScreen() {
         category: itemCategory,
       });
     },
-    [category, quantity, saveItem, unit],
+    [attemptSave, category, quantity, unit],
   );
 
   const errorText =
@@ -251,6 +337,8 @@ export default function AddItemScreen() {
       : error === 'generic'
       ? t('error_generic')
       : null;
+
+  const duplicateDialogMaxHeight = Math.min(520, Math.max(240, windowHeight * 0.58));
 
   return (
     <SalinoGradientBackground>
@@ -484,8 +572,104 @@ export default function AddItemScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Portal>
+        <Dialog
+          visible={duplicateDialog != null}
+          onDismiss={() => setDuplicateDialog(null)}
+          style={{ marginHorizontal: 16 }}
+        >
+          {duplicateDialog != null && (
+            <>
+              <Dialog.Content style={{ paddingHorizontal: 0, maxHeight: duplicateDialogMaxHeight }}>
+                <ScrollView
+                  bounces={false}
+                  contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8 }}
+                >
+                  <SalinoSurfaceCard padding={16}>
+                    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                      <MaterialCommunityIcons
+                        name="alert-circle-outline"
+                        size={26}
+                        color={colors.error}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={[
+                            Typography.titleMedium,
+                            { color: colors.onSurface } as any,
+                          ]}
+                        >
+                          {t('duplicate_warning_title')}
+                        </Text>
+                        <Text
+                          style={[
+                            Typography.bodyMedium,
+                            { color: colors.onSurfaceVariant, marginTop: 6 } as any,
+                          ]}
+                        >
+                          {duplicateDialog.duplicateMatch.item.name} ·{' '}
+                          {formatQuantityForDisplay(duplicateDialog.duplicateMatch.item.quantity)}
+                        </Text>
+                        <Text
+                          style={[
+                            Typography.bodySmall,
+                            { color: colors.onSurfaceVariant, marginTop: 8 } as any,
+                          ]}
+                        >
+                          {t('duplicate_confirm_message', {
+                            name: duplicateDialog.duplicateMatch.item.name,
+                            quantity: formatQuantityForDisplay(
+                              duplicateDialog.duplicateMatch.item.quantity,
+                            ),
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  </SalinoSurfaceCard>
+                </ScrollView>
+              </Dialog.Content>
+
+              <Dialog.Actions style={{ paddingHorizontal: 16, paddingBottom: 6 }}>
+                <View style={{ width: '100%', gap: 10 }}>
+                  <SalinoPrimaryButton
+                    text={t('duplicate_merge_action')}
+                    onPress={() => {
+                      const state = duplicateDialog;
+                      setDuplicateDialog(null);
+                      if (state)
+                        void mergeWithExisting(state.duplicateMatch.item, state.addQuantity);
+                    }}
+                  />
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      const state = duplicateDialog;
+                      setDuplicateDialog(null);
+                      if (state) void performSave(state.overrides);
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    {t('duplicate_add_anyway')}
+                  </Button>
+                  <Button onPress={() => setDuplicateDialog(null)} style={{ alignSelf: 'flex-end' }}>
+                    {t('cancel')}
+                  </Button>
+                </View>
+              </Dialog.Actions>
+            </>
+          )}
+        </Dialog>
+      </Portal>
     </SalinoGradientBackground>
   );
+}
+
+function formatQuantityForDisplay(quantity: number): string {
+  if (Number.isNaN(quantity) || !Number.isFinite(quantity)) return String(quantity);
+  const rounded = Math.round(quantity);
+  const isInt = Math.abs(quantity - rounded) < 1e-9;
+  return isInt ? String(rounded) : String(quantity);
 }
 
 function Chip({

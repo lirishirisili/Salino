@@ -49,7 +49,9 @@ fun BottomBannerAd(
     }
 
     DisposableEffect(Unit) {
+        Log.i(TAG_HOST, "component mount collapseWhenFailed=$collapseWhenFailed")
         onDispose {
+            Log.i(TAG_HOST, "component unmount")
             onAdVisible?.invoke(false)
         }
     }
@@ -67,10 +69,13 @@ fun BottomBannerAd(
             ),
         factory = { ctx ->
             FrameLayout(ctx).apply {
+                clipChildren = false
+                clipToPadding = false
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
                 )
+                Log.i(TAG_HOST, "banner native view creation")
                 tag = BannerHostController(
                     host = this,
                     onLoaded = { adLoaded = true; loadFailed = false },
@@ -110,6 +115,7 @@ private class BannerHostController(
         if (!UnityAds.isInitialized) {
             if (attempt < MAX_INIT_WAIT_ATTEMPTS) {
                 attempt += 1
+                Log.w(TAG, "banner load waiting for initialization retry=$attempt")
                 handler.postDelayed({ attemptLoad() }, RETRY_DELAY_MS)
             } else {
                 Log.w(TAG, "Unity Ads not initialized; giving up banner load")
@@ -126,8 +132,12 @@ private class BannerHostController(
         }
 
         val showListener = object : BannerShowListener {
-            override fun onImpression(ad: BannerAd) = Unit
-            override fun onClicked(ad: BannerAd) = Unit
+            override fun onImpression(ad: BannerAd) {
+                Log.i(TAG, "banner impression placement=${UnityAdsConfig.BANNER_PLACEMENT_ID}")
+            }
+            override fun onClicked(ad: BannerAd) {
+                Log.i(TAG, "banner click placement=${UnityAdsConfig.BANNER_PLACEMENT_ID}")
+            }
             override fun onFailedToShow(ad: BannerAd, error: UnityAdsError) {
                 Log.e(TAG, "Banner failed to show: ${error.code} ${error.message}")
                 if (!destroyed) onFailed()
@@ -169,6 +179,11 @@ private class BannerHostController(
                                 FrameLayout.LayoutParams.MATCH_PARENT,
                             ),
                         )
+                        Log.i(
+                            TAG,
+                            "banner view attached to UI host=${host.width}x${host.height} " +
+                                "adView=${adView.width}x${adView.height}",
+                        )
                         onLoaded()
                     }
                 }
@@ -187,12 +202,14 @@ private class BannerHostController(
     }
 
     companion object {
-        private const val TAG = "UnityAdsBanner"
+        private const val TAG = "HaserliUnityAds"
         private const val MAX_INIT_WAIT_ATTEMPTS = 40
         private const val MAX_LOAD_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 2_000L
     }
 }
+
+private const val TAG_HOST = "HaserliUnityAds"
 
 private fun Context.findActivity(): Activity? {
     var current: Context? = this

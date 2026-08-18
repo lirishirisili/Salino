@@ -94,6 +94,7 @@
   "duplicate_warning_bought": "Este artículo ya fue comprado",
   "duplicate_merge_action": "Aumentar la cantidad existente",
   "duplicate_add_anyway": "Agregar de todos modos",
+  "duplicate_confirm_message": "\"{{name}}\" ya está en la lista (cant.: {{quantity}}). ¿Qué quieres hacer?",
   "suggestions_title": "Sugerencias inteligentes",
   "autocomplete_section_household": "De tu hogar",
   "autocomplete_section_catalog": "Sugerencias",

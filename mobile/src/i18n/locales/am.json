@@ -94,6 +94,7 @@
   "duplicate_warning_bought": "ይህ ቀድሞ ተገዝቷል",
   "duplicate_merge_action": "ያለውን ብዛት ይጨምሩ",
   "duplicate_add_anyway": "ለማንኛውም ጨምር",
+  "duplicate_confirm_message": "\"{{name}}\" አስቀድሞ በዝርዝሩ ውስጥ አለ (ብዛት: {{quantity}}). ምን ማድረግ ይፈልጋሉ?",
   "suggestions_title": "ብልጥ ጥቆማዎች",
   "autocomplete_section_household": "ከቤትዎ",
   "autocomplete_section_catalog": "ጥቆማዎች",

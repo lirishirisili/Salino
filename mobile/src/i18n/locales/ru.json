@@ -94,6 +94,7 @@
   "duplicate_warning_bought": "Этот товар уже куплен",
   "duplicate_merge_action": "Увеличить количество вместо этого",
   "duplicate_add_anyway": "Добавить всё равно",
+  "duplicate_confirm_message": "«{{name}}» уже есть в списке (кол-во: {{quantity}}). Что сделать?",
   "suggestions_title": "Умные подсказки",
   "autocomplete_section_household": "Из вашего дома",
   "autocomplete_section_catalog": "Подсказки",

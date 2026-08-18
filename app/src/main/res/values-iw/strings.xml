@@ -102,6 +102,7 @@
     <string name="duplicate_warning_bought">הפריט הזה כבר נקנה</string>
     <string name="duplicate_merge_action">להגדיל את הכמות בפריט הקיים</string>
     <string name="duplicate_add_anyway">להוסיף בכל זאת</string>
+    <string name="duplicate_confirm_message">"%1$s" כבר נמצא ברשימה (כמות: %2$s). מה לעשות?</string>
     <string name="autocomplete_section_household">מהבית שלכם</string>
     <string name="autocomplete_section_catalog">הצעות</string>
     <string name="suggestions_title">הצעות חכמות</string>

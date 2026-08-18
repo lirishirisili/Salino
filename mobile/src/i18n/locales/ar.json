@@ -94,6 +94,7 @@
   "duplicate_warning_bought": "تم شراء هذا المنتج بالفعل",
   "duplicate_merge_action": "زيادة الكمية بدلاً من ذلك",
   "duplicate_add_anyway": "إضافة على أي حال",
+  "duplicate_confirm_message": "\"{{name}}\" موجود بالفعل في القائمة (الكمية: {{quantity}}). ماذا تريد أن تفعل؟",
   "suggestions_title": "اقتراحات ذكية",
   "autocomplete_section_household": "من بيتكم",
   "autocomplete_section_catalog": "اقتراحات",

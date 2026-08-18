@@ -38,6 +38,8 @@ import com.salino.sali.domain.service.DuplicateDetector
 
 import com.salino.sali.domain.service.DuplicateMatch
 
+import com.salino.sali.domain.service.DuplicateReason
+
 import com.salino.sali.domain.service.ItemNameAutocompleteEngine
 
 import com.salino.sali.domain.service.VoiceInputParser
@@ -85,6 +87,8 @@ data class AddItemState(
     val note: String = "",
 
     val duplicateMatch: DuplicateMatch? = null,
+
+    val duplicateConfirmDialog: DuplicateMatch? = null,
 
     val suggestions: List<SuggestionItem> = emptyList(),
 
@@ -225,6 +229,32 @@ class AddItemViewModel @Inject constructor(
         nameDerivativesJob?.cancel()
 
         val fields = resolveAutocompleteFields(suggestion)
+
+        val exactDuplicate = findExactDuplicate(fields.name)
+
+        if (exactDuplicate != null) {
+
+            _uiState.update {
+
+                it.copy(
+
+                    name = fields.name,
+
+                    quantity = formatQuantityString(fields.quantity),
+
+                    unit = fields.unit,
+
+                    category = fields.category,
+
+                    duplicateConfirmDialog = exactDuplicate
+
+                )
+
+            }
+
+            return
+
+        }
 
         addItemDirect(
 
@@ -452,6 +482,58 @@ class AddItemViewModel @Inject constructor(
 
 
 
+    fun dismissDuplicateConfirmDialog() {
+
+        _uiState.update { it.copy(duplicateConfirmDialog = null) }
+
+    }
+
+
+
+    fun confirmAddDespiteDuplicate() {
+
+        val state = _uiState.value
+
+        _uiState.update { it.copy(duplicateConfirmDialog = null) }
+
+        addItemDirect(
+
+            name = state.name,
+
+            quantity = parseQuantity(state.quantity) ?: 1.0,
+
+            unit = state.unit,
+
+            category = state.category
+
+        )
+
+    }
+
+
+
+    fun confirmMergeDuplicate() {
+
+        val dialogMatch = _uiState.value.duplicateConfirmDialog ?: return
+
+        _uiState.update {
+
+            it.copy(
+
+                duplicateMatch = dialogMatch,
+
+                duplicateConfirmDialog = null
+
+            )
+
+        }
+
+        mergeWithDuplicate()
+
+    }
+
+
+
     fun addItem() {
 
         val state = _uiState.value
@@ -459,6 +541,18 @@ class AddItemViewModel @Inject constructor(
         if (state.name.isBlank()) {
 
             _uiState.value = state.copy(errorMessage = "empty_name")
+
+            return
+
+        }
+
+
+
+        val exactDuplicate = findExactDuplicate(state.name)
+
+        if (exactDuplicate != null) {
+
+            _uiState.update { it.copy(duplicateConfirmDialog = exactDuplicate) }
 
             return
 
@@ -833,6 +927,22 @@ class AddItemViewModel @Inject constructor(
             }
 
         }
+
+    }
+
+
+
+    private fun findExactDuplicate(name: String): DuplicateMatch? {
+
+        val match = duplicateDetector.findDuplicate(
+
+            draftName = name,
+
+            existingItems = activeItems
+
+        )
+
+        return match?.takeIf { it.reason == DuplicateReason.EXACT_DUPLICATE }
 
     }
 

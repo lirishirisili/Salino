@@ -13,6 +13,7 @@ let initPromise: Promise<boolean> | null = null;
 const ADS_INIT_TIMEOUT_MS = 15_000;
 const ATT_ACTIVE_WAIT_MS = 10_000;
 const ATT_PROMPT_DELAY_MS = 1500;
+const LOG = '[HaserliUnityAds]';
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -75,7 +76,16 @@ async function ensureIosTrackingPermission(): Promise<void> {
  * Android module still forces Unity test mode when the package is debuggable.
  */
 export function initUnityAds(): Promise<boolean> {
-  if (Constants.appOwnership === 'expo' || !isUnityAdsAvailable()) {
+  const nativeAvailable = isUnityAdsAvailable();
+  console.log(
+    `${LOG} JS initialization starting gameId=${UNITY_ADS_GAME_ID} ` +
+      `jsTestMode=${String(__DEV__)} platform=${Platform.OS} ` +
+      `appOwnership=${Constants.appOwnership} nativeAvailable=${nativeAvailable}`,
+  );
+  if (Constants.appOwnership === 'expo' || !nativeAvailable) {
+    console.warn(
+      `${LOG} JS initialization skipped (Expo Go or native module missing)`,
+    );
     return Promise.resolve(false);
   }
   if (!initPromise) {
@@ -87,12 +97,19 @@ export function initUnityAds(): Promise<boolean> {
           'Unity Ads init',
         ),
       )
-      .then(() => true)
+      .then((nativeResult) => {
+        console.log(
+          `${LOG} JS initialization success gameId=${UNITY_ADS_GAME_ID} nativeResult=${nativeResult}`,
+        );
+        return true;
+      })
       .catch((err) => {
         initPromise = null;
-        console.warn('Unity Ads init failed:', err);
+        console.warn(`${LOG} JS initialization failure gameId=${UNITY_ADS_GAME_ID}`, err);
         return false;
       });
+  } else {
+    console.log(`${LOG} JS initialization already in flight/complete; reusing promise`);
   }
   return initPromise;
 }

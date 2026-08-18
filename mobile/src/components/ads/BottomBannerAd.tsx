@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { UnityAdsBannerView } from '../../../modules/unity-ads';
 import {
   UNITY_ADS_BANNER_PLACEMENT_ID,
   UNITY_ADS_BANNER_RESERVED_HEIGHT,
+  UNITY_ADS_GAME_ID,
 } from '../../config/unityAds';
 import { initUnityAds } from '../../services/initUnityAds';
 
@@ -15,6 +16,7 @@ type BottomBannerAdProps = {
 
 const BANNER_LOAD_TIMEOUT_MS = 15_000;
 const MAX_LOAD_ATTEMPTS = 3;
+const LOG = '[HaserliUnityAds]';
 
 export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   const insets = useSafeAreaInsets();
@@ -22,11 +24,32 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   const [sdkReady, setSdkReady] = useState(false);
   const [adLoaded, setAdLoaded] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const mountId = useRef(`banner-${Date.now()}`).current;
+
+  useEffect(() => {
+    console.log(
+      `${LOG} component mount id=${mountId} visible=${visible} ` +
+        `gameId=${UNITY_ADS_GAME_ID} placement=${UNITY_ADS_BANNER_PLACEMENT_ID} ` +
+        `platform=${Platform.OS} appOwnership=${Constants.appOwnership} ` +
+        `jsDev=${String(__DEV__)} insetBottom=${insets.bottom}`,
+    );
+    return () => {
+      console.log(`${LOG} component unmount id=${mountId} sdkReady was ${sdkReady} adLoaded=${adLoaded}`);
+    };
+    // Mount/unmount diagnostics only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    console.log(`${LOG} waiting for Unity Ads initialization before banner load`);
     initUnityAds().then((ok) => {
-      if (!cancelled && ok) {
+      if (cancelled) {
+        console.log(`${LOG} init resolved after unmount; ignoring ok=${ok}`);
+        return;
+      }
+      console.log(`${LOG} initialization gate ok=${ok}; banner load allowed=${ok}`);
+      if (ok) {
         setSdkReady(true);
       }
     });
@@ -41,53 +64,73 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     }
     const timer = setTimeout(() => {
       if (attempt + 1 < MAX_LOAD_ATTEMPTS) {
-        console.warn(`Unity banner load timed out; retry ${attempt + 1}`);
+        console.warn(`${LOG} banner load timed out; retry ${attempt + 1}`);
         setAdLoaded(false);
         setAttempt((value) => value + 1);
         return;
       }
-      console.warn('Unity banner load timed out');
+      console.warn(`${LOG} banner load timed out after ${MAX_LOAD_ATTEMPTS} attempts`);
       setFailed(true);
     }, BANNER_LOAD_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [sdkReady, failed, adLoaded, attempt]);
 
-  if (
-    !visible ||
-    !sdkReady ||
-    failed ||
-    Constants.appOwnership === 'expo' ||
-    Platform.OS === 'web'
-  ) {
+  const slotHeight = UNITY_ADS_BANNER_RESERVED_HEIGHT + insets.bottom;
+  const shouldShowSlot = adLoaded;
+
+  if (!visible) {
+    console.log(`${LOG} skip render: visible=false`);
+    return null;
+  }
+  if (Constants.appOwnership === 'expo' || Platform.OS === 'web') {
+    console.log(`${LOG} skip render: expo/web ownership=${Constants.appOwnership}`);
+    return null;
+  }
+  if (!sdkReady) {
+    console.log(`${LOG} skip render: waiting for initialization success`);
+    return null;
+  }
+  if (failed) {
+    console.log(`${LOG} skip render: banner failed after retries`);
     return null;
   }
 
-  // Only occupy layout space after a successful load; load off-screen until then.
   return (
     <View
+      collapsable={false}
+      pointerEvents={shouldShowSlot ? 'box-none' : 'none'}
+      onLayout={(event) => {
+        const { width, height, x, y } = event.nativeEvent.layout;
+        console.log(
+          `${LOG} banner slot layout width=${width} height=${height} x=${x} y=${y} ` +
+            `reserved=${UNITY_ADS_BANNER_RESERVED_HEIGHT} insetBottom=${insets.bottom} ` +
+            `adLoaded=${adLoaded}`,
+        );
+      }}
       style={[
         styles.wrap,
-        adLoaded
-          ? {
-              height: UNITY_ADS_BANNER_RESERVED_HEIGHT + insets.bottom,
-              paddingBottom: insets.bottom,
-            }
-          : styles.loadingSlot,
+        {
+          height: shouldShowSlot ? slotHeight : 0,
+          paddingBottom: shouldShowSlot ? insets.bottom : 0,
+          minHeight: shouldShowSlot ? UNITY_ADS_BANNER_RESERVED_HEIGHT : 0,
+          overflow: shouldShowSlot ? 'visible' : 'hidden',
+        },
       ]}
-      pointerEvents={adLoaded ? 'box-none' : 'none'}
-      accessibilityElementsHidden={!adLoaded}
-      importantForAccessibility={adLoaded ? 'auto' : 'no-hide-descendants'}
     >
       <UnityAdsBannerView
         key={`unity-banner-${attempt}`}
+        collapsable={false}
         placementId={UNITY_ADS_BANNER_PLACEMENT_ID}
-        style={styles.banner}
+        style={[styles.banner, { opacity: shouldShowSlot ? 1 : 0 }]}
         onAdLoaded={() => {
+          console.log(
+            `${LOG} JS onAdLoaded placement=${UNITY_ADS_BANNER_PLACEMENT_ID} attempt=${attempt}`,
+          );
           setFailed(false);
           setAdLoaded(true);
         }}
         onAdFailedToLoad={(event) => {
-          console.warn('Unity banner failed:', event?.nativeEvent);
+          console.warn(`${LOG} JS onAdFailedToLoad`, event?.nativeEvent);
           setAdLoaded(false);
           if (attempt + 1 < MAX_LOAD_ATTEMPTS) {
             setAttempt((value) => value + 1);
@@ -105,17 +148,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    overflow: 'visible',
     backgroundColor: 'transparent',
-  },
-  // Load without reserving list/FAB layout space; expand only after onAdLoaded.
-  loadingSlot: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: UNITY_ADS_BANNER_RESERVED_HEIGHT,
-    opacity: 0,
+    zIndex: 2,
+    elevation: 2,
   },
   banner: {
     width: 320,

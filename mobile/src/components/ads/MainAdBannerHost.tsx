@@ -20,6 +20,11 @@ export function MainAdBannerHost({ children }: MainAdBannerHostProps) {
   const screenName = segments[segments.length - 1];
   const showBanner = BANNER_SCREEN_NAMES.has(screenName);
 
+  console.log(
+    `[HaserliUnityAds] MainAdBannerHost screen=${String(screenName)} ` +
+      `showBanner=${showBanner} segments=${segments.join('/')}`,
+  );
+
   return (
     <View style={styles.root}>
       <View style={styles.content}>{children}</View>

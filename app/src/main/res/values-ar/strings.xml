@@ -100,6 +100,7 @@
     <string name="duplicate_warning_bought">هذا المنتج تم شراؤه بالفعل</string>
     <string name="duplicate_merge_action">زيادة الكمية الحالية بدلاً من ذلك</string>
     <string name="duplicate_add_anyway">أضف على أي حال</string>
+    <string name="duplicate_confirm_message">"%1$s" موجود بالفعل في القائمة (الكمية: %2$s). ماذا تريد أن تفعل؟</string>
     <string name="autocomplete_section_household">من بيتكم</string>
     <string name="autocomplete_section_catalog">اقتراحات</string>
     <string name="suggestions_title">اقتراحات ذكية</string>

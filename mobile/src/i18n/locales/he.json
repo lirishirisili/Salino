@@ -99,6 +99,7 @@
   "duplicate_warning_bought": "הפריט הזה כבר נקנה",
   "duplicate_merge_action": "להגדיל את הכמות בפריט הקיים",
   "duplicate_add_anyway": "להוסיף בכל זאת",
+  "duplicate_confirm_message": "\"{{name}}\" כבר נמצא ברשימה (כמות: {{quantity}}). מה לעשות?",
   "suggestions_title": "הצעות חכמות",
   "autocomplete_section_household": "מהבית שלכם",
   "autocomplete_section_catalog": "הצעות",

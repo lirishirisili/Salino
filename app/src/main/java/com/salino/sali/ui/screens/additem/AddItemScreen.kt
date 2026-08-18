@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -46,6 +47,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,6 +80,7 @@ import com.salino.sali.ui.components.salinoWebMaxWidth
 import com.salino.sali.ui.components.salinoWebOutlinedFieldColors
 import com.salino.sali.ui.components.SuggestionSection
 import com.salino.sali.domain.service.DuplicateReason
+import com.salino.sali.util.formatQuantity
 import java.util.Locale
 
 private fun getAppLocale(): Locale {
@@ -290,6 +293,44 @@ fun AddItemScreen(
                     )
                 }
             }
+        }
+
+        uiState.duplicateConfirmDialog?.let { duplicate ->
+            AlertDialog(
+                onDismissRequest = viewModel::dismissDuplicateConfirmDialog,
+                text = {
+                    DuplicateWarningCard(
+                        duplicateMatch = duplicate,
+                        title = stringResource(R.string.duplicate_warning_title),
+                        actionLabel = null,
+                        onMerge = null,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                },
+                confirmButton = {
+                    Column(horizontalAlignment = Alignment.End) {
+                        SalinoPrimaryButton(
+                            text = stringResource(R.string.duplicate_merge_action),
+                            onClick = viewModel::confirmMergeDuplicate,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        TextButton(
+                            onClick = viewModel::confirmAddDespiteDuplicate
+                        ) {
+                            Text(
+                                text = stringResource(R.string.duplicate_add_anyway),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = viewModel::dismissDuplicateConfirmDialog) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
         }
     }
 }

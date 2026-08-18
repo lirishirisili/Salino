@@ -15,6 +15,11 @@ class UnityAdsModule : Module() {
 
     AsyncFunction("initialize") { gameId: String, testMode: Boolean, promise: Promise ->
       if (isInitialized && initializedGameId == gameId) {
+        Log.i(
+          TAG,
+          "initialize skipped (already initialized) gameId=$gameId " +
+            "unityIsInitialized=${UnityAds.isInitialized} testModeWas=$lastTestMode",
+        )
         promise.resolve(true)
         return@AsyncFunction
       }
@@ -25,10 +30,12 @@ class UnityAdsModule : Module() {
       // Debug APKs embed a production JS bundle (__DEV__=false). Always enable Unity
       // test mode when the Android package is debuggable so banners actually fill.
       val effectiveTestMode = testMode || debuggable
+      lastTestMode = effectiveTestMode
 
       Log.i(
         TAG,
-        "Initializing Unity Ads gameId=$gameId testMode=$effectiveTestMode (js=$testMode debuggable=$debuggable)",
+        "initialization starting gameId=$gameId testMode=$effectiveTestMode " +
+          "(jsTestMode=$testMode debuggable=$debuggable alreadyInitialized=${UnityAds.isInitialized})",
       )
       UnityAds.debugMode = debuggable
 
@@ -40,7 +47,11 @@ class UnityAdsModule : Module() {
           override fun onInitializationComplete() {
             initializedGameId = gameId
             isInitialized = true
-            Log.i(TAG, "Unity Ads initialized (testMode=$effectiveTestMode)")
+            Log.i(
+              TAG,
+              "initialization success gameId=$gameId testMode=$effectiveTestMode " +
+                "unityIsInitialized=${UnityAds.isInitialized}",
+            )
             promise.resolve(true)
           }
 
@@ -49,7 +60,11 @@ class UnityAdsModule : Module() {
             message: String,
           ) {
             isInitialized = false
-            Log.e(TAG, "Unity Ads init failed: $error - $message")
+            Log.e(
+              TAG,
+              "initialization failure gameId=$gameId testMode=$effectiveTestMode " +
+                "error=$error message=$message unityIsInitialized=${UnityAds.isInitialized}",
+            )
             promise.reject(
               "ERR_UNITY_ADS_INIT",
               "Unity Ads failed to initialize: $error - $message",
@@ -66,12 +81,18 @@ class UnityAdsModule : Module() {
       Prop("placementId") { view: UnityAdsView, placementId: String? ->
         view.setPlacementId(placementId)
       }
+
+      OnViewDestroys { view: UnityAdsView ->
+        Log.i(TAG, "component unmount (native OnViewDestroys)")
+        view.destroyBanner("OnViewDestroys")
+      }
     }
   }
 
   companion object {
-    private const val TAG = "UnityAdsModule"
+    private const val TAG = "HaserliUnityAds"
     private var initializedGameId: String? = null
     private var isInitialized = false
+    private var lastTestMode: Boolean? = null
   }
 }

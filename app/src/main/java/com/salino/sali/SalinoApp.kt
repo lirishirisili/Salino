@@ -30,25 +30,37 @@ class SalinoApp : Application() {
             Log.e(TAG, "Firebase Analytics init failed", e)
         }
         try {
+            Log.i(
+                TAG,
+                "HaserliUnityAds initialization starting gameId=${UnityAdsConfig.ANDROID_GAME_ID} " +
+                    "testMode=${BuildConfig.DEBUG}",
+            )
             UnityAds.initialize(
                 applicationContext,
                 UnityAdsConfig.ANDROID_GAME_ID,
                 BuildConfig.DEBUG,
                 object : IUnityAdsInitializationListener {
                     override fun onInitializationComplete() {
-                        Log.d(TAG, "Unity Ads initialized")
+                        Log.i(
+                            TAG,
+                            "HaserliUnityAds initialization success gameId=${UnityAdsConfig.ANDROID_GAME_ID} " +
+                                "testMode=${BuildConfig.DEBUG}",
+                        )
                     }
 
                     override fun onInitializationFailed(
                         error: UnityAds.UnityAdsInitializationError,
                         message: String,
                     ) {
-                        Log.e(TAG, "Unity Ads init failed: $error - $message")
+                        Log.e(
+                            TAG,
+                            "HaserliUnityAds initialization failure error=$error message=$message",
+                        )
                     }
                 },
             )
         } catch (e: Throwable) {
-            Log.e(TAG, "Unity Ads init failed", e)
+            Log.e(TAG, "HaserliUnityAds initialization failure", e)
         }
         try {
             EntryPointAccessors.fromApplication(this, AutocompleteWarmupEntryPoint::class.java)
