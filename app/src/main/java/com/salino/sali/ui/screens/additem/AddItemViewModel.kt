@@ -28,7 +28,7 @@ import com.salino.sali.domain.repository.SuggestionsRepository
 
 import com.salino.sali.data.service.CategoryDetectionCoordinator
 
-import com.salino.sali.data.service.ItemNameAutocompleteStore
+import com.salino.sali.data.service.HouseholdHistoryIndex
 
 import com.salino.sali.domain.model.ItemNameAutocompleteSource
 
@@ -59,6 +59,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 import kotlinx.coroutines.Dispatchers
+
+import kotlinx.coroutines.flow.combine
 
 import kotlinx.coroutines.flow.first
 
@@ -134,9 +136,7 @@ class AddItemViewModel @Inject constructor(
 
     private val voiceInputParser: VoiceInputParser,
 
-    private val autocompleteEngine: ItemNameAutocompleteEngine,
-
-    private val autocompleteStore: ItemNameAutocompleteStore
+    private val autocompleteEngine: ItemNameAutocompleteEngine
 
 ) : ViewModel() {
 
@@ -156,6 +156,8 @@ class AddItemViewModel @Inject constructor(
 
     private var activeItems: List<ShoppingItem> = emptyList()
 
+    private var historyIndex: HouseholdHistoryIndex = HouseholdHistoryIndex.EMPTY
+
     private var categoryManuallyChanged: Boolean = false
 
     private var categoryAiJob: Job? = null
@@ -167,8 +169,6 @@ class AddItemViewModel @Inject constructor(
 
 
     init {
-
-        autocompleteStore.ensureStarted()
 
         observeContext()
 
@@ -472,6 +472,10 @@ class AddItemViewModel @Inject constructor(
 
                 saveRecurringTemplateIfNeeded(state, mergedItem)
 
+                // Refresh suggestions after merge so the household history updates
+                // without requiring another re-typing.
+                refreshNameAutocomplete(state.name, force = true)
+
             }
 
             _uiState.update { it.copy(isSaved = true, isLoading = false) }
@@ -722,6 +726,10 @@ class AddItemViewModel @Inject constructor(
 
                     saveRecurringTemplateIfNeeded(persistedState, item)
 
+                    // Refresh suggestions after add so the household history includes
+                    // the new entry without requiring focus/re-typing.
+                    refreshNameAutocomplete(trimmedName, force = true)
+
                     _uiState.update { it.copy(isLoading = false, isSaved = true) }
 
                 }
@@ -770,11 +778,31 @@ class AddItemViewModel @Inject constructor(
 
             launch {
 
-                shoppingRepository.observeActiveItems(currentHouseholdId).collect { items ->
+                combine(
 
-                    activeItems = items
+                    shoppingRepository.observeActiveItems(currentHouseholdId),
+
+                    shoppingRepository.observeBoughtItems(currentHouseholdId),
+
+                    recurringRepository.observeRecurringItems(currentHouseholdId)
+
+                ) { active, bought, recurring ->
+
+                    Triple(active, bought, recurring)
+
+                }.collect { (active, bought, recurring) ->
+
+                    activeItems = active
+
+                    historyIndex = HouseholdHistoryIndex.from(active, bought, recurring)
 
                     recomputeDuplicate()
+
+                    if (_uiState.value.isNameAutocompleteFocused && _uiState.value.name.isNotBlank()) {
+
+                        refreshNameAutocomplete(_uiState.value.name, force = true)
+
+                    }
 
                 }
 
@@ -852,11 +880,11 @@ class AddItemViewModel @Inject constructor(
 
 
 
-    private fun refreshNameAutocomplete(query: String) {
+    private fun refreshNameAutocomplete(query: String, force: Boolean = false) {
 
         val trimmed = query.trim()
 
-        if (!_uiState.value.isNameAutocompleteFocused || trimmed.isEmpty()) {
+        if ((!_uiState.value.isNameAutocompleteFocused && !force) || trimmed.isEmpty()) {
 
             _uiState.update {
 
@@ -880,15 +908,13 @@ class AddItemViewModel @Inject constructor(
 
         autocompleteRefreshJob = viewModelScope.launch(Dispatchers.Default) {
 
-            val index = autocompleteStore.historyIndex.value
-
-            val suggestions = autocompleteEngine.suggest(trimmed, index)
+            val suggestions = autocompleteEngine.suggest(trimmed, historyIndex)
 
 
 
             withContext(Dispatchers.Main.immediate) {
 
-                if (!_uiState.value.isNameAutocompleteFocused || _uiState.value.name.trim() != trimmed) {
+                if ((!_uiState.value.isNameAutocompleteFocused && !force) || _uiState.value.name.trim() != trimmed) {
 
                     return@withContext
 

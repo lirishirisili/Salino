@@ -43,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -299,37 +300,47 @@ fun AddItemScreen(
             AlertDialog(
                 onDismissRequest = viewModel::dismissDuplicateConfirmDialog,
                 text = {
-                    DuplicateWarningCard(
-                        duplicateMatch = duplicate,
-                        title = stringResource(R.string.duplicate_warning_title),
-                        actionLabel = null,
-                        onMerge = null,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                },
-                confirmButton = {
-                    Column(horizontalAlignment = Alignment.End) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    ) {
+                        DuplicateWarningCard(
+                            duplicateMatch = duplicate,
+                            title = stringResource(R.string.duplicate_warning_title),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Matches RN layout: primary merge action first
                         SalinoPrimaryButton(
                             text = stringResource(R.string.duplicate_merge_action),
                             onClick = viewModel::confirmMergeDuplicate,
                             modifier = Modifier.fillMaxWidth()
                         )
+
                         Spacer(modifier = Modifier.height(10.dp))
-                        TextButton(
-                            onClick = viewModel::confirmAddDespiteDuplicate
+
+                        // Matches RN: outlined full-width "Add anyway"
+                        OutlinedButton(
+                            onClick = viewModel::confirmAddDespiteDuplicate,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = stringResource(R.string.duplicate_add_anyway),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Text(text = stringResource(R.string.duplicate_add_anyway))
+                        }
+
+                        Spacer(modifier = Modifier.height(2.dp))
+                        TextButton(
+                            onClick = viewModel::dismissDuplicateConfirmDialog,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text(text = stringResource(R.string.cancel))
                         }
                     }
                 },
-                dismissButton = {
-                    TextButton(onClick = viewModel::dismissDuplicateConfirmDialog) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
+                confirmButton = {},
+                dismissButton = {}
             )
         }
     }

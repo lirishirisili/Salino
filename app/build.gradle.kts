@@ -15,8 +15,8 @@ android {
         applicationId = "com.salino.sali"
         minSdk = 26
         targetSdk = 36
-        versionCode = 59
-        versionName = "1.3.31"
+        versionCode = 60
+        versionName = "1.3.32"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

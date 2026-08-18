@@ -12,7 +12,7 @@ import com.salino.sali.domain.repository.AuthRepository
 import com.salino.sali.domain.repository.RecurringRepository
 import com.salino.sali.domain.repository.ShoppingRepository
 import com.salino.sali.data.service.CategoryDetectionCoordinator
-import com.salino.sali.data.service.ItemNameAutocompleteStore
+import com.salino.sali.data.service.HouseholdHistoryIndex
 import com.salino.sali.domain.model.ItemNameAutocompleteSource
 import com.salino.sali.domain.model.ItemNameAutocompleteSuggestion
 import com.salino.sali.domain.service.DuplicateDetector
@@ -28,6 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -65,8 +66,7 @@ class EditItemViewModel @Inject constructor(
     private val categoryDetection: CategoryDetectionCoordinator,
     private val duplicateDetector: DuplicateDetector,
     private val voiceInputParser: VoiceInputParser,
-    private val autocompleteEngine: ItemNameAutocompleteEngine,
-    private val autocompleteStore: ItemNameAutocompleteStore
+    private val autocompleteEngine: ItemNameAutocompleteEngine
 ) : ViewModel() {
 
     private val itemId: String = savedStateHandle[Constants.ARG_ITEM_ID] ?: ""
@@ -74,6 +74,7 @@ class EditItemViewModel @Inject constructor(
     private var originalItem: ShoppingItem? = null
     private var recurringItemId: String? = null
     private var activeItems: List<ShoppingItem> = emptyList()
+    private var historyIndex: HouseholdHistoryIndex = HouseholdHistoryIndex.EMPTY
     private var categoryManuallyChanged: Boolean = false
     private var categoryAiJob: Job? = null
     private var nameDerivativesJob: Job? = null
@@ -83,7 +84,6 @@ class EditItemViewModel @Inject constructor(
     val uiState: StateFlow<EditItemState> = _uiState
 
     init {
-        autocompleteStore.ensureStarted()
         loadItem()
     }
 
@@ -273,9 +273,19 @@ class EditItemViewModel @Inject constructor(
             householdId = user.activeHouseholdId
 
             launch {
-                shoppingRepository.observeActiveItems(householdId).collect { items ->
-                    activeItems = items
+                combine(
+                    shoppingRepository.observeActiveItems(householdId),
+                    shoppingRepository.observeBoughtItems(householdId),
+                    recurringRepository.observeRecurringItems(householdId)
+                ) { active, bought, recurring ->
+                    Triple(active, bought, recurring)
+                }.collect { (active, bought, recurring) ->
+                    activeItems = active
+                    historyIndex = HouseholdHistoryIndex.from(active, bought, recurring)
                     recomputeDuplicate()
+                    if (_uiState.value.isNameAutocompleteFocused && _uiState.value.name.isNotBlank()) {
+                        refreshNameAutocomplete(_uiState.value.name)
+                    }
                 }
             }
 
@@ -388,8 +398,7 @@ class EditItemViewModel @Inject constructor(
 
         autocompleteRefreshJob?.cancel()
         autocompleteRefreshJob = viewModelScope.launch(Dispatchers.Default) {
-            val index = autocompleteStore.historyIndex.value
-            val suggestions = autocompleteEngine.suggest(trimmed, index)
+            val suggestions = autocompleteEngine.suggest(trimmed, historyIndex)
 
             withContext(Dispatchers.Main.immediate) {
                 if (!_uiState.value.isNameAutocompleteFocused || _uiState.value.name.trim() != trimmed) {
