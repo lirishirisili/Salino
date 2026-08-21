@@ -47,7 +47,6 @@ import {
   AutocompleteSuggestion,
   HouseholdHistoryIndex,
 } from '../../src/services/householdHistoryIndex';
-import { isRTL } from '../../src/i18n';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
@@ -93,7 +92,6 @@ export default function ShoppingListScreen() {
   } | null>(null);
   const quickAddAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHebrew = i18n.language === 'he';
-  const isRtl = isRTL(i18n.language);
 
   const listRef = useRef<FlatList<number>>(null);
   const listContentRef = useRef<View>(null);
@@ -355,7 +353,9 @@ export default function ShoppingListScreen() {
 
   const noop = () => {};
 
-  const ListContent = () => (
+  // Inline element (not an inner component) so FlatList re-renders do not remount
+  // the TextInput and dismiss the keyboard.
+  const listContent = (
     <View
       ref={listContentRef}
       style={{ paddingHorizontal: Layout.horizontalPadding, paddingBottom: 130 }}
@@ -379,11 +379,11 @@ export default function ShoppingListScreen() {
         onSuggestionSelected={handleQuickAddSuggestionSelected}
         onFocusChange={(focused) => {
           if (focused) refreshQuickAddAutocomplete(quickAddName);
+          else setIsQuickAddAutocompleteVisible(false);
         }}
         onAdd={() => void handleQuickAdd()}
         isAdding={isQuickAdding}
         error={quickAddError}
-        isRtl={isRtl}
         placeholder={t('quick_add_placeholder')}
         addLabel={t('item_add')}
         emptyErrorText={t('item_error_empty_name')}
@@ -506,11 +506,11 @@ export default function ShoppingListScreen() {
             onSuggestionSelected={handleQuickAddSuggestionSelected}
             onFocusChange={(focused) => {
               if (focused) refreshQuickAddAutocomplete(quickAddName);
+              else setIsQuickAddAutocompleteVisible(false);
             }}
             onAdd={() => void handleQuickAdd()}
             isAdding={isQuickAdding}
             error={quickAddError}
-            isRtl={isRtl}
             placeholder={t('quick_add_placeholder')}
             addLabel={t('item_add')}
             emptyErrorText={t('item_error_empty_name')}
@@ -529,7 +529,7 @@ export default function ShoppingListScreen() {
           ref={listRef}
           data={[0]}
           keyExtractor={() => 'content'}
-          renderItem={() => <ListContent />}
+          renderItem={() => listContent}
           contentContainerStyle={{
             alignItems: 'center',
             width: '100%',
@@ -537,7 +537,9 @@ export default function ShoppingListScreen() {
           ListHeaderComponent={null}
           style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: Layout.maxContentWidth }}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="always"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          removeClippedSubviews={false}
         />
       )}
 
@@ -689,7 +691,6 @@ function QuickAddItemField({
   onAdd,
   isAdding,
   error,
-  isRtl,
   placeholder,
   addLabel,
   emptyErrorText,
@@ -704,7 +705,6 @@ function QuickAddItemField({
   onAdd: () => void;
   isAdding: boolean;
   error: 'empty_name' | 'generic' | null;
-  isRtl: boolean;
   placeholder: string;
   addLabel: string;
   emptyErrorText: string;
@@ -726,6 +726,8 @@ function QuickAddItemField({
           onSubmitEditing={onAdd}
           suggestionsMaxHeight={260}
           onFocusChange={onFocusChange}
+          // Keep text clear of the trailing + button (logical end side).
+          contentStyle={{ paddingEnd: 52 }}
         />
         <Pressable
           onPress={onAdd}
@@ -735,7 +737,9 @@ function QuickAddItemField({
           style={({ pressed }) => [
             styles.quickAddButton,
             { backgroundColor: colors.primary },
-            isRtl ? styles.quickAddButtonLeft : styles.quickAddButtonRight,
+            // Match native trailingIcon: logical end (left in RTL, right in LTR).
+            // Avoid left/right — RN mirrors them under forceRTL and flips the button.
+            styles.quickAddButtonEnd,
             (!value.trim() || isAdding) && styles.quickAddButtonDisabled,
             pressed && styles.quickAddButtonPressed,
           ]}
@@ -1013,7 +1017,8 @@ const styles = StyleSheet.create({
   },
   quickAddButton: {
     position: 'absolute',
-    top: 14,
+    // Center the 40px circle in the ~56px outlined input (not the whole wrap).
+    top: 8,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -1021,11 +1026,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
   },
-  quickAddButtonLeft: {
-    left: 6,
-  },
-  quickAddButtonRight: {
-    right: 6,
+  quickAddButtonEnd: {
+    end: 6,
   },
   quickAddButtonDisabled: {
     opacity: 0.45,

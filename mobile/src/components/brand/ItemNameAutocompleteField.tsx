@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
   FlatList,
-  InteractionManager,
   Pressable,
   StyleSheet,
   View,
@@ -50,7 +49,7 @@ export function ItemNameAutocompleteField({
   const { t } = useTranslation();
   const inputRef = useRef<RNTextInput>(null);
   const isFocusedRef = useRef(false);
-  const [isFocused, setIsFocused] = useState(false);
+  const selectingSuggestionRef = useRef(false);
   const expanded = isAutocompleteVisible && suggestions.length > 0;
 
   const wrapperBorderColor = expanded
@@ -107,24 +106,23 @@ export function ItemNameAutocompleteField({
 
   const handleFocus = useCallback(() => {
     isFocusedRef.current = true;
-    setIsFocused(true);
     onFocusChange?.(true);
   }, [onFocusChange]);
 
   const handleBlur = useCallback(() => {
-    if (isFocusedRef.current && expanded) {
-      InteractionManager.runAfterInteractions(() => {
-        inputRef.current?.focus();
-      });
+    // Tapping a suggestion blurs the field first; ignore that blur so the
+    // parent can apply the selection without fighting the keyboard.
+    if (selectingSuggestionRef.current) {
+      selectingSuggestionRef.current = false;
       return;
     }
     isFocusedRef.current = false;
-    setIsFocused(false);
     onFocusChange?.(false);
-  }, [expanded, onFocusChange]);
+  }, [onFocusChange]);
 
   const handleSuggestionPress = useCallback(
     (suggestion: AutocompleteSuggestion) => {
+      selectingSuggestionRef.current = true;
       isFocusedRef.current = false;
       onSuggestionSelected(suggestion);
     },
@@ -249,7 +247,7 @@ export function ItemNameAutocompleteField({
           data={expanded ? listData : []}
           renderItem={renderItem}
           keyExtractor={(item) => item.key}
-          keyboardShouldPersistTaps="always"
+          keyboardShouldPersistTaps="handled"
           focusable={false}
           scrollEnabled
           nestedScrollEnabled
