@@ -66,6 +66,7 @@
   "shopping_list_search_hint": "Rechercher des articles…",
   "shopping_list_empty_title": "Rien à acheter pour le moment",
   "shopping_list_empty_subtitle": "Ajoutez quelque chose qui manque",
+  "quick_add_placeholder": "Qu'est-ce qui manque à la maison ?",
   "shopping_list_active_section": "À acheter",
   "shopping_list_bought_section": "Déjà acheté",
   "shopping_list_bought_show_more": "Afficher plus",

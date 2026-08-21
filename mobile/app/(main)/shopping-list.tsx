@@ -1,14 +1,17 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
   Image,
+  Keyboard,
   LayoutChangeEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Button, Dialog, Portal, Text } from 'react-native-paper';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
@@ -26,17 +29,30 @@ import {
   HeroSuggestionsCard,
   LoadingIndicator,
   SalinoGradientBackground,
+  SalinoPrimaryButton,
   SalinoSectionTitle,
+  SalinoSurfaceCard,
   SalinoWebAppBarTitle,
   ShoppingItemsGroupCard,
   CategoryFilterRow,
+  ItemNameAutocompleteField,
 } from '../../src/components';
-import { ShoppingItem, ItemCategory } from '../../src/models';
+import { ShoppingItem, ItemCategory, ItemUnit } from '../../src/models';
+import { DuplicateReason, type DuplicateMatch } from '../../src/models';
 import { AccentColors, Layout, Typography, useThemeColors, useIsDark } from '../../src/theme';
+import { detectCategory, findDuplicate } from '../../src/services';
+import { suggestAutocomplete } from '../../src/services/itemNameAutocompleteEngine';
+import { warmUpCatalog } from '../../src/services/categoryKeywordCatalog';
+import {
+  AutocompleteSuggestion,
+  HouseholdHistoryIndex,
+} from '../../src/services/householdHistoryIndex';
+import { isRTL } from '../../src/i18n';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
 export default function ShoppingListScreen() {
+  const { height: windowHeight } = useWindowDimensions();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -51,6 +67,9 @@ export default function ShoppingListScreen() {
     markAsBought,
     markAsActive,
     deleteItem,
+    addItem,
+    updateItem,
+    recurringItems,
     hasReceivedRemoteSnapshot,
   } = useShoppingStore();
 
@@ -59,7 +78,22 @@ export default function ShoppingListScreen() {
 
   const [boughtExpanded, setBoughtExpanded] = useState(false);
   const [boughtVisibleCount, setBoughtVisibleCount] = useState(BOUGHT_ITEMS_PAGE_SIZE);
+  const [quickAddName, setQuickAddName] = useState('');
+  const [quickAddSuggestions, setQuickAddSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [isQuickAddAutocompleteVisible, setIsQuickAddAutocompleteVisible] = useState(false);
+  const [quickAddCategory, setQuickAddCategory] = useState<ItemCategory | null>(null);
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
+  const [quickAddError, setQuickAddError] = useState<'empty_name' | 'generic' | null>(null);
+  const [quickAddDuplicateDialog, setQuickAddDuplicateDialog] = useState<{
+    duplicateMatch: DuplicateMatch;
+    addQuantity: number;
+    itemName: string;
+    itemCategory: ItemCategory;
+    itemUnit: ItemUnit | null;
+  } | null>(null);
+  const quickAddAutocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHebrew = i18n.language === 'he';
+  const isRtl = isRTL(i18n.language);
 
   const listRef = useRef<FlatList<number>>(null);
   const listContentRef = useRef<View>(null);
@@ -86,6 +120,174 @@ export default function ShoppingListScreen() {
   );
 
   const hasMoreBoughtItems = sortedBoughtItems.length > boughtVisibleCount;
+
+  const quickAddHistoryIndex = useMemo(
+    () => HouseholdHistoryIndex.from(activeItems, boughtItems, recurringItems),
+    [activeItems, boughtItems, recurringItems],
+  );
+
+  useEffect(() => {
+    warmUpCatalog();
+    return () => {
+      if (quickAddAutocompleteTimerRef.current) {
+        clearTimeout(quickAddAutocompleteTimerRef.current);
+      }
+    };
+  }, []);
+
+  const refreshQuickAddAutocomplete = useCallback(
+    (text: string) => {
+      if (quickAddAutocompleteTimerRef.current) {
+        clearTimeout(quickAddAutocompleteTimerRef.current);
+      }
+      quickAddAutocompleteTimerRef.current = setTimeout(() => {
+        const trimmed = text.trim();
+        if (!trimmed) {
+          setQuickAddSuggestions([]);
+          setIsQuickAddAutocompleteVisible(false);
+          return;
+        }
+        const results = suggestAutocomplete(trimmed, quickAddHistoryIndex);
+        setQuickAddSuggestions(results);
+        setIsQuickAddAutocompleteVisible(results.length > 0);
+      }, 80);
+    },
+    [quickAddHistoryIndex],
+  );
+
+  const handleQuickAddNameChange = useCallback(
+    (text: string) => {
+      setQuickAddName(text);
+      setQuickAddCategory(null);
+      setQuickAddError(null);
+      refreshQuickAddAutocomplete(text);
+    },
+    [refreshQuickAddAutocomplete],
+  );
+
+  const performQuickAdd = useCallback(
+    async (itemName: string, quantity: number, unit: ItemUnit | null, category: ItemCategory) => {
+      if (!activeHouseholdId || isQuickAdding) return;
+      setIsQuickAdding(true);
+      setQuickAddError(null);
+      try {
+        await addItem(activeHouseholdId, {
+          name: itemName,
+          quantity,
+          unit,
+          category,
+          note: '',
+          isUrgent: false,
+          isFavorite: false,
+          boughtBy: null,
+          boughtByName: null,
+        });
+        setQuickAddName('');
+        setQuickAddCategory(null);
+      } catch {
+        setQuickAddError('generic');
+      } finally {
+        setIsQuickAdding(false);
+      }
+    },
+    [activeHouseholdId, addItem, isQuickAdding],
+  );
+
+  const mergeQuickAddWithExisting = useCallback(
+    async (existing: ShoppingItem, addQuantity: number) => {
+      if (!activeHouseholdId || isQuickAdding) return;
+      setIsQuickAdding(true);
+      setQuickAddError(null);
+      try {
+        await updateItem(activeHouseholdId, {
+          ...existing,
+          quantity: existing.quantity + addQuantity,
+        });
+        setQuickAddName('');
+        setQuickAddCategory(null);
+      } catch {
+        setQuickAddError('generic');
+      } finally {
+        setIsQuickAdding(false);
+      }
+    },
+    [activeHouseholdId, isQuickAdding, updateItem],
+  );
+
+  const handleQuickAddSuggestionSelected = useCallback(
+    (suggestion: AutocompleteSuggestion) => {
+      if (quickAddAutocompleteTimerRef.current) {
+        clearTimeout(quickAddAutocompleteTimerRef.current);
+      }
+      setQuickAddSuggestions([]);
+      setIsQuickAddAutocompleteVisible(false);
+      setQuickAddError(null);
+
+      const itemName = suggestion.displayName.trim();
+      if (!itemName || !activeHouseholdId || isQuickAdding) return;
+
+      const itemCategory = suggestion.category
+        ?? detectCategory(suggestion.displayName)
+        ?? ItemCategory.OTHER;
+      const itemQuantity = suggestion.quantity ?? 1;
+      const itemUnit = suggestion.unit ?? null;
+
+      const dup = findDuplicate(itemName, activeItems);
+      if (dup && dup.reason === DuplicateReason.EXACT_DUPLICATE) {
+        Keyboard.dismiss();
+        setQuickAddDuplicateDialog({
+          duplicateMatch: dup,
+          addQuantity: itemQuantity,
+          itemName,
+          itemCategory,
+          itemUnit,
+        });
+        return;
+      }
+
+      void performQuickAdd(itemName, itemQuantity, itemUnit, itemCategory);
+    },
+    [activeHouseholdId, activeItems, isQuickAdding, performQuickAdd],
+  );
+
+  const handleQuickAdd = useCallback(() => {
+    const name = quickAddName.trim();
+    if (!name) {
+      setQuickAddError('empty_name');
+      return;
+    }
+    if (!activeHouseholdId || isQuickAdding) return;
+    if (quickAddAutocompleteTimerRef.current) {
+      clearTimeout(quickAddAutocompleteTimerRef.current);
+    }
+
+    setQuickAddSuggestions([]);
+    setIsQuickAddAutocompleteVisible(false);
+
+    const itemCategory = quickAddCategory ?? detectCategory(name) ?? ItemCategory.OTHER;
+
+    const dup = findDuplicate(name, activeItems);
+    if (dup && dup.reason === DuplicateReason.EXACT_DUPLICATE) {
+      Keyboard.dismiss();
+      setQuickAddDuplicateDialog({
+        duplicateMatch: dup,
+        addQuantity: 1,
+        itemName: name,
+        itemCategory,
+        itemUnit: null,
+      });
+      return;
+    }
+
+    void performQuickAdd(name, 1, null, itemCategory);
+  }, [
+    activeHouseholdId,
+    activeItems,
+    isQuickAdding,
+    performQuickAdd,
+    quickAddCategory,
+    quickAddName,
+  ]);
 
   const handleBoughtSectionToggle = () => {
     setBoughtExpanded((expanded) => {
@@ -168,6 +370,25 @@ export default function ShoppingListScreen() {
           />
         </View>
       </View>
+
+      <QuickAddItemField
+        value={quickAddName}
+        onChangeText={handleQuickAddNameChange}
+        suggestions={quickAddSuggestions}
+        isAutocompleteVisible={isQuickAddAutocompleteVisible}
+        onSuggestionSelected={handleQuickAddSuggestionSelected}
+        onFocusChange={(focused) => {
+          if (focused) refreshQuickAddAutocomplete(quickAddName);
+        }}
+        onAdd={() => void handleQuickAdd()}
+        isAdding={isQuickAdding}
+        error={quickAddError}
+        isRtl={isRtl}
+        placeholder={t('quick_add_placeholder')}
+        addLabel={t('item_add')}
+        emptyErrorText={t('item_error_empty_name')}
+        genericErrorText={t('error_generic')}
+      />
 
       <View ref={filtersAnchor.ref} style={filtersAnchor.highlightStyle} collapsable={false}>
         <CategoryFilterRow
@@ -277,6 +498,24 @@ export default function ShoppingListScreen() {
             maxWidth: Layout.maxContentWidth,
           }}
         >
+          <QuickAddItemField
+            value={quickAddName}
+            onChangeText={handleQuickAddNameChange}
+            suggestions={quickAddSuggestions}
+            isAutocompleteVisible={isQuickAddAutocompleteVisible}
+            onSuggestionSelected={handleQuickAddSuggestionSelected}
+            onFocusChange={(focused) => {
+              if (focused) refreshQuickAddAutocomplete(quickAddName);
+            }}
+            onAdd={() => void handleQuickAdd()}
+            isAdding={isQuickAdding}
+            error={quickAddError}
+            isRtl={isRtl}
+            placeholder={t('quick_add_placeholder')}
+            addLabel={t('item_add')}
+            emptyErrorText={t('item_error_empty_name')}
+            genericErrorText={t('error_generic')}
+          />
           <EmptyState
             icon="cart-outline"
             title={t('shopping_list_empty_title')}
@@ -298,6 +537,7 @@ export default function ShoppingListScreen() {
           ListHeaderComponent={null}
           style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: Layout.maxContentWidth }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
         />
       )}
 
@@ -328,7 +568,192 @@ export default function ShoppingListScreen() {
           </View>
         </View>
       )}
+
+      <Portal>
+        <Dialog
+          visible={quickAddDuplicateDialog != null}
+          onDismiss={() => setQuickAddDuplicateDialog(null)}
+          style={{ marginHorizontal: 16 }}
+        >
+          {quickAddDuplicateDialog != null && (
+            <>
+              <Dialog.Content style={{ paddingHorizontal: 0, maxHeight: Math.min(520, Math.max(240, windowHeight * 0.58)) }}>
+                <ScrollView
+                  bounces={false}
+                  contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8 }}
+                >
+                  <SalinoSurfaceCard padding={16}>
+                    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+                      <MaterialCommunityIcons
+                        name="alert-circle-outline"
+                        size={26}
+                        color={colors.error}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={[
+                            Typography.titleMedium,
+                            { color: colors.onSurface } as any,
+                          ]}
+                        >
+                          {t('duplicate_warning_title')}
+                        </Text>
+                        <Text
+                          style={[
+                            Typography.bodyMedium,
+                            { color: colors.onSurfaceVariant, marginTop: 6 } as any,
+                          ]}
+                        >
+                          {quickAddDuplicateDialog.duplicateMatch.item.name} ·{' '}
+                          {formatQuantityForDisplay(quickAddDuplicateDialog.duplicateMatch.item.quantity)}
+                        </Text>
+                        <Text
+                          style={[
+                            Typography.bodySmall,
+                            { color: colors.onSurfaceVariant, marginTop: 8 } as any,
+                          ]}
+                        >
+                          {t('duplicate_confirm_message', {
+                            name: quickAddDuplicateDialog.duplicateMatch.item.name,
+                            quantity: formatQuantityForDisplay(
+                              quickAddDuplicateDialog.duplicateMatch.item.quantity,
+                            ),
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  </SalinoSurfaceCard>
+                </ScrollView>
+              </Dialog.Content>
+
+              <Dialog.Actions style={{ paddingHorizontal: 16, paddingBottom: 6 }}>
+                <View style={{ width: '100%', gap: 10 }}>
+                  <SalinoPrimaryButton
+                    text={t('duplicate_merge_action')}
+                    onPress={() => {
+                      const state = quickAddDuplicateDialog;
+                      setQuickAddDuplicateDialog(null);
+                      if (state) {
+                        void mergeQuickAddWithExisting(
+                          state.duplicateMatch.item,
+                          state.addQuantity,
+                        );
+                      }
+                    }}
+                  />
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      const state = quickAddDuplicateDialog;
+                      setQuickAddDuplicateDialog(null);
+                      if (state) {
+                        void performQuickAdd(
+                          state.itemName,
+                          state.addQuantity,
+                          state.itemUnit,
+                          state.itemCategory,
+                        );
+                      }
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    {t('duplicate_add_anyway')}
+                  </Button>
+                  <Button onPress={() => setQuickAddDuplicateDialog(null)} style={{ alignSelf: 'flex-end' }}>
+                    {t('cancel')}
+                  </Button>
+                </View>
+              </Dialog.Actions>
+            </>
+          )}
+        </Dialog>
+      </Portal>
     </SalinoGradientBackground>
+  );
+}
+
+function formatQuantityForDisplay(quantity: number): string {
+  if (Number.isNaN(quantity) || !Number.isFinite(quantity)) return String(quantity);
+  const rounded = Math.round(quantity);
+  const isInt = Math.abs(quantity - rounded) < 1e-9;
+  return isInt ? String(rounded) : String(quantity);
+}
+
+function QuickAddItemField({
+  value,
+  onChangeText,
+  suggestions,
+  isAutocompleteVisible,
+  onSuggestionSelected,
+  onFocusChange,
+  onAdd,
+  isAdding,
+  error,
+  isRtl,
+  placeholder,
+  addLabel,
+  emptyErrorText,
+  genericErrorText,
+}: {
+  value: string;
+  onChangeText: (text: string) => void;
+  suggestions: AutocompleteSuggestion[];
+  isAutocompleteVisible: boolean;
+  onSuggestionSelected: (suggestion: AutocompleteSuggestion) => void;
+  onFocusChange: (focused: boolean) => void;
+  onAdd: () => void;
+  isAdding: boolean;
+  error: 'empty_name' | 'generic' | null;
+  isRtl: boolean;
+  placeholder: string;
+  addLabel: string;
+  emptyErrorText: string;
+  genericErrorText: string;
+}) {
+  const colors = useThemeColors();
+
+  return (
+    <View style={styles.quickAddSection}>
+      <View style={styles.quickAddFieldWrap}>
+        <ItemNameAutocompleteField
+          value={value}
+          onChangeText={onChangeText}
+          suggestions={suggestions}
+          isAutocompleteVisible={isAutocompleteVisible}
+          onSuggestionSelected={onSuggestionSelected}
+          placeholder={placeholder}
+          isError={error != null}
+          onSubmitEditing={onAdd}
+          suggestionsMaxHeight={260}
+          onFocusChange={onFocusChange}
+        />
+        <Pressable
+          onPress={onAdd}
+          disabled={!value.trim() || isAdding}
+          accessibilityRole="button"
+          accessibilityLabel={addLabel}
+          style={({ pressed }) => [
+            styles.quickAddButton,
+            { backgroundColor: colors.primary },
+            isRtl ? styles.quickAddButtonLeft : styles.quickAddButtonRight,
+            (!value.trim() || isAdding) && styles.quickAddButtonDisabled,
+            pressed && styles.quickAddButtonPressed,
+          ]}
+        >
+          <MaterialCommunityIcons name="plus" size={26} color="#102326" />
+        </Pressable>
+      </View>
+      {error && (
+        <Text
+          style={[
+            Typography.bodySmall,
+            { color: colors.error, marginTop: 4, marginHorizontal: 16 } as any,
+          ]}
+        >
+          {error === 'empty_name' ? emptyErrorText : genericErrorText}
+        </Text>
+      )}
+    </View>
   );
 }
 
@@ -577,6 +1002,36 @@ const styles = StyleSheet.create({
     height: 42,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  quickAddSection: {
+    paddingVertical: 8,
+    width: '100%',
+  },
+  quickAddFieldWrap: {
+    position: 'relative',
+    width: '100%',
+  },
+  quickAddButton: {
+    position: 'absolute',
+    top: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  quickAddButtonLeft: {
+    left: 6,
+  },
+  quickAddButtonRight: {
+    right: 6,
+  },
+  quickAddButtonDisabled: {
+    opacity: 0.45,
+  },
+  quickAddButtonPressed: {
+    opacity: 0.75,
   },
   boughtToggleRow: {
     flexDirection: 'row',

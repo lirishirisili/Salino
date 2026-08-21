@@ -71,6 +71,7 @@
   "shopping_list_search_hint": "Search items…",
   "shopping_list_empty_title": "Nothing to buy right now",
   "shopping_list_empty_subtitle": "Add something that ran out",
+  "quick_add_placeholder": "What's missing at home?",
   "shopping_list_active_section": "To buy",
   "shopping_list_bought_section": "Already bought",
   "shopping_list_bought_show_more": "Show more",

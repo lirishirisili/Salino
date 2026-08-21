@@ -85,6 +85,7 @@
     <string name="edit_item_title">Modifier l\'article</string>
     <string name="item_name_label">De quoi avez-vous besoin ?</string>
     <string name="item_name_hint">Ex : Lait, Pain, Savon</string>
+    <string name="quick_add_placeholder">Qu\'est-ce qui manque à la maison ?</string>
     <string name="item_quantity_label">Quantité</string>
     <string name="item_unit_label">Unité</string>
     <string name="item_category_label">Catégorie</string>

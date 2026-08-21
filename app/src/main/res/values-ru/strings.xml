@@ -85,6 +85,7 @@
     <string name="edit_item_title">Редактировать товар</string>
     <string name="item_name_label">Что нужно?</string>
     <string name="item_name_hint">Например: Молоко, Хлеб, Мыло</string>
+    <string name="quick_add_placeholder">Чего не хватает дома?</string>
     <string name="item_quantity_label">Количество</string>
     <string name="item_unit_label">Единица</string>
     <string name="item_category_label">Категория</string>

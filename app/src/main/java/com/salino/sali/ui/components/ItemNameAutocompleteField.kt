@@ -1,5 +1,6 @@
 package com.salino.sali.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -46,13 +48,14 @@ fun ItemNameAutocompleteField(
     onFocusChanged: (Boolean) -> Unit,
     onSuggestionSelected: (ItemNameAutocompleteSuggestion) -> Unit,
     modifier: Modifier = Modifier,
-    label: @Composable () -> Unit,
+    label: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
     keyboardActions: androidx.compose.foundation.text.KeyboardActions = androidx.compose.foundation.text.KeyboardActions.Default,
-    suggestionsMaxHeight: Dp = 280.dp
+    suggestionsMaxHeight: Dp = 280.dp,
+    shape: Shape = SalinoWebTokens.InputCorner
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val expanded = isAutocompleteVisible && suggestions.isNotEmpty()
@@ -61,7 +64,7 @@ fun ItemNameAutocompleteField(
         isFocused || expanded -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outlineVariant
     }
-    val containerShape = SalinoWebTokens.InputCorner
+    val containerShape = shape
     val fieldColors = if (expanded) {
         autocompleteExpandedFieldColors(isError = isError)
     } else {
@@ -76,6 +79,7 @@ fun ItemNameAutocompleteField(
                     Modifier
                         .border(width = 1.dp, color = borderColor, shape = containerShape)
                         .clip(containerShape)
+                        .background(MaterialTheme.colorScheme.surface)
                 } else {
                     Modifier
                 }
@@ -122,6 +126,10 @@ private fun autocompleteExpandedFieldColors(isError: Boolean) = OutlinedTextFiel
     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
     disabledContainerColor = MaterialTheme.colorScheme.surface,
     errorContainerColor = MaterialTheme.colorScheme.surface,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+    errorTextColor = MaterialTheme.colorScheme.onSurface,
     cursorColor = MaterialTheme.colorScheme.primary,
     focusedLabelColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
     unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -230,6 +238,7 @@ private fun AutocompleteSuggestionRow(
         Text(
             text = suggestion.displayName,
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         suggestion.category?.let { category ->

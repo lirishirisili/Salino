@@ -85,6 +85,7 @@
     <string name="edit_item_title">تعديل منتج</string>
     <string name="item_name_label">ماذا تحتاج؟</string>
     <string name="item_name_hint">مثلاً: حليب، خبز، صابون</string>
+    <string name="quick_add_placeholder">ما الذي ينقص في المنزل؟</string>
     <string name="item_quantity_label">الكمية</string>
     <string name="item_unit_label">الوحدة</string>
     <string name="item_category_label">الفئة</string>

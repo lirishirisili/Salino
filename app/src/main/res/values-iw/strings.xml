@@ -87,6 +87,7 @@
     <string name="edit_item_title">עריכת פריט</string>
     <string name="item_name_label">מה צריך?</string>
     <string name="item_name_hint">למשל: חלב, לחם, סבון</string>
+    <string name="quick_add_placeholder">מה חסר בבית?</string>
     <string name="item_quantity_label">כמות</string>
     <string name="item_unit_label">יחידה</string>
     <string name="item_category_label">קטגוריה</string>

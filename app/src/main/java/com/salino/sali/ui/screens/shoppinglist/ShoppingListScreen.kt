@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,9 +47,12 @@ import com.salino.sali.data.model.ShoppingItem
 import com.salino.sali.data.model.SuggestionItem
 import com.salino.sali.ui.components.BottomBannerAd
 import com.salino.sali.ui.components.BrandLogo
+import com.salino.sali.ui.components.DuplicateWarningCard
 import com.salino.sali.ui.components.EmptyState
 import com.salino.sali.ui.components.LoadingIndicator
+import com.salino.sali.ui.components.ItemNameAutocompleteField
 import com.salino.sali.ui.components.SalinoGradientBackground
+import com.salino.sali.ui.components.SalinoPrimaryButton
 import com.salino.sali.ui.components.SalinoSectionTitle
 import com.salino.sali.ui.components.SalinoWebAppBarTitle
 import com.salino.sali.ui.components.SalinoWebTokens
@@ -127,7 +133,7 @@ fun ShoppingListScreen(
             listState.animateScrollToItem(0)
         }
         registry.registerScrollHandler(TourAnchorId.ListFilters) {
-            listState.animateScrollToItem(1)
+            listState.animateScrollToItem(2)
         }
         onDispose {
             registry.unregisterScrollHandler(TourAnchorId.ListHero)
@@ -306,6 +312,14 @@ fun ShoppingListScreen(
                         .salinoWebMaxWidth()
                         .padding(horizontal = SalinoWebTokens.HorizontalPadding)
                 ) {
+                    QuickAddItemField(
+                        uiState = uiState,
+                        onNameChange = viewModel::onQuickAddNameChange,
+                        onFocusChanged = viewModel::onQuickAddFocusChanged,
+                        onSuggestionSelected = viewModel::onQuickAddSuggestionSelected,
+                        onAdd = viewModel::addQuickItem,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                     EmptyState(
                         icon = Icons.Default.ShoppingCart,
                         title = stringResource(R.string.shopping_list_empty_title),
@@ -334,6 +348,17 @@ fun ShoppingListScreen(
                             modifier = Modifier
                                 .padding(vertical = 8.dp)
                                 .tourAnchor(TourAnchorId.ListHero),
+                        )
+                    }
+
+                    item(key = "__quick_add") {
+                        QuickAddItemField(
+                            uiState = uiState,
+                            onNameChange = viewModel::onQuickAddNameChange,
+                            onFocusChanged = viewModel::onQuickAddFocusChanged,
+                            onSuggestionSelected = viewModel::onQuickAddSuggestionSelected,
+                            onAdd = viewModel::addQuickItem,
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                     }
 
@@ -506,6 +531,116 @@ fun ShoppingListScreen(
                         Text(text = stringResource(android.R.string.cancel))
                     }
                 }
+            )
+        }
+
+        uiState.quickAddDuplicateDialog?.let { dialog ->
+            AlertDialog(
+                onDismissRequest = viewModel::dismissQuickAddDuplicateDialog,
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    ) {
+                        DuplicateWarningCard(
+                            duplicateMatch = dialog.duplicateMatch,
+                            title = stringResource(R.string.duplicate_warning_title),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        SalinoPrimaryButton(
+                            text = stringResource(R.string.duplicate_merge_action),
+                            onClick = viewModel::confirmMergeQuickAddDuplicate,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        OutlinedButton(
+                            onClick = viewModel::confirmAddDespiteQuickAddDuplicate,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.duplicate_add_anyway))
+                        }
+
+                        Spacer(modifier = Modifier.height(2.dp))
+                        TextButton(
+                            onClick = viewModel::dismissQuickAddDuplicateDialog,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text(text = stringResource(R.string.cancel))
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {}
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickAddItemField(
+    uiState: ShoppingListState,
+    onNameChange: (String) -> Unit,
+    onFocusChanged: (Boolean) -> Unit,
+    onSuggestionSelected: (com.salino.sali.domain.model.ItemNameAutocompleteSuggestion) -> Unit,
+    onAdd: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        ItemNameAutocompleteField(
+            value = uiState.quickAddName,
+            onValueChange = onNameChange,
+            suggestions = uiState.quickAddSuggestions,
+            isAutocompleteVisible = uiState.isQuickAddAutocompleteVisible,
+            onFocusChanged = onFocusChanged,
+            onSuggestionSelected = onSuggestionSelected,
+            placeholder = { Text(stringResource(R.string.quick_add_placeholder)) },
+            isError = uiState.quickAddErrorMessage != null,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onAdd() }),
+            suggestionsMaxHeight = 260.dp,
+            shape = SalinoWebTokens.InputCorner,
+            trailingIcon = {
+                FilledIconButton(
+                    onClick = onAdd,
+                    enabled = uiState.quickAddName.isNotBlank() && !uiState.isQuickAdding,
+                    modifier = Modifier.size(40.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    if (uiState.isQuickAdding) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.item_add)
+                        )
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        uiState.quickAddErrorMessage?.let { error ->
+            Text(
+                text = stringResource(
+                    if (error == "empty_name") R.string.item_error_empty_name
+                    else R.string.error_generic
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
     }

@@ -5,6 +5,8 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type StyleProp,
+  type TextStyle,
   type TextInput as RNTextInput,
 } from 'react-native';
 import { Text, TextInput as PaperTextInput } from 'react-native-paper';
@@ -19,12 +21,14 @@ interface Props {
   suggestions: AutocompleteSuggestion[];
   isAutocompleteVisible: boolean;
   onSuggestionSelected: (suggestion: AutocompleteSuggestion) => void;
-  label: string;
+  label?: string;
   placeholder?: string;
   isError?: boolean;
   onSubmitEditing?: () => void;
   suggestionsMaxHeight?: number;
   onFocusChange?: (focused: boolean) => void;
+  contentStyle?: StyleProp<TextStyle>;
+  cornerRadius?: number;
 }
 
 export function ItemNameAutocompleteField({
@@ -39,6 +43,8 @@ export function ItemNameAutocompleteField({
   onSubmitEditing,
   suggestionsMaxHeight = 280,
   onFocusChange,
+  contentStyle,
+  cornerRadius = Layout.inputCorner,
 }: Props) {
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -189,8 +195,21 @@ export function ItemNameAutocompleteField({
     [colors, handleSuggestionPress, t],
   );
 
+  const wrapperRadius = expanded
+    ? { borderTopLeftRadius: cornerRadius, borderTopRightRadius: cornerRadius, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }
+    : { borderRadius: cornerRadius };
+
   return (
-    <View style={[styles.wrapper, { borderColor: wrapperBorderColor }]}>
+    <View
+      style={[
+        styles.wrapper,
+        {
+          borderColor: wrapperBorderColor,
+          backgroundColor: expanded ? colors.surface : 'transparent',
+        },
+        wrapperRadius,
+      ]}
+    >
       <PaperTextInput
         ref={inputRef}
         value={value}
@@ -198,11 +217,15 @@ export function ItemNameAutocompleteField({
         label={label}
         placeholder={placeholder}
         mode="outlined"
+        textColor={colors.onSurface}
+        placeholderTextColor={colors.outline}
         outlineStyle={[
           styles.outline,
+          { borderRadius: cornerRadius },
           inputOutlineBorderColor != null && { borderColor: inputOutlineBorderColor },
         ]}
         style={styles.input}
+        contentStyle={contentStyle}
         error={isError}
         autoCorrect={false}
         returnKeyType="done"
@@ -214,7 +237,10 @@ export function ItemNameAutocompleteField({
       <View
         style={[
           styles.dropdownPanel,
-          { maxHeight: expanded ? suggestionsMaxHeight : 0 },
+          {
+            maxHeight: expanded ? suggestionsMaxHeight : 0,
+            backgroundColor: expanded ? colors.surface : 'transparent',
+          },
         ]}
         pointerEvents={expanded ? 'auto' : 'none'}
       >

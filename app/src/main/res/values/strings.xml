@@ -87,6 +87,7 @@
     <string name="edit_item_title">Edit item</string>
     <string name="item_name_label">What do you need?</string>
     <string name="item_name_hint">e.g. Milk, Bread, Soap</string>
+    <string name="quick_add_placeholder">What\'s missing at home?</string>
     <string name="item_quantity_label">Quantity</string>
     <string name="item_unit_label">Unit</string>
     <string name="item_category_label">Category</string>
