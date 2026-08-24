@@ -8,11 +8,9 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
+import com.salino.sali.ads.LevelPlayInitializer
 import com.salino.sali.data.service.SalinoMessagingService
 import com.salino.sali.di.AutocompleteWarmupEntryPoint
-import com.salino.sali.util.UnityAdsConfig
-import com.unity3d.ads.IUnityAdsInitializationListener
-import com.unity3d.ads.UnityAds
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.EntryPointAccessors
 import java.util.Locale
@@ -29,38 +27,11 @@ class SalinoApp : Application() {
         } catch (e: Throwable) {
             Log.e(TAG, "Firebase Analytics init failed", e)
         }
+        // Active monetization path: Unity LevelPlay (banner only), initialized once.
         try {
-            Log.i(
-                TAG,
-                "HaserliUnityAds initialization starting gameId=${UnityAdsConfig.ANDROID_GAME_ID} " +
-                    "testMode=${BuildConfig.DEBUG}",
-            )
-            UnityAds.initialize(
-                applicationContext,
-                UnityAdsConfig.ANDROID_GAME_ID,
-                BuildConfig.DEBUG,
-                object : IUnityAdsInitializationListener {
-                    override fun onInitializationComplete() {
-                        Log.i(
-                            TAG,
-                            "HaserliUnityAds initialization success gameId=${UnityAdsConfig.ANDROID_GAME_ID} " +
-                                "testMode=${BuildConfig.DEBUG}",
-                        )
-                    }
-
-                    override fun onInitializationFailed(
-                        error: UnityAds.UnityAdsInitializationError,
-                        message: String,
-                    ) {
-                        Log.e(
-                            TAG,
-                            "HaserliUnityAds initialization failure error=$error message=$message",
-                        )
-                    }
-                },
-            )
+            LevelPlayInitializer.initialize(this)
         } catch (e: Throwable) {
-            Log.e(TAG, "HaserliUnityAds initialization failure", e)
+            Log.e(TAG, "LevelPlay initialization failure", e)
         }
         try {
             EntryPointAccessors.fromApplication(this, AutocompleteWarmupEntryPoint::class.java)

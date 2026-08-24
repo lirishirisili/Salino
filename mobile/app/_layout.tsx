@@ -11,7 +11,7 @@ import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
 import { LoadingScreen, SalinoGradientBackground } from '../src/components';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
-import { initUnityAds } from '../src/services/initUnityAds';
+import { initLevelPlay } from '../src/services/initLevelPlay';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
 
@@ -31,8 +31,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     void (async () => {
-      // iOS: ATT runs inside initUnityAds before ads; analytics starts after.
-      await initUnityAds();
+      // iOS: ATT runs inside initLevelPlay before ads; analytics starts after.
+      await initLevelPlay();
       await initMobileAnalytics();
     })();
   }, []);

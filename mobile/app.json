@@ -2,7 +2,7 @@
   "expo": {
     "name": "Haserli",
     "slug": "haserli",
-    "version": "1.3.37",
+    "version": "1.3.38",
     "orientation": "portrait",
     "scheme": "haserli",
     "userInterfaceStyle": "automatic",
@@ -103,7 +103,8 @@
           { "SKAdNetworkIdentifier": "44jx6755aq.skadnetwork" },
           { "SKAdNetworkIdentifier": "mqn7fxpca7.skadnetwork" },
           { "SKAdNetworkIdentifier": "wzmmz9fp6w.skadnetwork" },
-          { "SKAdNetworkIdentifier": "a8cz6cu7e5.skadnetwork" }
+          { "SKAdNetworkIdentifier": "a8cz6cu7e5.skadnetwork" },
+          { "SKAdNetworkIdentifier": "su67r6k2v3.skadnetwork" }
         ]
       }
     },
@@ -129,6 +130,7 @@
         }
       ],
       "./plugins/withGradlePropsTweaks",
+      "./plugins/withLevelPlayAndroid",
       [
         "./plugins/withAndroidLocaleStrings",
         {

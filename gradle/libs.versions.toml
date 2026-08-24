@@ -14,7 +14,12 @@ hilt-navigation-compose = "1.2.0"
 google-services = "4.4.2"
 coroutines = "1.9.0"
 play-services-auth = "21.2.0"
-unity-ads = "4.19.0"
+unity-ads = "4.16.6"
+levelplay = "9.5.0"
+unityads-adapter = "5.5.0"
+play-services-appset = "16.0.2"
+play-services-ads-identifier = "18.0.1"
+play-services-basement = "18.3.0"
 room = "2.6.1"
 datastore = "1.1.1"
 
@@ -62,6 +67,13 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 # Google Sign-In
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "play-services-auth" }
 unity-ads = { group = "com.unity3d.ads", name = "unity-ads", version.ref = "unity-ads" }
+
+# Unity LevelPlay (ironSource) mediation + Unity Ads adapter (same path as PoofCam / Tohav)
+levelplay-mediation = { group = "com.unity3d.ads-mediation", name = "mediation-sdk", version.ref = "levelplay" }
+levelplay-unityads-adapter = { group = "com.unity3d.ads-mediation", name = "unityads-adapter", version.ref = "unityads-adapter" }
+play-services-appset = { group = "com.google.android.gms", name = "play-services-appset", version.ref = "play-services-appset" }
+play-services-ads-identifier = { group = "com.google.android.gms", name = "play-services-ads-identifier", version.ref = "play-services-ads-identifier" }
+play-services-basement = { group = "com.google.android.gms", name = "play-services-basement", version.ref = "play-services-basement" }
 
 # Room
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

@@ -6,10 +6,14 @@ export const UNITY_ADS_GAME_IDS = {
   ios: '6164603',
 } as const;
 
-/** Unity banner placements per platform. */
+/**
+ * Unity banner placements per platform.
+ * LevelPlay Unity Ads is bidding-only — use Banner_*_Bidding (same as PoofCam / Tohav).
+ * Direct Unity Ads is disabled via autolinking exclude; these IDs are legacy-only.
+ */
 export const UNITY_ADS_BANNER_PLACEMENT_IDS = {
-  android: 'Banner_Android',
-  ios: 'Banner_iOS',
+  android: 'Banner_Android_Bidding',
+  ios: 'Banner_iOS_Bidding',
 } as const;
 
 export const UNITY_ADS_GAME_ID =

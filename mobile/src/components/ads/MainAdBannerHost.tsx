@@ -21,14 +21,17 @@ export function MainAdBannerHost({ children }: MainAdBannerHostProps) {
   const showBanner = BANNER_SCREEN_NAMES.has(screenName);
 
   console.log(
-    `[HaserliUnityAds] MainAdBannerHost screen=${String(screenName)} ` +
+    `[BANNER] MainAdBannerHost screen=${String(screenName)} ` +
       `showBanner=${showBanner} segments=${segments.join('/')}`,
   );
 
+  // Keep a single banner instance mounted across main navigation and toggle its
+  // visibility per route, so Add/Edit/Settings never display an ad and we avoid
+  // unmount/remount churn.
   return (
     <View style={styles.root}>
       <View style={styles.content}>{children}</View>
-      {showBanner ? <BottomBannerAd /> : null}
+      <BottomBannerAd visible={showBanner} />
     </View>
   );
 }

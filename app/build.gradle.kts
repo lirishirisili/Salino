@@ -15,8 +15,8 @@ android {
         applicationId = "com.salino.sali"
         minSdk = 26
         targetSdk = 36
-        versionCode = 65
-        versionName = "1.3.37"
+        versionCode = 66
+        versionName = "1.3.38"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -112,8 +112,13 @@ dependencies {
     // Google Sign-In
     implementation(libs.play.services.auth)
 
-    // Unity Ads
-    implementation(libs.unity.ads)
+    // Unity LevelPlay mediation — banner only (ironSource + Unity Ads adapter).
+    // Do not initialize Direct Unity Ads; LegacyUnityBottomBannerAd was removed.
+    implementation(libs.levelplay.mediation)
+    implementation(libs.levelplay.unityads.adapter)
+    implementation(libs.play.services.appset)
+    implementation(libs.play.services.ads.identifier)
+    implementation(libs.play.services.basement)
 
     // Testing
     testImplementation("junit:junit:4.13.2")
