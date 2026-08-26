@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, AppStateStatus, Platform, StyleSheet, View } from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  Platform,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -24,6 +31,8 @@ type BottomBannerAdProps = {
 const LOG = '[BANNER]';
 const MAX_LOAD_ATTEMPTS = 3;
 const RETRY_BACKOFF_MS = 30_000;
+/** Tablet / unfolded foldable — keep banner host phone-width, not full-bleed. */
+const WIDE_LAYOUT_MIN_WIDTH = 600;
 
 /**
  * Inner slot that owns exactly one native LevelPlayBannerAdView instance.
@@ -118,6 +127,8 @@ function LevelPlayBannerSlot({
       },
       onAdDisplayFailed: (_adInfo: LevelPlayAdInfo, error: LevelPlayAdError) => {
         console.warn(`${LOG} display failed code=${error.errorCode} message=${error.errorMessage}`);
+        onLoadedChange(false);
+        scheduleRetry();
       },
       onAdClicked: (adInfo: LevelPlayAdInfo) => {
         console.log(`${LOG} clicked network=${adInfo.adNetwork}`);
@@ -131,12 +142,17 @@ function LevelPlayBannerSlot({
 
   return (
     <LevelPlayBannerAdView
+      key={`${LEVELPLAY_BANNER_AD_UNIT_ID}-${adSize.width}-${adSize.height}`}
       ref={bannerRef}
       adUnitId={LEVELPLAY_BANNER_AD_UNIT_ID}
       adSize={adSize}
       placementName={LEVELPLAY_BANNER_PLACEMENT_NAME}
       listener={listener}
-      style={[styles.banner, { height: adSize.height }]}
+      style={{
+        width: adSize.width,
+        height: adSize.height,
+        alignSelf: 'center',
+      }}
       onLayout={(event) => {
         const { width, height } = event.nativeEvent.layout;
         if (loadRequestedRef.current || width <= 0 || height <= 0) {
@@ -151,6 +167,8 @@ function LevelPlayBannerSlot({
 /** Bottom banner host (document flow, not overlay). Collapses when no ad. */
 export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const isWideLayout = windowWidth >= WIDE_LAYOUT_MIN_WIDTH;
   const [sdkReady, setSdkReady] = useState(false);
   const [adSize, setAdSize] = useState<LevelPlayAdSize | null>(null);
   const [adLoaded, setAdLoaded] = useState(false);
@@ -182,10 +200,21 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     return unsubscribe;
   }, [isRenderableEnv]);
 
-  // Resolve an adaptive ad size once, with a safe standard-banner fallback.
+  // Phones: adaptive. Wide / foldable: fixed BANNER so the creative stays phone-sized.
+  // Avoid createAdaptiveAdSize(width) — New Arch on iOS can mis-marshal the width arg.
   useEffect(() => {
-    if (!sdkReady || adSize) return;
+    if (!sdkReady) return;
     let cancelled = false;
+    setAdLoaded(false);
+    setAdSize(null);
+
+    if (isWideLayout) {
+      setAdSize(LevelPlayAdSize.BANNER);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     (async () => {
       try {
         const adaptive = await LevelPlayAdSize.createAdaptiveAdSize();
@@ -199,7 +228,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     return () => {
       cancelled = true;
     };
-  }, [sdkReady, adSize]);
+  }, [sdkReady, isWideLayout]);
 
   // When the route hides the banner, collapse and tear down the native view.
   useEffect(() => {
@@ -214,6 +243,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   // native banner absolutely positioned (measurable, zero flex impact).
   const inFlow = shouldMountAd && adLoaded;
   const slotHeight = inFlow ? reservedHeight + insets.bottom : 0;
+  const hostWidth = adSize?.width ?? 320;
 
   if (!isRenderableEnv) {
     return null;
@@ -225,6 +255,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
       pointerEvents={inFlow ? 'box-none' : 'none'}
       style={[
         styles.wrap,
+        isWideLayout ? { width: hostWidth, alignSelf: 'center' } : styles.wrapFullBleed,
         inFlow
           ? {
               height: slotHeight,
@@ -234,19 +265,40 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
             }
           : shouldMountAd
             ? {
+                // Off-flow until filled so we don't reserve empty chrome.
                 position: 'absolute',
-                left: 0,
-                right: 0,
                 bottom: 0,
-                height: reservedHeight,
+                height: 0,
+                overflow: 'visible',
                 opacity: 0,
                 zIndex: -1,
+                ...(isWideLayout
+                  ? {
+                      left: Math.max(0, (windowWidth - hostWidth) / 2),
+                      width: hostWidth,
+                    }
+                  : { left: 0, right: 0 }),
               }
             : { height: 0, opacity: 0 },
       ]}
     >
       {shouldMountAd && adSize ? (
-        <LevelPlayBannerSlot adSize={adSize} onLoadedChange={setAdLoaded} />
+        <View
+          style={
+            inFlow
+              ? undefined
+              : {
+                  // Keep a measurable native host for onLayout/load without claiming height.
+                  position: 'absolute',
+                  bottom: 0,
+                  width: adSize.width,
+                  height: adSize.height,
+                  alignSelf: 'center',
+                }
+          }
+        >
+          <LevelPlayBannerSlot adSize={adSize} onLoadedChange={setAdLoaded} />
+        </View>
       ) : null}
     </View>
   );
@@ -254,15 +306,14 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
 
 const styles = StyleSheet.create({
   wrap: {
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
     zIndex: 2,
     elevation: 2,
+    overflow: 'hidden',
   },
-  banner: {
+  wrapFullBleed: {
     width: '100%',
-    alignSelf: 'center',
   },
 });

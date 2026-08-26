@@ -38,14 +38,14 @@ object LevelPlayInitializer {
         Log.i(TAG, "init started")
         Log.i(TAG, "platform android appKey=${LevelPlayConfig.ANDROID_APP_KEY}")
 
-        // Development diagnostics — must run before init. Removed automatically in
-        // release because BuildConfig.DEBUG is false.
+        // Always enable adapter debug logs so release APK device tests are diagnosable.
+        // Keep validateIntegration for debug builds only (it can be noisy / UI-affecting).
+        try {
+            LevelPlay.setAdaptersDebug(true)
+        } catch (e: Throwable) {
+            Log.w(TAG, "setAdaptersDebug failed", e)
+        }
         if (BuildConfig.DEBUG) {
-            try {
-                LevelPlay.setAdaptersDebug(true)
-            } catch (e: Throwable) {
-                Log.w(TAG, "setAdaptersDebug failed", e)
-            }
             try {
                 LevelPlay.validateIntegration(context.applicationContext)
             } catch (e: Throwable) {

@@ -93,7 +93,9 @@ jobs:
           retention-days: 30
           compression-level: 0
 
+      # Soft-fail: missing Beta App Information must not block later steps.
       - name: Publish to TestFlight
+        continue-on-error: true
         env:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}

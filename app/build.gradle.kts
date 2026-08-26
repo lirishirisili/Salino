@@ -15,8 +15,8 @@ android {
         applicationId = "com.salino.sali"
         minSdk = 26
         targetSdk = 36
-        versionCode = 66
-        versionName = "1.3.38"
+        versionCode = 69
+        versionName = "1.3.41"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -113,9 +113,10 @@ dependencies {
     implementation(libs.play.services.auth)
 
     // Unity LevelPlay mediation — banner only (ironSource + Unity Ads adapter).
-    // Do not initialize Direct Unity Ads; LegacyUnityBottomBannerAd was removed.
+    // Versions aligned with working RN app (mediation 9.2.0 + adapter 5.5.0).
     implementation(libs.levelplay.mediation)
     implementation(libs.levelplay.unityads.adapter)
+    implementation(libs.unity.ads)
     implementation(libs.play.services.appset)
     implementation(libs.play.services.ads.identifier)
     implementation(libs.play.services.basement)

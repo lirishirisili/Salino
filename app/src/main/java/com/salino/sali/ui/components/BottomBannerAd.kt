@@ -4,8 +4,6 @@ import android.util.Log
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.salino.sali.ads.LevelPlayInitializer
@@ -29,11 +29,11 @@ import com.unity3d.mediation.banner.LevelPlayBannerAdViewListener
 /**
  * Bottom Unity LevelPlay banner.
  *
- * Layout contract (same as Expo / Tohav UX):
- * - Takes **no Scaffold space** until an ad actually loads.
- * - While loading, the native view still gets a real [requiredHeight] so LevelPlay
- *   can measure/layout, but Compose reports 0.dp height to the parent.
- * - Collapses again on persistent load failure.
+ * Matches the working RN behavior:
+ * - Parent (Scaffold bottomBar) reports **0 height** until an ad loads (no empty gap).
+ * - The native LevelPlay view is still measured at a real banner height while loading
+ *   (like RN `position: 'absolute'`), so mediation can lay out and fill.
+ * - Collapses on persistent load failure.
  */
 @Composable
 fun BottomBannerAd(
@@ -44,6 +44,7 @@ fun BottomBannerAd(
     var adLoaded by remember { mutableStateOf(false) }
     var loadFailed by remember { mutableStateOf(false) }
     var slotHeightDp by remember { mutableIntStateOf(LevelPlayConfig.BANNER_HEIGHT_DP) }
+    val density = LocalDensity.current
     val showSlot = !collapseWhenFailed || adLoaded
 
     LaunchedEffect(showSlot) {
@@ -58,19 +59,29 @@ fun BottomBannerAd(
         }
     }
 
-    // No empty reserved bar when ads are unavailable.
     if (collapseWhenFailed && loadFailed && !adLoaded) {
         return
     }
 
+    val slotHeightPx = with(density) { slotHeightDp.dp.roundToPx().coerceAtLeast(1) }
+
     AndroidView(
         modifier = modifier
             .fillMaxWidth()
-            // Parent only sees height after a real fill.
-            .height(if (showSlot) slotHeightDp.dp else 0.dp)
-            // Force a measurable native size even while parent height is 0.
-            .requiredHeight(slotHeightDp.dp)
-            .alpha(if (adLoaded) 1f else 0f),
+            .alpha(if (adLoaded) 1f else 0f)
+            // Measure at real banner size; report 0 height to Scaffold until fill.
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(
+                    constraints.copy(
+                        minHeight = slotHeightPx,
+                        maxHeight = slotHeightPx,
+                    ),
+                )
+                val reportedHeight = if (adLoaded) placeable.height else 0
+                layout(placeable.width, reportedHeight) {
+                    placeable.placeRelative(0, 0)
+                }
+            },
         factory = { ctx ->
             FrameLayout(ctx).apply {
                 clipChildren = false
@@ -94,6 +105,12 @@ fun BottomBannerAd(
                 ).also { it.start() }
             }
         },
+        update = { view ->
+            // Keep host at least as tall as the measured banner slot.
+            view.layoutParams = view.layoutParams.apply {
+                height = slotHeightPx
+            }
+        },
         onRelease = { view ->
             (view.tag as? LevelPlayBannerController)?.destroy()
         },
@@ -113,11 +130,13 @@ private class LevelPlayBannerController(
     private var loadRequested = false
 
     fun start() {
+        Log.i(TAG, "controller start isReady=${LevelPlayInitializer.isReady}")
         if (LevelPlayInitializer.isReady) {
             createAndLoad()
             return
         }
         val listener: (Boolean) -> Unit = { ready ->
+            Log.i(TAG, "ready listener ready=$ready destroyed=$destroyed")
             if (ready) {
                 host.post { if (!destroyed) createAndLoad() }
             } else if (!destroyed) {
@@ -140,6 +159,8 @@ private class LevelPlayBannerController(
         }
         val heightDp = adSize.height.takeIf { it > 0 } ?: LevelPlayConfig.BANNER_HEIGHT_DP
         val heightPx = (heightDp * density).toInt().coerceAtLeast(1)
+        val widthPx = host.width.takeIf { it > 0 }
+            ?: ctx.resources.displayMetrics.widthPixels
 
         val configBuilder = LevelPlayBannerAdView.Config.Builder().setAdSize(adSize)
         if (LevelPlayConfig.BANNER_PLACEMENT_NAME.isNotEmpty()) {
@@ -151,7 +172,11 @@ private class LevelPlayBannerController(
                 if (destroyed) return
                 attempt = 0
                 loadRequested = true
-                Log.i(TAG, "loaded network=${adInfo.adNetwork} placement=${adInfo.placementName}")
+                Log.i(
+                    TAG,
+                    "loaded network=${adInfo.adNetwork} placement=${adInfo.placementName} " +
+                        "adUnit=${adInfo.adUnitId}",
+                )
                 host.post { if (!destroyed) onLoaded(heightDp) }
             }
 
@@ -163,7 +188,10 @@ private class LevelPlayBannerController(
 
             override fun onAdDisplayed(adInfo: LevelPlayAdInfo) {
                 Log.i(TAG, "displayed network=${adInfo.adNetwork}")
-                Log.i(TAG, "impression adUnit=${adInfo.adUnitId} network=${adInfo.adNetwork} revenue=${adInfo.revenue}")
+                Log.i(
+                    TAG,
+                    "impression adUnit=${adInfo.adUnitId} network=${adInfo.adNetwork} revenue=${adInfo.revenue}",
+                )
             }
 
             override fun onAdDisplayFailed(adInfo: LevelPlayAdInfo, error: LevelPlayAdError) {
@@ -191,15 +219,20 @@ private class LevelPlayBannerController(
         host.removeAllViews()
         host.addView(
             view,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                heightPx,
-            ),
+            FrameLayout.LayoutParams(widthPx, heightPx),
         )
-        if (!loadRequested) {
-            loadRequested = true
-            Log.i(TAG, "load requested adUnit=${LevelPlayConfig.BANNER_AD_UNIT_ID}")
-            view.loadAd()
+        // Force a layout pass before load — mirrors RN onLayout gate.
+        host.post {
+            if (destroyed) return@post
+            if (!loadRequested) {
+                loadRequested = true
+                Log.i(
+                    TAG,
+                    "load requested adUnit=${LevelPlayConfig.BANNER_AD_UNIT_ID} " +
+                        "size=${widthPx}x$heightPx adaptive=${adSize.isAdaptive}",
+                )
+                view.loadAd()
+            }
         }
     }
 
@@ -208,9 +241,11 @@ private class LevelPlayBannerController(
         if (attempt < MAX_LOAD_ATTEMPTS) {
             attempt += 1
             loadRequested = false
+            Log.i(TAG, "scheduling retry attempt=$attempt in ${RETRY_BACKOFF_MS}ms")
             handler.postDelayed({
                 if (destroyed) return@postDelayed
                 loadRequested = true
+                Log.i(TAG, "retry loadAd attempt=$attempt")
                 banner?.loadAd()
             }, RETRY_BACKOFF_MS)
         } else {
@@ -236,7 +271,7 @@ private class LevelPlayBannerController(
 
     companion object {
         private const val MAX_LOAD_ATTEMPTS = 3
-        private const val RETRY_BACKOFF_MS = 30_000L
+        private const val RETRY_BACKOFF_MS = 15_000L
     }
 }
 
