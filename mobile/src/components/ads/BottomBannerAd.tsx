@@ -29,6 +29,16 @@ type BottomBannerAdProps = {
 };
 
 const LOG = '[BANNER]';
+
+// Ad lifecycle logs are dev-only: they fire on every load/refresh/display and
+// add needless JS-thread work + logcat noise in production.
+const log = (...args: unknown[]) => {
+  if (__DEV__) console.log(...args);
+};
+const warn = (...args: unknown[]) => {
+  if (__DEV__) console.warn(...args);
+};
+
 const MAX_LOAD_ATTEMPTS = 3;
 const RETRY_BACKOFF_MS = 30_000;
 /** Tablet / unfolded foldable — keep banner host phone-width, not full-bleed. */
@@ -64,17 +74,17 @@ function LevelPlayBannerSlot({
       return;
     }
     loadRequestedRef.current = true;
-    console.log(`${LOG} load requested attempt=${attemptRef.current + 1}`);
+    log(`${LOG} load requested attempt=${attemptRef.current + 1}`);
     bannerRef.current?.loadAd();
   }, []);
 
   useEffect(() => {
-    console.log(`${LOG} component mount adUnit=${LEVELPLAY_BANNER_AD_UNIT_ID}`);
+    log(`${LOG} component mount adUnit=${LEVELPLAY_BANNER_AD_UNIT_ID}`);
     loadRequestedRef.current = false;
     return () => {
       clearRetry();
       loadRequestedRef.current = false;
-      console.log(`${LOG} destroyed`);
+      log(`${LOG} destroyed`);
       bannerRef.current?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,7 +104,7 @@ function LevelPlayBannerSlot({
 
   const scheduleRetry = useCallback(() => {
     if (attemptRef.current + 1 >= MAX_LOAD_ATTEMPTS) {
-      console.warn(`${LOG} giving up after ${MAX_LOAD_ATTEMPTS} attempts (slot collapsed)`);
+      warn(`${LOG} giving up after ${MAX_LOAD_ATTEMPTS} attempts (slot collapsed)`);
       return;
     }
     attemptRef.current += 1;
@@ -109,33 +119,33 @@ function LevelPlayBannerSlot({
         attemptRef.current = 0;
         loadRequestedRef.current = true;
         clearRetry();
-        console.log(
+        log(
           `${LOG} loaded network=${adInfo.adNetwork} placement=${adInfo.placementName} ` +
             `size=${adInfo.adSize?.width ?? '?'}x${adInfo.adSize?.height ?? '?'}`,
         );
         onLoadedChange(true);
       },
       onAdLoadFailed: (error: LevelPlayAdError) => {
-        console.warn(
+        warn(
           `${LOG} load failed code=${error.errorCode} message=${error.errorMessage}`,
         );
         onLoadedChange(false);
         scheduleRetry();
       },
       onAdDisplayed: (adInfo: LevelPlayAdInfo) => {
-        console.log(`${LOG} displayed network=${adInfo.adNetwork}`);
+        log(`${LOG} displayed network=${adInfo.adNetwork}`);
       },
       onAdDisplayFailed: (_adInfo: LevelPlayAdInfo, error: LevelPlayAdError) => {
-        console.warn(`${LOG} display failed code=${error.errorCode} message=${error.errorMessage}`);
+        warn(`${LOG} display failed code=${error.errorCode} message=${error.errorMessage}`);
         onLoadedChange(false);
         scheduleRetry();
       },
       onAdClicked: (adInfo: LevelPlayAdInfo) => {
-        console.log(`${LOG} clicked network=${adInfo.adNetwork}`);
+        log(`${LOG} clicked network=${adInfo.adNetwork}`);
       },
-      onAdExpanded: () => console.log(`${LOG} expanded`),
-      onAdCollapsed: () => console.log(`${LOG} collapsed`),
-      onAdLeftApplication: () => console.log(`${LOG} left application`),
+      onAdExpanded: () => log(`${LOG} expanded`),
+      onAdCollapsed: () => log(`${LOG} collapsed`),
+      onAdLeftApplication: () => log(`${LOG} left application`),
     }),
     [clearRetry, onLoadedChange, scheduleRetry],
   );
@@ -178,13 +188,13 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     Platform.OS !== 'web' && Constants.appOwnership !== 'expo';
 
   useEffect(() => {
-    console.log(
+    log(
       `${LOG} component mount id=${mountId} visible=${visible} ` +
         `adUnit=${LEVELPLAY_BANNER_AD_UNIT_ID} platform=${Platform.OS} ` +
         `appOwnership=${Constants.appOwnership} insetBottom=${insets.bottom}`,
     );
     return () => {
-      console.log(`${LOG} component unmount id=${mountId}`);
+      log(`${LOG} component unmount id=${mountId}`);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -194,7 +204,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
     if (!isRenderableEnv) return;
     void initLevelPlay();
     const unsubscribe = subscribeLevelPlayReady((ready) => {
-      console.log(`${LOG} sdk ready=${ready}`);
+      log(`${LOG} sdk ready=${ready}`);
       setSdkReady(ready);
     });
     return unsubscribe;
@@ -221,7 +231,7 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
         if (cancelled) return;
         setAdSize(adaptive ?? LevelPlayAdSize.BANNER);
       } catch (err) {
-        console.warn(`${LOG} createAdaptiveAdSize failed; using BANNER`, err);
+        warn(`${LOG} createAdaptiveAdSize failed; using BANNER`, err);
         if (!cancelled) setAdSize(LevelPlayAdSize.BANNER);
       }
     })();

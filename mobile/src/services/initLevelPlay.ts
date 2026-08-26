@@ -17,6 +17,11 @@ import { LEVELPLAY_APP_KEY } from '../config/levelPlay';
 
 const LOG = '[LEVELPLAY]';
 
+// Info-level SDK logs are dev-only; warnings for real failures are kept.
+const log = (...args: unknown[]) => {
+  if (__DEV__) console.log(...args);
+};
+
 const ATT_ACTIVE_WAIT_MS = 10_000;
 const ATT_PROMPT_DELAY_MS = 1500;
 const INIT_TIMEOUT_MS = 20_000;
@@ -117,7 +122,7 @@ async function registerImpressionListener(): Promise<void> {
       onImpressionSuccess: (data: LevelPlayImpressionData) => {
         const format = (data.adFormat ?? '').toUpperCase();
         if (format === 'BANNER' || format === '') {
-          console.log(
+          log(
             `[BANNER] impression adUnit=${data.mediationAdUnitId ?? ''} ` +
               `network=${data.adNetwork ?? ''} placement=${data.placement ?? ''} ` +
               `revenue=${data.revenue ?? ''} precision=${data.precision ?? ''}`,
@@ -156,8 +161,8 @@ export function initLevelPlay(): Promise<boolean> {
     };
 
     void (async () => {
-      console.log(`${LOG} init started`);
-      console.log(`${LOG} platform ${Platform.OS} appKey=${LEVELPLAY_APP_KEY}`);
+      log(`${LOG} init started`);
+      log(`${LOG} platform ${Platform.OS} appKey=${LEVELPLAY_APP_KEY}`);
 
       // Listeners and diagnostics must be registered BEFORE init.
       await registerImpressionListener();
@@ -187,7 +192,7 @@ export function initLevelPlay(): Promise<boolean> {
       const initListener: LevelPlayInitListener = {
         onInitSuccess: (_configuration: LevelPlayConfiguration) => {
           status = 'ready';
-          console.log(`${LOG} init success`);
+          log(`${LOG} init success`);
           if (ENABLE_INTEGRATION_TEST_SUITE) {
             LevelPlay.launchTestSuite().catch((err) =>
               console.warn(`${LOG} launchTestSuite failed:`, err),

@@ -1,5 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ShoppingItem, Household, HouseholdMember, ActivityLog, RecurringItem } from '../models';
+import {
+  encodeItem,
+  decodeItem,
+  encodeRecurring,
+  decodeRecurring,
+  encodeActivity,
+  decodeActivity,
+  encodeHousehold,
+  decodeHousehold,
+  encodeMember,
+  decodeMember,
+} from './timestampCodec';
 
 const KEYS = {
   ITEMS: (hId: string) => `@items_${hId}`,
@@ -32,90 +44,145 @@ async function setJSON<T>(key: string, value: T): Promise<void> {
   await AsyncStorage.setItem(key, JSON.stringify(value));
 }
 
+/**
+ * Serializes async operations per storage key. Read-modify-write upserts and
+ * full-list writes to the same key must not interleave, otherwise concurrent
+ * mutations (e.g. checking off several items quickly) can lose writes. This
+ * also makes fire-and-forget background writes safe.
+ */
+const keyLocks = new Map<string, Promise<unknown>>();
+
+function runExclusive<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = keyLocks.get(key) ?? Promise.resolve();
+  const result = prev.then(fn, fn);
+  // Keep the chain alive without leaking rejections into it.
+  keyLocks.set(key, result.then(NOOP, NOOP));
+  return result;
+}
+
+const NOOP = () => {};
+
 // Shopping Items
+async function readItemsRaw(householdId: string): Promise<ShoppingItem[]> {
+  const raw = (await getJSON<Record<string, unknown>[]>(KEYS.ITEMS(householdId))) ?? [];
+  return raw.map(decodeItem);
+}
+
+async function writeItemsRaw(householdId: string, items: ShoppingItem[]): Promise<void> {
+  await setJSON(KEYS.ITEMS(householdId), items.map(encodeItem));
+}
+
 export const localGetItems = async (householdId: string): Promise<ShoppingItem[]> => {
-  return (await getJSON<ShoppingItem[]>(KEYS.ITEMS(householdId))) ?? [];
+  return readItemsRaw(householdId);
 };
 
 export const localSetItems = async (householdId: string, items: ShoppingItem[]): Promise<void> => {
-  await setJSON(KEYS.ITEMS(householdId), items);
+  await runExclusive(KEYS.ITEMS(householdId), () => writeItemsRaw(householdId, items));
 };
 
 export const localUpsertItem = async (householdId: string, item: ShoppingItem): Promise<void> => {
-  const items = await localGetItems(householdId);
-  const idx = items.findIndex((i) => i.id === item.id);
-  if (idx >= 0) {
-    items[idx] = item;
-  } else {
-    items.unshift(item);
-  }
-  await localSetItems(householdId, items);
+  await runExclusive(KEYS.ITEMS(householdId), async () => {
+    const items = await readItemsRaw(householdId);
+    const idx = items.findIndex((i) => i.id === item.id);
+    if (idx >= 0) {
+      items[idx] = item;
+    } else {
+      items.unshift(item);
+    }
+    await writeItemsRaw(householdId, items);
+  });
 };
 
 export const localDeleteItem = async (householdId: string, itemId: string): Promise<void> => {
-  const items = await localGetItems(householdId);
-  await localSetItems(
-    householdId,
-    items.filter((i) => i.id !== itemId)
-  );
+  await runExclusive(KEYS.ITEMS(householdId), async () => {
+    const items = await readItemsRaw(householdId);
+    await writeItemsRaw(
+      householdId,
+      items.filter((i) => i.id !== itemId)
+    );
+  });
 };
 
 // Household
 export const localGetHousehold = async (householdId: string): Promise<Household | null> => {
-  return getJSON<Household>(KEYS.HOUSEHOLD(householdId));
+  const raw = await getJSON<Record<string, unknown>>(KEYS.HOUSEHOLD(householdId));
+  return raw ? decodeHousehold(raw) : null;
 };
 
 export const localSetHousehold = async (household: Household): Promise<void> => {
-  await setJSON(KEYS.HOUSEHOLD(household.id), household);
+  await setJSON(KEYS.HOUSEHOLD(household.id), encodeHousehold(household));
 };
 
 // Members
 export const localGetMembers = async (householdId: string): Promise<HouseholdMember[]> => {
-  return (await getJSON<HouseholdMember[]>(KEYS.MEMBERS(householdId))) ?? [];
+  const raw = (await getJSON<Record<string, unknown>[]>(KEYS.MEMBERS(householdId))) ?? [];
+  return raw.map(decodeMember);
 };
 
 export const localSetMembers = async (householdId: string, members: HouseholdMember[]): Promise<void> => {
-  await setJSON(KEYS.MEMBERS(householdId), members);
+  await setJSON(KEYS.MEMBERS(householdId), members.map(encodeMember));
 };
 
 // Activity
+async function readActivityRaw(householdId: string): Promise<ActivityLog[]> {
+  const raw = (await getJSON<Record<string, unknown>[]>(KEYS.ACTIVITY(householdId))) ?? [];
+  return raw.map(decodeActivity);
+}
+
+async function writeActivityRaw(householdId: string, logs: ActivityLog[]): Promise<void> {
+  await setJSON(KEYS.ACTIVITY(householdId), logs.map(encodeActivity));
+}
+
 export const localGetActivity = async (householdId: string): Promise<ActivityLog[]> => {
-  return (await getJSON<ActivityLog[]>(KEYS.ACTIVITY(householdId))) ?? [];
+  return readActivityRaw(householdId);
 };
 
 export const localSetActivity = async (householdId: string, logs: ActivityLog[]): Promise<void> => {
-  await setJSON(KEYS.ACTIVITY(householdId), logs);
+  await runExclusive(KEYS.ACTIVITY(householdId), () => writeActivityRaw(householdId, logs));
 };
 
 export const localUpsertActivity = async (householdId: string, log: ActivityLog): Promise<void> => {
-  const logs = await localGetActivity(householdId);
-  const idx = logs.findIndex((l) => l.id === log.id);
-  if (idx >= 0) {
-    logs[idx] = log;
-  } else {
-    logs.unshift(log);
-  }
-  await localSetActivity(householdId, logs);
+  await runExclusive(KEYS.ACTIVITY(householdId), async () => {
+    const logs = await readActivityRaw(householdId);
+    const idx = logs.findIndex((l) => l.id === log.id);
+    if (idx >= 0) {
+      logs[idx] = log;
+    } else {
+      logs.unshift(log);
+    }
+    await writeActivityRaw(householdId, logs);
+  });
 };
 
 // Recurring Items
+async function readRecurringRaw(householdId: string): Promise<RecurringItem[]> {
+  const raw = (await getJSON<Record<string, unknown>[]>(KEYS.RECURRING(householdId))) ?? [];
+  return raw.map(decodeRecurring);
+}
+
+async function writeRecurringRaw(householdId: string, items: RecurringItem[]): Promise<void> {
+  await setJSON(KEYS.RECURRING(householdId), items.map(encodeRecurring));
+}
+
 export const localGetRecurring = async (householdId: string): Promise<RecurringItem[]> => {
-  return (await getJSON<RecurringItem[]>(KEYS.RECURRING(householdId))) ?? [];
+  return readRecurringRaw(householdId);
 };
 
 export const localSetRecurring = async (householdId: string, items: RecurringItem[]): Promise<void> => {
-  await setJSON(KEYS.RECURRING(householdId), items);
+  await runExclusive(KEYS.RECURRING(householdId), () => writeRecurringRaw(householdId, items));
 };
 
 export const localUpsertRecurring = async (householdId: string, item: RecurringItem): Promise<void> => {
-  const items = await localGetRecurring(householdId);
-  const idx = items.findIndex((i) => i.id === item.id);
-  if (idx >= 0) {
-    items[idx] = item;
-  } else {
-    items.push(item);
-  }
-  await localSetRecurring(householdId, items);
+  await runExclusive(KEYS.RECURRING(householdId), async () => {
+    const items = await readRecurringRaw(householdId);
+    const idx = items.findIndex((i) => i.id === item.id);
+    if (idx >= 0) {
+      items[idx] = item;
+    } else {
+      items.push(item);
+    }
+    await writeRecurringRaw(householdId, items);
+  });
 };
 
 // Active household — scoped per Firebase uid so accounts cannot leak into each other.

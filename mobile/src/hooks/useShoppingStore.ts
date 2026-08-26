@@ -3,7 +3,15 @@ import { ShoppingItem, RecurringItem, SuggestionItem } from '../models';
 import { shoppingRepository, recurringRepository } from '../repositories';
 import { localGetRecurring } from '../local/storage';
 import { buildShoppingListState } from './shoppingListState';
+import { perfMark } from '../utils/perf';
 import { Unsubscribe } from 'firebase/firestore';
+
+/**
+ * Tracks which household's cache has already been hydrated into the store so a
+ * boot-time `preloadFromCache` and the follow-up `subscribe` do not both hit
+ * AsyncStorage for the same household.
+ */
+let cacheHydratedHouseholdId: string | null = null;
 
 interface ShoppingListState {
   items: ShoppingItem[];
@@ -32,10 +40,12 @@ interface ShoppingListState {
 }
 
 async function readCachedList(householdId: string) {
+  perfMark('cache_read_start');
   const [items, recurringItems] = await Promise.all([
     shoppingRepository.getLocalItems(householdId),
     localGetRecurring(householdId),
   ]);
+  perfMark('cache_read_done', { overwrite: true });
   return { items, recurringItems };
 }
 
@@ -54,6 +64,8 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   preloadFromCache: async (householdId: string) => {
     try {
       const { items, recurringItems } = await readCachedList(householdId);
+      // Mark this household's cache as hydrated so subscribe() won't re-read it.
+      cacheHydratedHouseholdId = householdId;
       if (items.length === 0) {
         // Mark household so subscribe() won't treat it as a switch
         set({ subscribedHouseholdId: householdId, isLoading: false });
@@ -64,6 +76,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
         ...buildShoppingListState(items, recurringItems),
         isLoading: false,
       });
+      perfMark('cache_committed');
     } catch {
       // Still mark household even on error
       set({ subscribedHouseholdId: householdId, isLoading: false });
@@ -74,6 +87,8 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
     const switchingHousehold = get().subscribedHouseholdId !== householdId;
 
     if (switchingHousehold) {
+      // A genuine household switch invalidates any previously hydrated cache.
+      cacheHydratedHouseholdId = null;
       set({
         subscribedHouseholdId: householdId,
         hasReceivedRemoteSnapshot: false,
@@ -99,25 +114,33 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
 
     const applyRemote = (items: ShoppingItem[]) => {
       if (cancelled || get().subscribedHouseholdId !== householdId) return;
+      perfMark('first_remote_snapshot');
       const recurringItems = get().recurringItems;
       set({
         ...buildShoppingListState(items, recurringItems),
         isLoading: false,
         hasReceivedRemoteSnapshot: true,
       });
+      perfMark('reconcile_done', { overwrite: true });
     };
 
-    // Only read cache if we don't already have items for this household
-    if (switchingHousehold || get().items.length === 0) {
+    // Only read cache if we don't already have items for this household and the
+    // boot-time preload didn't already hydrate it (avoids a duplicate read).
+    const needsCacheRead =
+      cacheHydratedHouseholdId !== householdId &&
+      (switchingHousehold || get().items.length === 0);
+    if (needsCacheRead) {
       void (async () => {
         try {
           const { items, recurringItems } = await readCachedList(householdId);
+          cacheHydratedHouseholdId = householdId;
           if (cancelled || get().subscribedHouseholdId !== householdId) return;
           if (items.length > 0) {
             set({
               ...buildShoppingListState(items, recurringItems),
               isLoading: false,
             });
+            perfMark('cache_committed');
           }
         } catch {
           // Firestore will follow.
@@ -184,7 +207,8 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedCategory: (category) => set({ selectedCategory: category }),
 
-  reset: () =>
+  reset: () => {
+    cacheHydratedHouseholdId = null;
     set({
       items: [],
       activeItems: [],
@@ -196,5 +220,6 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
       hasReceivedRemoteSnapshot: false,
       isLoading: true,
       subscribedHouseholdId: null,
-    }),
+    });
+  },
 }));

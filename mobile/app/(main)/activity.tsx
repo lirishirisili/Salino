@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
-import { useActivityStore } from '../../src/hooks';
+import { useActivityStore, useHouseholdStore } from '../../src/hooks';
 import {
   EmptyState,
   LoadingIndicator,
@@ -21,6 +21,15 @@ export default function ActivityScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const { logs, isLoading } = useActivityStore();
+  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  const subscribeActivity = useActivityStore((s) => s.subscribe);
+
+  // Activity is only streamed while this screen is open (kept off cold start).
+  useEffect(() => {
+    if (!activeHouseholdId) return;
+    const unsub = subscribeActivity(activeHouseholdId);
+    return () => unsub();
+  }, [activeHouseholdId, subscribeActivity]);
 
   return (
     <SalinoGradientBackground>

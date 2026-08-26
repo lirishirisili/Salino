@@ -7,6 +7,7 @@ import { useHouseholdStore } from './useHouseholdStore';
 import { useNotificationStore } from './useNotificationStore';
 import { localGetActiveHouseholdId } from '../local/storage';
 import { unregisterNotifications } from '../services/notificationService';
+import { perfMark } from '../utils/perf';
 
 interface AuthState {
   user: User | null;
@@ -72,6 +73,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       previousAuthUid = user.uid;
 
       const alreadyBootstrapped = get().hasBootstrapped;
+      perfMark('auth_restored');
       set({ isSignedIn: true, user });
 
       // FAST PATH: read cached householdId from local storage and preload items

@@ -14,8 +14,11 @@ import { TourOverlay } from '../src/components/tour/TourOverlay';
 import { initLevelPlay } from '../src/services/initLevelPlay';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
+import { perfMark } from '../src/utils/perf';
 
 LogBox.ignoreLogs(['Setting a timer']);
+
+perfMark('process_start');
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 

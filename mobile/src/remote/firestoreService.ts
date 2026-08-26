@@ -10,6 +10,7 @@ import {
   query,
   orderBy,
   where,
+  limit,
   arrayUnion,
   arrayRemove,
   Timestamp,
@@ -91,13 +92,20 @@ export const subscribeToMembers = (
   );
 };
 
+/** Upper bound on activity logs streamed to the client. */
+export const ACTIVITY_FEED_LIMIT = 100;
+
 // Activity feed listener
 export const subscribeToActivity = (
   householdId: string,
   onData: (logs: ActivityLog[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe => {
-  const q = query(activityCol(householdId), orderBy('createdAt', 'desc'));
+  const q = query(
+    activityCol(householdId),
+    orderBy('createdAt', 'desc'),
+    limit(ACTIVITY_FEED_LIMIT)
+  );
   return onSnapshot(
     q,
     (snapshot) => {

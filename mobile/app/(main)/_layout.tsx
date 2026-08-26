@@ -6,7 +6,6 @@ import { useTourStore } from '../../src/features/tour';
 import {
   useHouseholdStore,
   useShoppingStore,
-  useActivityStore,
   useNotificationStore,
 } from '../../src/hooks';
 import {
@@ -23,7 +22,6 @@ export default function MainLayout() {
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const subscribeHousehold = useHouseholdStore((s) => s.subscribe);
   const subscribeShopping = useShoppingStore((s) => s.subscribe);
-  const subscribeActivity = useActivityStore((s) => s.subscribe);
   const loadPreferences = useNotificationStore((s) => s.loadPreferences);
   const setPermissionGranted = useNotificationStore((s) => s.setPermissionGranted);
   const tourBootstrapStatus = useTourStore((s) => s.bootstrapStatus);
@@ -31,10 +29,12 @@ export default function MainLayout() {
 
   useEffect(() => {
     if (!activeHouseholdId) return;
+    // The activity feed listener is intentionally NOT started here; it is
+    // subscribed only while the activity screen is mounted to keep it off the
+    // cold-start critical path.
     const unsubs = [
       subscribeHousehold(activeHouseholdId),
       subscribeShopping(activeHouseholdId),
-      subscribeActivity(activeHouseholdId),
     ];
     return () => unsubs.forEach((u) => u());
   }, [activeHouseholdId]);

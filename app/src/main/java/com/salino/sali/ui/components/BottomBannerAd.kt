@@ -3,7 +3,9 @@ package com.salino.sali.ui.components
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -12,9 +14,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -26,6 +30,9 @@ import com.unity3d.mediation.LevelPlayAdSize
 import com.unity3d.mediation.banner.LevelPlayBannerAdView
 import com.unity3d.mediation.banner.LevelPlayBannerAdViewListener
 
+/** Tablet / unfolded foldable — keep banner host phone-width, not full-bleed. */
+private const val WIDE_LAYOUT_MIN_WIDTH_DP = 600
+
 /**
  * Bottom Unity LevelPlay banner.
  *
@@ -34,6 +41,7 @@ import com.unity3d.mediation.banner.LevelPlayBannerAdViewListener
  * - The native LevelPlay view is still measured at a real banner height while loading
  *   (like RN `position: 'absolute'`), so mediation can lay out and fill.
  * - Collapses on persistent load failure.
+ * - On wide screens, uses fixed BANNER (320×50) centered instead of full-bleed adaptive.
  */
 @Composable
 fun BottomBannerAd(
@@ -44,7 +52,10 @@ fun BottomBannerAd(
     var adLoaded by remember { mutableStateOf(false) }
     var loadFailed by remember { mutableStateOf(false) }
     var slotHeightDp by remember { mutableIntStateOf(LevelPlayConfig.BANNER_HEIGHT_DP) }
+    var slotWidthDp by remember { mutableIntStateOf(320) }
     val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val isWideLayout = configuration.screenWidthDp >= WIDE_LAYOUT_MIN_WIDTH_DP
     val showSlot = !collapseWhenFailed || adLoaded
 
     LaunchedEffect(showSlot) {
@@ -52,7 +63,7 @@ fun BottomBannerAd(
     }
 
     DisposableEffect(Unit) {
-        Log.i(TAG, "component mount collapseWhenFailed=$collapseWhenFailed")
+        Log.i(TAG, "component mount collapseWhenFailed=$collapseWhenFailed wide=$isWideLayout")
         onDispose {
             Log.i(TAG, "component unmount")
             onAdVisible?.invoke(false)
@@ -64,62 +75,78 @@ fun BottomBannerAd(
     }
 
     val slotHeightPx = with(density) { slotHeightDp.dp.roundToPx().coerceAtLeast(1) }
+    val slotWidthPx = with(density) { slotWidthDp.dp.roundToPx().coerceAtLeast(1) }
 
-    AndroidView(
-        modifier = modifier
-            .fillMaxWidth()
-            .alpha(if (adLoaded) 1f else 0f)
-            // Measure at real banner size; report 0 height to Scaffold until fill.
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(
-                    constraints.copy(
-                        minHeight = slotHeightPx,
-                        maxHeight = slotHeightPx,
-                    ),
-                )
-                val reportedHeight = if (adLoaded) placeable.height else 0
-                layout(placeable.width, reportedHeight) {
-                    placeable.placeRelative(0, 0)
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        AndroidView(
+            modifier = Modifier
+                .width(slotWidthDp.dp)
+                .alpha(if (adLoaded) 1f else 0f)
+                // Measure at real banner size; report 0 height to Scaffold until fill.
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(
+                        constraints.copy(
+                            minWidth = slotWidthPx,
+                            maxWidth = slotWidthPx,
+                            minHeight = slotHeightPx,
+                            maxHeight = slotHeightPx,
+                        ),
+                    )
+                    val reportedHeight = if (adLoaded) placeable.height else 0
+                    layout(placeable.width, reportedHeight) {
+                        placeable.placeRelative(0, 0)
+                    }
+                },
+            factory = { ctx ->
+                FrameLayout(ctx).apply {
+                    clipChildren = false
+                    clipToPadding = false
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                    )
+                    Log.i(TAG, "component mount host created")
+                    tag = LevelPlayBannerController(
+                        host = this,
+                        isWideLayout = isWideLayout,
+                        onSize = { widthDp, heightDp ->
+                            if (widthDp > 0) slotWidthDp = widthDp
+                            if (heightDp > 0) slotHeightDp = heightDp
+                        },
+                        onLoaded = { widthDp, heightDp ->
+                            if (widthDp > 0) slotWidthDp = widthDp
+                            if (heightDp > 0) slotHeightDp = heightDp
+                            adLoaded = true
+                            loadFailed = false
+                        },
+                        onFailed = {
+                            adLoaded = false
+                            loadFailed = true
+                        },
+                    ).also { it.start() }
                 }
             },
-        factory = { ctx ->
-            FrameLayout(ctx).apply {
-                clipChildren = false
-                clipToPadding = false
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                )
-                Log.i(TAG, "component mount host created")
-                tag = LevelPlayBannerController(
-                    host = this,
-                    onLoaded = { heightDp ->
-                        if (heightDp > 0) slotHeightDp = heightDp
-                        adLoaded = true
-                        loadFailed = false
-                    },
-                    onFailed = {
-                        adLoaded = false
-                        loadFailed = true
-                    },
-                ).also { it.start() }
-            }
-        },
-        update = { view ->
-            // Keep host at least as tall as the measured banner slot.
-            view.layoutParams = view.layoutParams.apply {
-                height = slotHeightPx
-            }
-        },
-        onRelease = { view ->
-            (view.tag as? LevelPlayBannerController)?.destroy()
-        },
-    )
+            update = { view ->
+                view.layoutParams = view.layoutParams.apply {
+                    width = slotWidthPx
+                    height = slotHeightPx
+                }
+            },
+            onRelease = { view ->
+                (view.tag as? LevelPlayBannerController)?.destroy()
+            },
+        )
+    }
 }
 
 private class LevelPlayBannerController(
     private val host: FrameLayout,
-    private val onLoaded: (Int) -> Unit,
+    private val isWideLayout: Boolean,
+    private val onSize: (widthDp: Int, heightDp: Int) -> Unit,
+    private val onLoaded: (widthDp: Int, heightDp: Int) -> Unit,
     private val onFailed: () -> Unit,
 ) {
     private var banner: LevelPlayBannerAdView? = null
@@ -128,9 +155,11 @@ private class LevelPlayBannerController(
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private var readyListener: ((Boolean) -> Unit)? = null
     private var loadRequested = false
+    private var sizeWidthDp = 320
+    private var sizeHeightDp = LevelPlayConfig.BANNER_HEIGHT_DP
 
     fun start() {
-        Log.i(TAG, "controller start isReady=${LevelPlayInitializer.isReady}")
+        Log.i(TAG, "controller start isReady=${LevelPlayInitializer.isReady} wide=$isWideLayout")
         if (LevelPlayInitializer.isReady) {
             createAndLoad()
             return
@@ -151,16 +180,22 @@ private class LevelPlayBannerController(
         if (destroyed || banner != null) return
         val ctx = host.context
         val density = ctx.resources.displayMetrics.density
-        val adSize = try {
-            LevelPlayAdSize.createAdaptiveAdSize(ctx) ?: LevelPlayAdSize.BANNER
-        } catch (e: Throwable) {
-            Log.w(TAG, "createAdaptiveAdSize failed; using BANNER", e)
+        // Phones: adaptive. Wide / foldable: fixed BANNER so the creative stays phone-sized.
+        val adSize = if (isWideLayout) {
             LevelPlayAdSize.BANNER
+        } else {
+            try {
+                LevelPlayAdSize.createAdaptiveAdSize(ctx) ?: LevelPlayAdSize.BANNER
+            } catch (e: Throwable) {
+                Log.w(TAG, "createAdaptiveAdSize failed; using BANNER", e)
+                LevelPlayAdSize.BANNER
+            }
         }
-        val heightDp = adSize.height.takeIf { it > 0 } ?: LevelPlayConfig.BANNER_HEIGHT_DP
-        val heightPx = (heightDp * density).toInt().coerceAtLeast(1)
-        val widthPx = host.width.takeIf { it > 0 }
-            ?: ctx.resources.displayMetrics.widthPixels
+        sizeHeightDp = adSize.height.takeIf { it > 0 } ?: LevelPlayConfig.BANNER_HEIGHT_DP
+        sizeWidthDp = adSize.width.takeIf { it > 0 } ?: 320
+        val heightPx = (sizeHeightDp * density).toInt().coerceAtLeast(1)
+        val widthPx = (sizeWidthDp * density).toInt().coerceAtLeast(1)
+        host.post { if (!destroyed) onSize(sizeWidthDp, sizeHeightDp) }
 
         val configBuilder = LevelPlayBannerAdView.Config.Builder().setAdSize(adSize)
         if (LevelPlayConfig.BANNER_PLACEMENT_NAME.isNotEmpty()) {
@@ -175,9 +210,9 @@ private class LevelPlayBannerController(
                 Log.i(
                     TAG,
                     "loaded network=${adInfo.adNetwork} placement=${adInfo.placementName} " +
-                        "adUnit=${adInfo.adUnitId}",
+                        "adUnit=${adInfo.adUnitId} size=${sizeWidthDp}x$sizeHeightDp",
                 )
-                host.post { if (!destroyed) onLoaded(heightDp) }
+                host.post { if (!destroyed) onLoaded(sizeWidthDp, sizeHeightDp) }
             }
 
             override fun onAdLoadFailed(error: LevelPlayAdError) {
@@ -196,6 +231,7 @@ private class LevelPlayBannerController(
 
             override fun onAdDisplayFailed(adInfo: LevelPlayAdInfo, error: LevelPlayAdError) {
                 Log.w(TAG, "display failed code=${error.errorCode} message=${error.errorMessage}")
+                scheduleRetryOrFail()
             }
 
             override fun onAdClicked(adInfo: LevelPlayAdInfo) {
@@ -229,7 +265,7 @@ private class LevelPlayBannerController(
                 Log.i(
                     TAG,
                     "load requested adUnit=${LevelPlayConfig.BANNER_AD_UNIT_ID} " +
-                        "size=${widthPx}x$heightPx adaptive=${adSize.isAdaptive}",
+                        "size=${widthPx}x$heightPx adaptive=${adSize.isAdaptive} wide=$isWideLayout",
                 )
                 view.loadAd()
             }

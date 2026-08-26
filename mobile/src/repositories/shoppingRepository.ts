@@ -20,6 +20,39 @@ function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+/**
+ * Runs a persistence/remote side-effect off the UI critical path. Mutations
+ * return immediately; Firestore's own latency compensation updates the list via
+ * the active snapshot listener, so the UI reflects the change without waiting
+ * on the full local read-modify-write or the activity-log write.
+ */
+function runBackground(work: Promise<unknown>): void {
+  work.catch((e) => {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn('[shoppingRepository] background write failed', e);
+    }
+  });
+}
+
+/**
+ * Cheap signature of an items list so we can skip rewriting the full cache blob
+ * when a snapshot carries no meaningful change (e.g. pending-write metadata
+ * flips). Uses count + newest updatedAt + last id — enough to detect real edits
+ * without hashing every field.
+ */
+function itemsSignature(items: ShoppingItem[]): string {
+  let newest = 0;
+  for (const item of items) {
+    const ms = item.updatedAt?.toMillis?.() ?? item.createdAt?.toMillis?.() ?? 0;
+    if (ms > newest) newest = ms;
+  }
+  const lastId = items.length > 0 ? items[items.length - 1].id : '';
+  return `${items.length}:${newest}:${lastId}`;
+}
+
+const lastPersistedSignature = new Map<string, string>();
+
 export const shoppingRepository = {
   subscribeToItems: (
     householdId: string,
@@ -29,7 +62,12 @@ export const shoppingRepository = {
     return subscribeToItems(
       householdId,
       (items) => {
-        localSetItems(householdId, items);
+        // Only rewrite the full cache blob when the data actually changed.
+        const signature = itemsSignature(items);
+        if (lastPersistedSignature.get(householdId) !== signature) {
+          lastPersistedSignature.set(householdId, signature);
+          runBackground(localSetItems(householdId, items));
+        }
         onData(items);
       },
       onError
@@ -64,11 +102,15 @@ export const shoppingRepository = {
       updatedAt: now,
     };
 
-    await localUpsertItem(householdId, newItem);
+    // Persist locally for offline durability and write remotely in parallel;
+    // the active snapshot listener (latency-compensated) surfaces the new item.
+    runBackground(localUpsertItem(householdId, newItem));
     await firestoreAddItem(householdId, newItem);
 
-    // Log activity
-    await shoppingRepository.logActivity(householdId, ActivityType.ITEM_ADDED, newItem.id, newItem.name);
+    // Activity logging is not on the critical path.
+    runBackground(
+      shoppingRepository.logActivity(householdId, ActivityType.ITEM_ADDED, newItem.id, newItem.name)
+    );
 
     return newItem;
   },
@@ -79,9 +121,11 @@ export const shoppingRepository = {
       normalizedName: normalizeItemName(item.name),
       updatedAt: Timestamp.now(),
     };
-    await localUpsertItem(householdId, updated);
+    runBackground(localUpsertItem(householdId, updated));
     await firestoreUpdateItem(householdId, item.id, updated);
-    await shoppingRepository.logActivity(householdId, ActivityType.ITEM_UPDATED, item.id, item.name);
+    runBackground(
+      shoppingRepository.logActivity(householdId, ActivityType.ITEM_UPDATED, item.id, item.name)
+    );
   },
 
   markAsBought: async (householdId: string, itemId: string, items: ShoppingItem[]): Promise<void> => {
@@ -97,9 +141,11 @@ export const shoppingRepository = {
       updatedAt: Timestamp.now(),
     };
 
-    await localUpsertItem(householdId, { ...item, ...updated } as ShoppingItem);
+    runBackground(localUpsertItem(householdId, { ...item, ...updated } as ShoppingItem));
     await firestoreUpdateItem(householdId, itemId, updated);
-    await shoppingRepository.logActivity(householdId, ActivityType.ITEM_BOUGHT, itemId, item.name);
+    runBackground(
+      shoppingRepository.logActivity(householdId, ActivityType.ITEM_BOUGHT, itemId, item.name)
+    );
   },
 
   markAsActive: async (householdId: string, itemId: string, items: ShoppingItem[]): Promise<void> => {
@@ -113,20 +159,24 @@ export const shoppingRepository = {
       updatedAt: Timestamp.now(),
     };
 
-    await localUpsertItem(householdId, { ...item, ...updated } as ShoppingItem);
+    runBackground(localUpsertItem(householdId, { ...item, ...updated } as ShoppingItem));
     await firestoreUpdateItem(householdId, itemId, updated);
-    await shoppingRepository.logActivity(householdId, ActivityType.ITEM_RESTORED, itemId, item.name);
+    runBackground(
+      shoppingRepository.logActivity(householdId, ActivityType.ITEM_RESTORED, itemId, item.name)
+    );
   },
 
   deleteItem: async (householdId: string, itemId: string, itemName: string): Promise<void> => {
-    await localDeleteItem(householdId, itemId);
+    runBackground(localDeleteItem(householdId, itemId));
     await firestoreDeleteItem(householdId, itemId);
-    await shoppingRepository.logActivity(householdId, ActivityType.ITEM_DELETED, itemId, itemName);
+    runBackground(
+      shoppingRepository.logActivity(householdId, ActivityType.ITEM_DELETED, itemId, itemName)
+    );
   },
 
   toggleFavorite: async (householdId: string, item: ShoppingItem): Promise<void> => {
     const updated = { ...item, isFavorite: !item.isFavorite, updatedAt: Timestamp.now() };
-    await localUpsertItem(householdId, updated);
+    runBackground(localUpsertItem(householdId, updated));
     await firestoreUpdateItem(householdId, item.id, { isFavorite: updated.isFavorite });
   },
 

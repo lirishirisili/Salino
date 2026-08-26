@@ -47,8 +47,11 @@ import {
   AutocompleteSuggestion,
   HouseholdHistoryIndex,
 } from '../../src/services/householdHistoryIndex';
+import { perfMark } from '../../src/utils/perf';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
+
+const NOOP = () => {};
 
 export default function ShoppingListScreen() {
   const { height: windowHeight } = useWindowDimensions();
@@ -132,6 +135,13 @@ export default function ShoppingListScreen() {
       }
     };
   }, []);
+
+  // One-shot cold-start marker: the first time the list has any items to show.
+  useEffect(() => {
+    if (activeItems.length > 0 || boughtItems.length > 0) {
+      perfMark('first_list_paint');
+    }
+  }, [activeItems.length, boughtItems.length]);
 
   const refreshQuickAddAutocomplete = useCallback(
     (text: string) => {
@@ -301,22 +311,34 @@ export default function ShoppingListScreen() {
     return activeItems.filter((i) => i.category === selectedCategory);
   }, [activeItems, selectedCategory]);
 
-  const handleMarkBought = (item: ShoppingItem) => {
-    if (activeHouseholdId) markAsBought(activeHouseholdId, item.id);
-  };
-  const handleMarkActive = (item: ShoppingItem) => {
-    if (activeHouseholdId) markAsActive(activeHouseholdId, item.id);
-  };
-  const handleDelete = (item: ShoppingItem) => {
-    Alert.alert('', t('shopping_list_delete_confirm'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('shopping_list_delete'),
-        style: 'destructive',
-        onPress: () => activeHouseholdId && deleteItem(activeHouseholdId, item.id, item.name),
-      },
-    ]);
-  };
+  const handleMarkBought = useCallback(
+    (item: ShoppingItem) => {
+      if (activeHouseholdId) markAsBought(activeHouseholdId, item.id);
+    },
+    [activeHouseholdId, markAsBought]
+  );
+  const handleMarkActive = useCallback(
+    (item: ShoppingItem) => {
+      if (activeHouseholdId) markAsActive(activeHouseholdId, item.id);
+    },
+    [activeHouseholdId, markAsActive]
+  );
+  const handleDelete = useCallback(
+    (item: ShoppingItem) => {
+      Alert.alert('', t('shopping_list_delete_confirm'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('shopping_list_delete'),
+          style: 'destructive',
+          onPress: () => activeHouseholdId && deleteItem(activeHouseholdId, item.id, item.name),
+        },
+      ]);
+    },
+    [activeHouseholdId, deleteItem, t]
+  );
+  const openEditItem = useCallback((item: ShoppingItem) => {
+    router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } });
+  }, []);
 
   const handleSuggestionPress = (s: any) => {
     router.push({
@@ -351,8 +373,6 @@ export default function ShoppingListScreen() {
       : previewItems
     : filteredActive;
 
-  const noop = () => {};
-
   // Inline element (not an inner component) so FlatList re-renders do not remount
   // the TextInput and dismiss the keyboard.
   const listContent = (
@@ -366,7 +386,7 @@ export default function ShoppingListScreen() {
             title={t('suggestions_title')}
             subtitle={t('suggestions_subtitle_home')}
             suggestions={listSuggestions}
-            onSuggestionPress={showTourPreview ? noop : handleSuggestionPress}
+            onSuggestionPress={showTourPreview ? NOOP : handleSuggestionPress}
           />
         </View>
       </View>
@@ -408,13 +428,8 @@ export default function ShoppingListScreen() {
       <View style={{ paddingVertical: 6 }}>
         <ShoppingItemsGroupCard
           items={listActiveItems}
-          onToggleBought={showTourPreview ? noop : handleMarkBought}
-          onItemPress={
-            showTourPreview
-              ? noop
-              : (item) =>
-                  router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } })
-          }
+          onToggleBought={showTourPreview ? NOOP : handleMarkBought}
+          onItemPress={showTourPreview ? NOOP : openEditItem}
           onDelete={showTourPreview ? undefined : handleDelete}
         />
       </View>
@@ -437,9 +452,7 @@ export default function ShoppingListScreen() {
               <ShoppingItemsGroupCard
                 items={visibleBoughtItems}
                 onToggleBought={handleMarkActive}
-                onItemPress={(item) =>
-                  router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } })
-                }
+                onItemPress={openEditItem}
               />
               {hasMoreBoughtItems && (
                 <Pressable

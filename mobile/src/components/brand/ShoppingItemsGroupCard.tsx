@@ -15,7 +15,7 @@ interface ShoppingItemsGroupCardProps {
 }
 
 /** Matches Android ShoppingItemsGroupCard — all items in one large rounded surface. */
-export function ShoppingItemsGroupCard({
+function ShoppingItemsGroupCardComponent({
   items,
   onToggleBought,
   onItemPress,
@@ -51,20 +51,15 @@ export function ShoppingItemsGroupCard({
       >
         {items.map((item, index) => (
           <View key={item.id}>
+            {/* Pass the item + stable group-level handlers so memoized rows only
+                re-render when their own item changes, not on every parent render. */}
             <ShoppingItemRow
               item={item}
-              onToggleBought={() => onToggleBought(item)}
-              onPress={() => onItemPress(item)}
-              onDelete={onDelete ? () => onDelete(item) : undefined}
+              onToggleBought={onToggleBought}
+              onPress={onItemPress}
+              onDelete={onDelete}
+              showDivider={index !== items.length - 1}
             />
-            {index !== items.length - 1 && (
-              <View
-                style={[
-                  styles.divider,
-                  { backgroundColor: isDark ? `${colors.outlineVariant}59` : `${colors.outlineVariant}99` },
-                ]}
-              />
-            )}
           </View>
         ))}
       </View>
@@ -72,29 +67,38 @@ export function ShoppingItemsGroupCard({
   );
 }
 
-function ShoppingItemRow({
+export const ShoppingItemsGroupCard = React.memo(ShoppingItemsGroupCardComponent);
+
+const ShoppingItemRow = React.memo(function ShoppingItemRow({
   item,
   onToggleBought,
   onPress,
   onDelete,
+  showDivider,
 }: {
   item: ShoppingItem;
-  onToggleBought: () => void;
-  onPress: () => void;
-  onDelete?: () => void;
+  onToggleBought: (item: ShoppingItem) => void;
+  onPress: (item: ShoppingItem) => void;
+  onDelete?: (item: ShoppingItem) => void;
+  showDivider: boolean;
 }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const isDark = useIsDark();
   const isBought = item.status === 'BOUGHT';
 
+  const handleToggle = () => onToggleBought(item);
+  const handlePress = () => onPress(item);
+  const handleDelete = onDelete ? () => onDelete(item) : undefined;
+
   const unitLabel = item.unit ? t(`unit_${(item.unit as string).toLowerCase()}`) : '';
   const qtyText = item.quantity > 0 ? formatQty(item.quantity) : '';
 
   return (
+    <>
     <View style={styles.row}>
       {/* Left circular checkbox */}
-      <Pressable onPress={onToggleBought} hitSlop={8} style={styles.checkboxHit}>
+      <Pressable onPress={handleToggle} hitSlop={8} style={styles.checkboxHit}>
         <View
           style={[
             styles.checkbox,
@@ -115,7 +119,7 @@ function ShoppingItemRow({
       </Pressable>
 
       {/* Middle content */}
-      <Pressable onPress={onPress} style={styles.middle}>
+      <Pressable onPress={handlePress} style={styles.middle}>
         <Text
           style={[
             Typography.titleMedium,
@@ -146,16 +150,25 @@ function ShoppingItemRow({
       </Pressable>
 
       {/* Right delete */}
-      {onDelete && !isBought ? (
-        <Pressable onPress={onDelete} hitSlop={8} style={styles.deleteHit}>
+      {handleDelete && !isBought ? (
+        <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteHit}>
           <Text style={{ fontSize: 19, color: `${colors.onSurfaceVariant}e6` }}>{'🗑️'}</Text>
         </Pressable>
       ) : (
         <View style={styles.deleteHit} />
       )}
     </View>
+    {showDivider && (
+      <View
+        style={[
+          styles.divider,
+          { backgroundColor: isDark ? `${colors.outlineVariant}59` : `${colors.outlineVariant}99` },
+        ]}
+      />
+    )}
+    </>
   );
-}
+});
 
 function formatQty(qty: number) {
   if (!isFinite(qty)) return '';
