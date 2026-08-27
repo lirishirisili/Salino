@@ -70,11 +70,12 @@ export default function MainLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: 'transparent' },
-          animation: 'slide_from_right',
+          // Match Kotlin NavHost defaults (fade), not horizontal slide.
+          animation: 'fade',
         }}
       >
         <Stack.Screen name="shopping-list" />
-        <Stack.Screen name="add-item" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="add-item" options={{ animation: 'fade' }} />
         <Stack.Screen name="edit-item" />
         <Stack.Screen name="history" />
         <Stack.Screen name="activity" />

@@ -103,7 +103,7 @@ const ShoppingItemRow = React.memo(function ShoppingItemRow({
           style={[
             styles.checkbox,
             {
-              borderColor: colors.primary,
+              borderColor: `${colors.primary}F2`,
               backgroundColor: isBought
                 ? isDark
                   ? `${colors.primary}33`

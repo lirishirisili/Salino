@@ -25,11 +25,13 @@ export function BrandLogo({
   shadowElevation = 4,
   style,
 }: BrandLogoProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(undefined, { useSuspense: false });
   const colors = useThemeColors();
   const isDark = useIsDark();
   const haloSize = iconSize * 1.72;
   const ringColor = 'rgba(255,255,255,0.33)';
+  const appName = showWordmark ? t('app_name', 'Haserli') : '';
+  const tagline = showTagline ? t('brand_tagline', 'Shared list. Smooth errands.') : '';
 
   return (
     <View style={[center ? styles.centered : styles.start, style]}>

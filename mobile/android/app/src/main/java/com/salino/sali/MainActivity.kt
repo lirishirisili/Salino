@@ -3,6 +3,8 @@ import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -21,6 +23,25 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
+
+    // expo-splash-screen blocks the first draw until JS calls hide(). After a
+    // recents-swipe / process death that call can be skipped (new Activity,
+    // JS remount, or a render that never commits). Sleep off the main thread
+    // so a spinning OnPreDrawListener cannot starve this failsafe.
+    Thread({
+      try {
+        Thread.sleep(NATIVE_SPLASH_FAILSAFE_MS)
+      } catch (_: InterruptedException) {
+        // Ignore — we still post hide() below.
+      }
+      Handler(Looper.getMainLooper()).post {
+        SplashScreenManager.hide()
+      }
+    }, "splash-failsafe").apply { isDaemon = true }.start()
+  }
+
+  companion object {
+    private const val NATIVE_SPLASH_FAILSAFE_MS = 2000L
   }
 
   /**

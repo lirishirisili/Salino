@@ -217,12 +217,25 @@ export function ItemNameAutocompleteField({
         mode="outlined"
         textColor={colors.onSurface}
         placeholderTextColor={colors.outline}
+        // Match Android salinoWebOutlinedFieldColors(): surface fill, primary
+        // when focused, outlineVariant when idle.
+        theme={{
+          colors: {
+            primary: colors.primary,
+            onSurfaceVariant: colors.onSurfaceVariant,
+            error: colors.error,
+            background: colors.surface,
+          },
+          roundness: cornerRadius,
+        }}
+        outlineColor={isError ? colors.error : colors.outlineVariant}
+        activeOutlineColor={isError ? colors.error : colors.primary}
         outlineStyle={[
           styles.outline,
           { borderRadius: cornerRadius },
           inputOutlineBorderColor != null && { borderColor: inputOutlineBorderColor },
         ]}
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.surface }]}
         contentStyle={contentStyle}
         error={isError}
         autoCorrect={false}

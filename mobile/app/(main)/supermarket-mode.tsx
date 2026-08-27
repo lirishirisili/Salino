@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
 import { ShoppingItem, ItemCategory } from '../../src/models';
-import { EmptyState } from '../../src/components';
+import { EmptyState, SalinoGradientBackground } from '../../src/components';
 import { Typography, useThemeColors } from '../../src/theme';
 import { auth } from '../../src/remote/firebase';
 
@@ -154,7 +154,7 @@ export default function SupermarketModeScreen() {
     sessionStartedRef.current && activeNonNotFound.length === 0 && sessionStartCount > 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SalinoGradientBackground plain style={styles.container}>
       <Header
         progress={progress}
         bought={boughtInSession}
@@ -255,7 +255,7 @@ export default function SupermarketModeScreen() {
       >
         {snackMsg}
       </Snackbar>
-    </View>
+    </SalinoGradientBackground>
   );
 }
 

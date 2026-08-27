@@ -12,6 +12,7 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
+/** Matches Android EmptyState.kt — centered, 72dp primaryContainer circle icon. */
 export function EmptyState({
   icon = 'cart-outline',
   title,
@@ -22,16 +23,19 @@ export function EmptyState({
   const colors = useThemeColors();
   return (
     <View style={styles.container}>
-      <MaterialCommunityIcons
-        name={icon}
-        size={72}
-        color={colors.primary}
-        style={{ opacity: 0.65 }}
-      />
+      <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer }]}>
+        <MaterialCommunityIcons name={icon} size={36} color={colors.onPrimaryContainer} />
+      </View>
       <Text
         style={[
-          Typography.titleLarge,
-          { color: colors.onBackground, marginTop: 16, textAlign: 'center' } as any,
+          Typography.titleMedium,
+          {
+            fontSize: 17,
+            fontWeight: '700',
+            color: colors.onSurface,
+            marginTop: 8,
+            textAlign: 'center',
+          } as any,
         ]}
       >
         {title}
@@ -40,7 +44,12 @@ export function EmptyState({
         <Text
           style={[
             Typography.bodyMedium,
-            { color: colors.onSurfaceVariant, marginTop: 8, textAlign: 'center' } as any,
+            {
+              color: colors.onSurfaceVariant,
+              marginTop: 4,
+              textAlign: 'center',
+              maxWidth: 300,
+            } as any,
           ]}
         >
           {subtitle}
@@ -49,12 +58,16 @@ export function EmptyState({
       {actionLabel && onAction && (
         <Pressable
           onPress={onAction}
-          style={({ pressed }) => [
-            styles.action,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-          ]}
+          style={({ pressed }) => [{ marginTop: 18, opacity: pressed ? 0.7 : 1 }]}
         >
-          <Text style={[Typography.labelLarge, { color: colors.onPrimary } as any]}>{actionLabel}</Text>
+          <Text
+            style={[
+              Typography.labelLarge,
+              { color: colors.primary, fontWeight: '600' } as any,
+            ]}
+          >
+            {actionLabel}
+          </Text>
         </Pressable>
       )}
     </View>
@@ -66,14 +79,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 48,
+    paddingHorizontal: 24,
+    paddingVertical: 56,
   },
-  action: {
-    marginTop: 24,
-    height: 54,
-    paddingHorizontal: 32,
-    borderRadius: 24,
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },

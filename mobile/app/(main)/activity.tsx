@@ -32,7 +32,7 @@ export default function ActivityScreen() {
   }, [activeHouseholdId, subscribeActivity]);
 
   return (
-    <SalinoGradientBackground>
+    <SalinoGradientBackground plain>
       <SalinoWebInnerTopBar title={t('activity_feed_title')} onBack={() => router.back()} />
       {isLoading ? (
         <LoadingIndicator />

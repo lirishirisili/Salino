@@ -482,7 +482,7 @@ export default function ShoppingListScreen() {
   );
 
   return (
-    <SalinoGradientBackground style={{ flex: 1 }}>
+    <SalinoGradientBackground plain style={{ flex: 1 }}>
       <CurvedTopBar
         isHebrew={isHebrew}
         isDark={isDark}

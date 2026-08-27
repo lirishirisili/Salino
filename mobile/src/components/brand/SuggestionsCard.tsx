@@ -24,7 +24,15 @@ export function HeroSuggestionsCard({
   const isDark = useIsDark();
 
   return (
-    <SalinoSurfaceCard padding={16} style={{ borderRadius: 30 }}>
+    <SalinoSurfaceCard
+      padding={16}
+      style={{
+        borderRadius: 30,
+        ...(isDark
+          ? { borderWidth: 1, borderColor: `${colors.outlineVariant}80` }
+          : null),
+      }}
+    >
       <View style={styles.headerRow}>
         <View
           style={[

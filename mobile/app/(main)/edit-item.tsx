@@ -141,7 +141,7 @@ export default function EditItemScreen() {
 
   if (!item) {
     return (
-      <SalinoGradientBackground>
+      <SalinoGradientBackground plain>
         <SalinoWebInnerTopBar title={t('edit_item_title')} onBack={() => router.back()} />
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 }}
@@ -202,7 +202,7 @@ export default function EditItemScreen() {
       : null;
 
   return (
-    <SalinoGradientBackground>
+    <SalinoGradientBackground plain>
       <SalinoWebInnerTopBar
         title={t('edit_item_title')}
         onBack={() => router.back()}

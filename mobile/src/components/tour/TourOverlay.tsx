@@ -18,7 +18,7 @@ const FAB_ROW_CLEARANCE = 88;
 export function TourOverlay() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const { t } = useTranslation();
+  const { t } = useTranslation(undefined, { useSuspense: false });
   const overlay = useTourStore((s) => s.overlay);
 
   if (!overlay) return null;

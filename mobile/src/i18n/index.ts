@@ -36,10 +36,14 @@ const resources = {
 };
 
 const getDeviceLanguage = (): string => {
-  const locale = Localization.getLocales()[0]?.languageCode ?? 'en';
-  // Map 'iw' to 'he' for Hebrew
-  if (locale === 'iw') return 'he';
-  return SUPPORTED_LANGUAGES.find((l) => l.code === locale) ? locale : 'en';
+  try {
+    const locale = Localization.getLocales()[0]?.languageCode ?? 'en';
+    // Map 'iw' to 'he' for Hebrew
+    if (locale === 'iw') return 'he';
+    return SUPPORTED_LANGUAGES.find((l) => l.code === locale) ? locale : 'en';
+  } catch {
+    return 'en';
+  }
 };
 
 /** Returns the language we will use at boot, without touching i18next. */
@@ -48,21 +52,42 @@ export const resolveBootLanguage = async (): Promise<string> => {
   return savedLang || getDeviceLanguage();
 };
 
+const i18nInitOptions = {
+  resources,
+  lng: getDeviceLanguage(),
+  fallbackLng: 'en',
+  interpolation: {
+    escapeValue: false,
+  },
+  react: {
+    useSuspense: false,
+  },
+} as const;
+
+/**
+ * Init at module load so useTranslation() never suspends on the first paint.
+ * Saved language from AsyncStorage is applied in initI18n().
+ */
+const i18nInitPromise = i18n.use(initReactI18next).init(i18nInitOptions);
+
 export const initI18n = async () => {
+  try {
+    await i18nInitPromise;
+  } catch (e) {
+    console.error('i18n module init error:', e);
+  }
+
   const savedLang = await AsyncStorage.getItem(LANGUAGE_KEY);
   const language = savedLang || getDeviceLanguage();
 
-  await i18n.use(initReactI18next).init({
-    resources,
-    lng: language,
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false,
-    },
-    react: {
-      useSuspense: false,
-    },
-  });
+  if (!i18n.isInitialized) {
+    await i18n.init({ ...i18nInitOptions, lng: language });
+    return language;
+  }
+
+  if (i18n.language !== language) {
+    await i18n.changeLanguage(language);
+  }
 
   return language;
 };

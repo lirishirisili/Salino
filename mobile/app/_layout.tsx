@@ -9,17 +9,21 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LightTheme, DarkTheme } from '../src/theme';
 import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
-import { LoadingScreen, SalinoGradientBackground } from '../src/components';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
 import { initLevelPlay } from '../src/services/initLevelPlay';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
+import { BootErrorBoundary } from '../src/boot/BootErrorBoundary';
+import { BootSplashView } from '../src/boot/BootSplashView';
+import { subscribeHideNativeSplashOnActive } from '../src/boot/hideNativeSplash';
 import { perfMark } from '../src/utils/perf';
 
 LogBox.ignoreLogs(['Setting a timer']);
 
 perfMark('process_start');
 
+// Keep the system splash until the first JS frame. Hide is NOT gated on i18n/auth
+// — that coupling left the Android 12 splash up forever after a recents kill.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
@@ -31,6 +35,11 @@ export default function RootLayout() {
   const hasBootstrapped = useAuthStore((s) => s.hasBootstrapped);
 
   useInviteDeepLinkListener();
+
+  useEffect(() => {
+    const sub = subscribeHideNativeSplashOnActive();
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -90,7 +99,7 @@ export default function RootLayout() {
 
     const failsafe = setTimeout(() => {
       if (!cancelled) setI18nReady(true);
-    }, 12_000);
+    }, 8_000);
 
     return () => {
       cancelled = true;
@@ -100,50 +109,40 @@ export default function RootLayout() {
     };
   }, []);
 
-  useEffect(() => {
-    if (i18nReady) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [i18nReady]);
-
   // Only block the whole UI during the INITIAL boot. Once bootstrapped, keep
   // the navigator mounted even if auth re-fires — unmounting remounts the stack
   // and duplicates shopping-list on the Android back stack.
-  if (!i18nReady || (isLoading && !hasBootstrapped)) {
-    return (
-      <SafeAreaProvider style={{ flex: 1 }}>
-        <PaperProvider theme={paperTheme}>
-          <SalinoGradientBackground style={{ flex: 1 }}>
-            <LoadingScreen />
-          </SalinoGradientBackground>
-        </PaperProvider>
-      </SafeAreaProvider>
-    );
-  }
+  const showBootGate = !i18nReady || (isLoading && !hasBootstrapped);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <PaperProvider theme={paperTheme}>
-          <View style={{ flex: 1 }}>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} translucent />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: 'transparent' },
-                animation: 'fade',
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="join/[inviteCode]" options={{ animation: 'none' }} />
-              <Stack.Screen name="household-setup" />
-              <Stack.Screen name="(main)" />
-            </Stack>
-            <TourOverlay />
-          </View>
-        </PaperProvider>
-      </SafeAreaProvider>
+      <BootErrorBoundary>
+        <SafeAreaProvider style={{ flex: 1 }}>
+          <PaperProvider theme={paperTheme}>
+            {showBootGate ? (
+              <BootSplashView />
+            ) : (
+              <View style={{ flex: 1 }}>
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} translucent />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: 'transparent' },
+                    animation: 'fade',
+                  }}
+                >
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="auth" />
+                  <Stack.Screen name="join/[inviteCode]" options={{ animation: 'none' }} />
+                  <Stack.Screen name="household-setup" />
+                  <Stack.Screen name="(main)" />
+                </Stack>
+                <TourOverlay />
+              </View>
+            )}
+          </PaperProvider>
+        </SafeAreaProvider>
+      </BootErrorBoundary>
     </GestureHandlerRootView>
   );
 }

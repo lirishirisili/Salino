@@ -171,7 +171,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SalinoGradientBackground>
+    <SalinoGradientBackground plain>
       <View
         style={[
           styles.topBar,

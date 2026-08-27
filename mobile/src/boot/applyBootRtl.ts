@@ -3,6 +3,13 @@ import { DevSettings, I18nManager } from 'react-native';
 import * as Updates from 'expo-updates';
 
 const RTL_BOOT_RELOAD_KEY = '@rtl_boot_reload_attempted';
+const RELOAD_TIMEOUT_MS = 2000;
+
+function timeout(ms: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('rtl reload timeout')), ms);
+  });
+}
 
 /**
  * Align RTL layout direction at cold start.
@@ -30,11 +37,22 @@ export async function applyBootRtl(desiredRTL: boolean): Promise<boolean> {
     return true;
   }
 
+  let updatesEnabled = false;
   try {
-    await Updates.reloadAsync();
+    updatesEnabled = Updates.isEnabled;
+  } catch {
+    updatesEnabled = false;
+  }
+  if (!updatesEnabled) {
+    // forceRTL is persisted; it takes effect on the next native process start.
+    return false;
+  }
+
+  try {
+    await Promise.race([Updates.reloadAsync(), timeout(RELOAD_TIMEOUT_MS)]);
     return true;
   } catch {
-    // Production builds often have updates disabled — continue boot without reload.
+    // Production builds often have updates disabled, or reload hung — continue.
     return false;
   }
 }

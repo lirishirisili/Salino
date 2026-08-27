@@ -52,86 +52,82 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isSignedIn: false,
 
   initialize: () => {
-    const unsubscribe = authRepository.observeAuthState(async (user) => {
-      if (!user) {
-        previousAuthUid = null;
-        await resetSessionState();
-        set({
-          user: null,
-          profile: null,
-          isSignedIn: false,
-          isLoading: false,
-          isSubmitting: false,
-          hasBootstrapped: true,
-        });
-        return;
-      }
+    const unsubscribe = authRepository.observeAuthState((user) => {
+      void (async () => {
+        try {
+          if (!user) {
+            previousAuthUid = null;
+            await resetSessionState();
+            set({
+              user: null,
+              profile: null,
+              isSignedIn: false,
+            });
+            return;
+          }
 
-      if (previousAuthUid !== null && previousAuthUid !== user.uid) {
-        await resetSessionState();
-      }
-      previousAuthUid = user.uid;
+          if (previousAuthUid !== null && previousAuthUid !== user.uid) {
+            await resetSessionState();
+          }
+          previousAuthUid = user.uid;
 
-      const alreadyBootstrapped = get().hasBootstrapped;
-      perfMark('auth_restored');
-      set({ isSignedIn: true, user });
+          perfMark('auth_restored');
+          set({ isSignedIn: true, user });
 
-      // FAST PATH: read cached householdId from local storage and preload items
-      // before waiting for network. This makes cold start near-instant.
-      let fastPathDone = false;
-      try {
-        const cachedHouseholdId = await localGetActiveHouseholdId(user.uid);
-        if (cachedHouseholdId) {
-          await useHouseholdStore.getState().setActiveHouseholdFromProfile(cachedHouseholdId);
-          fastPathDone = true;
-          // Do not clear isSubmitting here — a sign-in action may still be in
-          // flight and /auth waits for the final set() below before navigating.
-          set({ isLoading: false });
+          let fastPathDone = false;
+          try {
+            const cachedHouseholdId = await localGetActiveHouseholdId(user.uid);
+            if (cachedHouseholdId) {
+              await useHouseholdStore.getState().setActiveHouseholdFromProfile(cachedHouseholdId);
+              fastPathDone = true;
+              set({ isLoading: false, hasBootstrapped: true });
+            }
+          } catch {
+            // Fast path failed — fall through to network path.
+          }
+
+          // Never flip isLoading back to true after the gate has opened.
+          if (!fastPathDone && !get().hasBootstrapped) {
+            set({ isSubmitting: true });
+          }
+
+          let profile: UserProfile | null = null;
+          try {
+            profile = await Promise.race<UserProfile | null>([
+              authRepository.getOrCreateUserProfile(),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+            ]);
+          } catch {
+            profile = null;
+          }
+
+          if (profile?.activeHouseholdId) {
+            const currentHouseholdId = useHouseholdStore.getState().activeHouseholdId;
+            if (currentHouseholdId !== profile.activeHouseholdId) {
+              await Promise.race([
+                useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId),
+                new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+              ]);
+            }
+          } else if (!profile?.activeHouseholdId && fastPathDone) {
+            useHouseholdStore.getState().reset();
+          }
+
+          set({
+            user,
+            profile,
+            isSignedIn: true,
+          });
+        } catch (e) {
+          console.error('Auth bootstrap error:', e);
+        } finally {
+          set({
+            isLoading: false,
+            isSubmitting: false,
+            hasBootstrapped: true,
+          });
         }
-      } catch {
-        // Fast path failed — fall through to network path.
-      }
-
-      // After the first boot, never flip isLoading back to true — that unmounts
-      // the root navigator and duplicates screens on the back stack.
-      if (!fastPathDone) {
-        if (alreadyBootstrapped) {
-          set({ isSubmitting: true });
-        } else {
-          set({ isLoading: true, isSubmitting: true });
-        }
-      }
-
-      // BACKGROUND: verify profile from Firestore (creates if needed)
-      let profile: UserProfile | null = null;
-      try {
-        profile = await Promise.race<UserProfile | null>([
-          authRepository.getOrCreateUserProfile(),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
-        ]);
-      } catch {
-        profile = null;
-      }
-
-      // If household changed on the server, update
-      if (profile?.activeHouseholdId) {
-        const currentHouseholdId = useHouseholdStore.getState().activeHouseholdId;
-        if (currentHouseholdId !== profile.activeHouseholdId) {
-          await useHouseholdStore.getState().setActiveHouseholdFromProfile(profile.activeHouseholdId);
-        }
-      } else if (!profile?.activeHouseholdId && fastPathDone) {
-        // Server says no household but we loaded one from cache — reset
-        useHouseholdStore.getState().reset();
-      }
-
-      set({
-        user,
-        profile,
-        isSignedIn: true,
-        isLoading: false,
-        isSubmitting: false,
-        hasBootstrapped: true,
-      });
+      })();
     });
     return unsubscribe;
   },

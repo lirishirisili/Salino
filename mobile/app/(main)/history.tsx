@@ -51,7 +51,7 @@ export default function HistoryScreen() {
   );
 
   return (
-    <SalinoGradientBackground>
+    <SalinoGradientBackground plain>
       <View ref={historyTitleAnchor.ref} style={historyTitleAnchor.highlightStyle} collapsable={false}>
         <SalinoWebInnerTopBar title={t('history_title')} onBack={() => router.back()} />
       </View>

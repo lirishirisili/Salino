@@ -341,7 +341,7 @@ export default function AddItemScreen() {
   const duplicateDialogMaxHeight = Math.min(520, Math.max(240, windowHeight * 0.58));
 
   return (
-    <SalinoGradientBackground>
+    <SalinoGradientBackground plain>
       <SalinoWebInnerTopBar title={t('add_item_title')} onBack={() => router.back()} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}

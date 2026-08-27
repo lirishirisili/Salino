@@ -5,8 +5,11 @@
 //    any manual tweaks. We need a few non-default values to survive:
 //      1. Larger JVM heap & Metaspace, otherwise Kotlin/KSP/Lint workers crash with
 //         OutOfMemoryError on this codebase (expo-modules-core lint, expo-updates KSP).
-//      2. Build only for arm64-v8a, which covers virtually all modern Android devices,
-//         instead of bundling x86/x86_64/armeabi-v7a too (saves ~50 MB in the APK).
+//      2. Build for arm64-v8a (modern physical devices) plus x86_64 (x86_64
+//         emulators/players such as LDPlayer). x86_64 is required so the native
+//         libreactnative.so is present; otherwise the app crashes at
+//         MainApplication.onCreate with SoLoaderDSONotFoundError. We still skip
+//         x86 and armeabi-v7a to keep the artifact small.
 //
 // Usage in app.json:
 //   "plugins": [..., "./plugins/withGradlePropsTweaks"]
@@ -29,7 +32,7 @@ const OVERRIDES = [
   {
     type: 'property',
     key: 'reactNativeArchitectures',
-    value: 'arm64-v8a',
+    value: 'arm64-v8a,x86_64',
   },
   // Google Play (from Aug 31, 2026): updates must target API 36 (Android 16).
   {
