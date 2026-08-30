@@ -33,6 +33,17 @@ if (-not (Test-Path $keystoreSrc)) {
 Copy-Item $keystoreSrc $keystoreDst -Force
 Write-Host "Applied Play Store signing config from scripts/android/keystore.properties" -ForegroundColor Cyan
 
+# expo prebuild may reset versionCode — sync from app.json.
+$appJson = Get-Content (Join-Path $root "app.json") -Raw | ConvertFrom-Json
+$versionName = $appJson.expo.version
+$versionCode = $appJson.expo.android.versionCode
+$appGradle = Join-Path $root "android\app\build.gradle"
+$gradleText = Get-Content $appGradle -Raw
+$gradleText = $gradleText -replace 'versionCode \d+', "versionCode $versionCode"
+$gradleText = $gradleText -replace 'versionName "[^"]+"', "versionName `"$versionName`""
+Set-Content -Path $appGradle -Value $gradleText -NoNewline
+Write-Host "Synced versionCode=$versionCode versionName=$versionName in build.gradle" -ForegroundColor Cyan
+
 $appGradle = Join-Path $root "android\app\build.gradle"
 $gradleText = Get-Content $appGradle -Raw
 if ($gradleText -notmatch 'keystorePropertiesFile') {
