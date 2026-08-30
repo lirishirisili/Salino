@@ -11,6 +11,8 @@ web-build/
 .env
 .env.*
 !.env.example
+scripts/android/keystore.properties
+android/keystore.properties
 
 # NOTE: google-services.json / GoogleService-Info.plist intentionally NOT ignored.
 # They are required by EAS Build (must be tracked in git). Their contents are

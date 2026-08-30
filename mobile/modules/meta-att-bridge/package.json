@@ -1,0 +1,8 @@
+{
+  "name": "meta-att-bridge",
+  "version": "1.0.0",
+  "description": "Native bridge to set Meta Audience Network advertiser tracking before LevelPlay init (iOS only).",
+  "main": "index.ts",
+  "private": true,
+  "license": "UNLICENSED"
+}

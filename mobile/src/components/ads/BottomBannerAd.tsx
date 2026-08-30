@@ -30,16 +30,15 @@ type BottomBannerAdProps = {
 
 const LOG = '[BANNER]';
 
-// Ad lifecycle logs are dev-only: they fire on every load/refresh/display and
-// add needless JS-thread work + logcat noise in production.
+// Lifecycle callbacks use console.warn so they appear in release logcat.
 const log = (...args: unknown[]) => {
-  if (__DEV__) console.log(...args);
+  console.warn(...args);
 };
 const warn = (...args: unknown[]) => {
-  if (__DEV__) console.warn(...args);
+  console.warn(...args);
 };
 
-const MAX_LOAD_ATTEMPTS = 3;
+/** Bounded backoff between retries; never permanently hide after a load failure. */
 const RETRY_BACKOFF_MS = 30_000;
 /** Tablet / unfolded foldable — keep banner host phone-width, not full-bleed. */
 const WIDE_LAYOUT_MIN_WIDTH = 600;
@@ -103,13 +102,10 @@ function LevelPlayBannerSlot({
   }, []);
 
   const scheduleRetry = useCallback(() => {
-    if (attemptRef.current + 1 >= MAX_LOAD_ATTEMPTS) {
-      warn(`${LOG} giving up after ${MAX_LOAD_ATTEMPTS} attempts (slot collapsed)`);
-      return;
-    }
     attemptRef.current += 1;
     loadRequestedRef.current = false;
     clearRetry();
+    log(`${LOG} retry scheduled attempt=${attemptRef.current + 1} in ${RETRY_BACKOFF_MS}ms`);
     retryTimer.current = setTimeout(requestLoad, RETRY_BACKOFF_MS);
   }, [clearRetry, requestLoad]);
 
@@ -120,23 +116,25 @@ function LevelPlayBannerSlot({
         loadRequestedRef.current = true;
         clearRetry();
         log(
-          `${LOG} loaded network=${adInfo.adNetwork} placement=${adInfo.placementName} ` +
+          `${LOG} onAdLoaded network=${adInfo.adNetwork} placement=${adInfo.placementName} ` +
             `size=${adInfo.adSize?.width ?? '?'}x${adInfo.adSize?.height ?? '?'}`,
         );
         onLoadedChange(true);
       },
       onAdLoadFailed: (error: LevelPlayAdError) => {
         warn(
-          `${LOG} load failed code=${error.errorCode} message=${error.errorMessage}`,
+          `${LOG} onAdLoadFailed code=${error.errorCode} message=${error.errorMessage}`,
         );
         onLoadedChange(false);
         scheduleRetry();
       },
       onAdDisplayed: (adInfo: LevelPlayAdInfo) => {
-        log(`${LOG} displayed network=${adInfo.adNetwork}`);
+        log(`${LOG} onAdDisplayed network=${adInfo.adNetwork}`);
       },
       onAdDisplayFailed: (_adInfo: LevelPlayAdInfo, error: LevelPlayAdError) => {
-        warn(`${LOG} display failed code=${error.errorCode} message=${error.errorMessage}`);
+        warn(
+          `${LOG} onAdDisplayFailed code=${error.errorCode} message=${error.errorMessage}`,
+        );
         onLoadedChange(false);
         scheduleRetry();
       },

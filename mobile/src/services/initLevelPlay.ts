@@ -13,13 +13,14 @@ import {
   type LevelPlayInitListener,
   type LevelPlayImpressionData,
 } from 'unity-levelplay-mediation';
+import { setMetaAdvertiserTrackingEnabled } from '../../modules/meta-att-bridge';
 import { LEVELPLAY_APP_KEY } from '../config/levelPlay';
 
 const LOG = '[LEVELPLAY]';
 
-// Info-level SDK logs are dev-only; warnings for real failures are kept.
+// Lifecycle callbacks use console.warn so they appear in release logcat.
 const log = (...args: unknown[]) => {
-  if (__DEV__) console.log(...args);
+  console.warn(...args);
 };
 
 const ATT_ACTIVE_WAIT_MS = 10_000;
@@ -94,24 +95,33 @@ function waitForActiveState(): Promise<void> {
   });
 }
 
+function isTrackingAuthorized(status: PermissionStatus): boolean {
+  return status === PermissionStatus.GRANTED;
+}
+
 /**
- * iOS App Tracking Transparency prompt should be resolved before LevelPlay init.
- * This preserves the existing ATT behavior; the ATT outcome is NOT treated as
- * GDPR/CCPA consent.
+ * iOS ATT prompt + Meta FAN advertiser tracking must resolve before LevelPlay.init
+ * (same path as PoofCam). ATT outcome is NOT treated as GDPR/CCPA consent.
  */
-async function ensureIosTrackingPermission(): Promise<void> {
+async function ensureIosPrivacyBeforeInit(): Promise<void> {
   if (Platform.OS !== 'ios') {
     return;
   }
   try {
     await waitForActiveState();
     await new Promise((r) => setTimeout(r, ATT_PROMPT_DELAY_MS));
-    const { status: attStatus } = await getTrackingPermissionsAsync();
+    let { status: attStatus } = await getTrackingPermissionsAsync();
     if (attStatus === PermissionStatus.UNDETERMINED) {
-      await requestTrackingPermissionsAsync();
+      ({ status: attStatus } = await requestTrackingPermissionsAsync());
     }
+    const trackingEnabled = isTrackingAuthorized(attStatus);
+    log(
+      `${LOG} iOS ATT status=${attStatus} metaAdvertiserTrackingEnabled=${trackingEnabled}`,
+    );
+    await setMetaAdvertiserTrackingEnabled(trackingEnabled);
   } catch (err) {
-    console.warn(`${LOG} App Tracking Transparency request failed:`, err);
+    console.warn(`${LOG} App Tracking Transparency / Meta tracking setup failed:`, err);
+    await setMetaAdvertiserTrackingEnabled(false);
   }
 }
 
@@ -187,12 +197,12 @@ export function initLevelPlay(): Promise<boolean> {
         }
       }
 
-      await ensureIosTrackingPermission();
+      await ensureIosPrivacyBeforeInit();
 
       const initListener: LevelPlayInitListener = {
         onInitSuccess: (_configuration: LevelPlayConfiguration) => {
           status = 'ready';
-          log(`${LOG} init success`);
+          log(`${LOG} onInitSuccess`);
           if (ENABLE_INTEGRATION_TEST_SUITE) {
             LevelPlay.launchTestSuite().catch((err) =>
               console.warn(`${LOG} launchTestSuite failed:`, err),
@@ -204,7 +214,7 @@ export function initLevelPlay(): Promise<boolean> {
         onInitFailed: (error: LevelPlayInitError) => {
           status = 'failed';
           console.warn(
-            `${LOG} init failed code=${error?.errorCode} message=${error?.errorMessage}`,
+            `${LOG} onInitFailed code=${error?.errorCode} message=${error?.errorMessage}`,
             error,
           );
           // Allow a later retry to re-run init.

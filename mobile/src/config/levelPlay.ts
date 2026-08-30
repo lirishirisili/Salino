@@ -3,9 +3,8 @@ import { Platform } from 'react-native';
 /**
  * Unity LevelPlay App Keys per platform.
  *
- * Banner mediation: ironSource bidding + Unity Ads bidding (same as PoofCam / Tohav).
- * Unity Game IDs: Android 6164602 / iOS 6164603.
- * Unity placements (LevelPlay): Banner_Android_Bidding / Banner_iOS_Bidding.
+ * Banner mediation only via LevelPlay → Meta Audience Network + Unity Ads (+ ironSource).
+ * Meta Placement IDs are dashboard/server-side only — never used in app load calls.
  *
  * IMPORTANT: These are LevelPlay App Keys, NOT ad unit IDs. They must never be
  * swapped with the banner ad unit IDs below.
