@@ -107,8 +107,9 @@ function upsertIosPod(podfile, marker, podLine) {
   }
   const targetMatch = podfile.match(/target ['"]Haserli['"] do/);
   if (!targetMatch || targetMatch.index == null) {
-    // Podfile may not exist yet during early prebuild; skip quietly.
-    return podfile;
+    throw new Error(
+      "withLevelPlayAndroid: could not find the Haserli iOS target in Podfile — Meta/Unity adapters would be missing from the GitHub Actions IPA",
+    );
   }
   const insertAt = targetMatch.index + targetMatch[0].length;
   const snippet = `\n  ${marker}\n  ${podLine}`;

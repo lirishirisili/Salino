@@ -26,6 +26,9 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "NSMicrophoneUsageDescription": "Microphone access is needed for voice input to add items to your shopping list.",
+        "NSUserTrackingUsageDescription": "Haserli uses this identifier to deliver relevant ads and keep the app free.",
+        "FacebookAppID": "1294857219184340",
+        "FacebookDisplayName": "Haserli",
         "ITSAppUsesNonExemptEncryption": false,
         "SKAdNetworkItems": [
           { "SKAdNetworkIdentifier": "9t245vhmpl.skadnetwork" },
@@ -151,7 +154,12 @@
           }
         }
       ],
-      "expo-tracking-transparency",
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Haserli uses this identifier to deliver relevant ads and keep the app free."
+        }
+      ],
       [
         "@react-native-firebase/app",
         {

@@ -80,7 +80,15 @@ function LevelPlayBannerSlot({
   useEffect(() => {
     log(`${LOG} component mount adUnit=${LEVELPLAY_BANNER_AD_UNIT_ID}`);
     loadRequestedRef.current = false;
+    // iOS often skips onLayout when an ancestor is height:0 / overflow:hidden.
+    const fallback = setTimeout(() => {
+      if (!loadRequestedRef.current) {
+        log(`${LOG} loadAd fallback (onLayout missed)`);
+        requestLoad();
+      }
+    }, 800);
     return () => {
+      clearTimeout(fallback);
       clearRetry();
       loadRequestedRef.current = false;
       log(`${LOG} destroyed`);
@@ -273,10 +281,12 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
             }
           : shouldMountAd
             ? {
-                // Off-flow until filled so we don't reserve empty chrome.
+                // Off-flow until filled. Keep a real height so iOS Yoga/onLayout
+                // can measure the native banner (height:0 + overflow:hidden clips
+                // children on iOS and loadAd never runs).
                 position: 'absolute',
                 bottom: 0,
-                height: 0,
+                height: reservedHeight,
                 overflow: 'visible',
                 opacity: 0,
                 zIndex: -1,
@@ -319,7 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 2,
     elevation: 2,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   wrapFullBleed: {
     width: '100%',
