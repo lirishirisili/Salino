@@ -214,17 +214,133 @@ export const localGetPendingOps = async (householdId: string): Promise<PendingSy
 };
 
 export const localAddPendingOp = async (op: PendingSyncOperation): Promise<void> => {
-  const ops = await localGetPendingOps(op.householdId);
-  ops.push(op);
-  await setJSON(KEYS.PENDING_OPS(op.householdId), ops);
+  await runExclusive(KEYS.PENDING_OPS(op.householdId), async () => {
+    const ops = await localGetPendingOps(op.householdId);
+    ops.push(op);
+    await setJSON(KEYS.PENDING_OPS(op.householdId), ops);
+  });
 };
 
 export const localRemovePendingOp = async (householdId: string, opId: string): Promise<void> => {
+  await runExclusive(KEYS.PENDING_OPS(householdId), async () => {
+    const ops = await localGetPendingOps(householdId);
+    await setJSON(
+      KEYS.PENDING_OPS(householdId),
+      ops.filter((o) => o.id !== opId)
+    );
+  });
+};
+
+/** IDs that have at least one pending sync op for the given target type. */
+export const localGetPendingTargetIds = async (
+  householdId: string,
+  targetType: PendingSyncOperation['targetType'],
+): Promise<Set<string>> => {
   const ops = await localGetPendingOps(householdId);
-  await setJSON(
-    KEYS.PENDING_OPS(householdId),
-    ops.filter((o) => o.id !== opId)
-  );
+  return new Set(ops.filter((o) => o.targetType === targetType).map((o) => o.targetId));
+};
+
+/**
+ * Protected merge for shopping items — mirrors native
+ * `ShoppingLocalDataSource.mergeRemoteItems`.
+ *
+ * 1. Pending-ITEM IDs are excluded from remote upsert (keep local version).
+ * 2. Local IDs missing from remote AND not pending are deleted as stale.
+ */
+export const mergeRemoteItems = async (
+  householdId: string,
+  remoteItems: ShoppingItem[],
+): Promise<void> => {
+  await runExclusive(KEYS.ITEMS(householdId), async () => {
+    const protectedIds = await localGetPendingTargetIds(householdId, 'ITEM');
+    const local = await readItemsRaw(householdId);
+    const localById = new Map(local.map((i) => [i.id, i]));
+    const remoteIds = new Set(remoteItems.map((i) => i.id));
+
+    // Upsert remote items that aren't protected.
+    for (const item of remoteItems) {
+      if (!protectedIds.has(item.id)) {
+        localById.set(item.id, item);
+      }
+    }
+
+    // Delete stale local items (not in remote, not protected).
+    for (const id of localById.keys()) {
+      if (!remoteIds.has(id) && !protectedIds.has(id)) {
+        localById.delete(id);
+      }
+    }
+
+    await writeItemsRaw(householdId, Array.from(localById.values()));
+  });
+};
+
+/**
+ * Protected merge for recurring items — mirrors native
+ * `RecurringLocalDataSource.mergeRemoteRecurringItems`.
+ *
+ * Upserts ALL remote items (no filter), but stale-deletes respect protected IDs.
+ */
+export const mergeRemoteRecurring = async (
+  householdId: string,
+  remoteItems: RecurringItem[],
+): Promise<void> => {
+  await runExclusive(KEYS.RECURRING(householdId), async () => {
+    const protectedIds = await localGetPendingTargetIds(householdId, 'RECURRING');
+    const local = await readRecurringRaw(householdId);
+    const localById = new Map(local.map((i) => [i.id, i]));
+    const remoteIds = new Set(remoteItems.map((i) => i.id));
+
+    for (const item of remoteItems) {
+      localById.set(item.id, item);
+    }
+
+    for (const id of localById.keys()) {
+      if (!remoteIds.has(id) && !protectedIds.has(id)) {
+        localById.delete(id);
+      }
+    }
+
+    await writeRecurringRaw(householdId, Array.from(localById.values()));
+  });
+};
+
+/**
+ * Protected merge for activity logs — same semantics as recurring: upsert all,
+ * protect stale deletes.
+ */
+export const mergeRemoteActivity = async (
+  householdId: string,
+  remoteLogs: ActivityLog[],
+): Promise<void> => {
+  await runExclusive(KEYS.ACTIVITY(householdId), async () => {
+    const protectedIds = await localGetPendingTargetIds(householdId, 'ACTIVITY');
+    const local = await readActivityRaw(householdId);
+    const localById = new Map(local.map((l) => [l.id, l]));
+    const remoteIds = new Set(remoteLogs.map((l) => l.id));
+
+    for (const log of remoteLogs) {
+      localById.set(log.id, log);
+    }
+
+    for (const id of localById.keys()) {
+      if (!remoteIds.has(id) && !protectedIds.has(id)) {
+        localById.delete(id);
+      }
+    }
+
+    await writeActivityRaw(householdId, Array.from(localById.values()));
+  });
+};
+
+export const localDeleteRecurring = async (householdId: string, itemId: string): Promise<void> => {
+  await runExclusive(KEYS.RECURRING(householdId), async () => {
+    const items = await readRecurringRaw(householdId);
+    await writeRecurringRaw(
+      householdId,
+      items.filter((i) => i.id !== itemId),
+    );
+  });
 };
 
 // Clear all local data for a household

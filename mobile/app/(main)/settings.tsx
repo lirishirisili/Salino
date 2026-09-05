@@ -181,6 +181,8 @@ export default function SettingsScreen() {
         <Pressable
           onPress={() => router.back()}
           hitSlop={8}
+          accessibilityLabel={t('settings_title')}
+          accessibilityRole="button"
           style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={colors.onBackground} />
@@ -221,6 +223,8 @@ export default function SettingsScreen() {
                       setNewName(household.name);
                       setShowEditName(true);
                     }}
+                    accessibilityLabel={t('settings_household_name')}
+                    accessibilityRole="button"
                     style={{ padding: 6 }}
                   >
                     <MaterialCommunityIcons name="pencil" size={20} color={colors.onSurfaceVariant} />
@@ -236,10 +240,20 @@ export default function SettingsScreen() {
                   subtitle={household.inviteCode}
                   trailing={
                     <View style={{ flexDirection: 'row' }}>
-                      <Pressable onPress={handleCopy} style={{ padding: 6 }}>
+                      <Pressable
+                        onPress={handleCopy}
+                        accessibilityLabel={t('copy')}
+                        accessibilityRole="button"
+                        style={{ padding: 6 }}
+                      >
                         <MaterialCommunityIcons name="content-copy" size={20} color={colors.onSurfaceVariant} />
                       </Pressable>
-                      <Pressable onPress={handleShareInvite} style={{ padding: 6 }}>
+                      <Pressable
+                        onPress={handleShareInvite}
+                        accessibilityLabel={t('share')}
+                        accessibilityRole="button"
+                        style={{ padding: 6 }}
+                      >
                         <MaterialCommunityIcons name="share-variant" size={20} color={colors.onSurfaceVariant} />
                       </Pressable>
                     </View>

@@ -28,6 +28,8 @@ interface Props {
   onFocusChange?: (focused: boolean) => void;
   contentStyle?: StyleProp<TextStyle>;
   cornerRadius?: number;
+  outlineColor?: string;
+  activeOutlineColor?: string;
 }
 
 export function ItemNameAutocompleteField({
@@ -44,6 +46,8 @@ export function ItemNameAutocompleteField({
   onFocusChange,
   contentStyle,
   cornerRadius = Layout.inputCorner,
+  outlineColor,
+  activeOutlineColor,
 }: Props) {
   const colors = useThemeColors();
   const { t } = useTranslation();
@@ -228,8 +232,8 @@ export function ItemNameAutocompleteField({
           },
           roundness: cornerRadius,
         }}
-        outlineColor={isError ? colors.error : colors.outlineVariant}
-        activeOutlineColor={isError ? colors.error : colors.primary}
+        outlineColor={isError ? colors.error : outlineColor ?? colors.outlineVariant}
+        activeOutlineColor={isError ? colors.error : activeOutlineColor ?? colors.primary}
         outlineStyle={[
           styles.outline,
           { borderRadius: cornerRadius },

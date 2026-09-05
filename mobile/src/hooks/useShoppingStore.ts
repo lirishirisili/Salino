@@ -179,29 +179,56 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   addItem: async (householdId, item) => {
-    return shoppingRepository.addItem(householdId, item);
+    const newItem = await shoppingRepository.addItem(householdId, item);
+    // Optimistic: add to Zustand immediately so the UI reflects before snapshot.
+    const { items, recurringItems } = get();
+    set(buildShoppingListState([newItem, ...items], recurringItems));
+    return newItem;
   },
 
   updateItem: async (householdId, item) => {
     await shoppingRepository.updateItem(householdId, item);
+    // Optimistic: replace the item in the store.
+    const { items, recurringItems } = get();
+    const updated = items.map((i) => (i.id === item.id ? item : i));
+    set(buildShoppingListState(updated, recurringItems));
   },
 
   markAsBought: async (householdId, itemId) => {
-    const { items } = get();
-    await shoppingRepository.markAsBought(householdId, itemId, items);
+    const { items, recurringItems } = get();
+    await shoppingRepository.markAsBought(householdId, itemId, items, recurringItems);
+    // Optimistic: move item to bought in the store.
+    const updated = items.map((i) =>
+      i.id === itemId ? { ...i, status: 'BOUGHT' as ShoppingItem['status'] } : i,
+    );
+    set(buildShoppingListState(updated, recurringItems));
   },
 
   markAsActive: async (householdId, itemId) => {
-    const { items } = get();
+    const { items, recurringItems } = get();
     await shoppingRepository.markAsActive(householdId, itemId, items);
+    // Optimistic: move item back to active.
+    const updated = items.map((i) =>
+      i.id === itemId ? { ...i, status: 'ACTIVE' as ShoppingItem['status'], boughtBy: null, boughtByName: null } : i,
+    );
+    set(buildShoppingListState(updated, recurringItems));
   },
 
   deleteItem: async (householdId, itemId, itemName) => {
     await shoppingRepository.deleteItem(householdId, itemId, itemName);
+    // Optimistic: remove from store.
+    const { items, recurringItems } = get();
+    set(buildShoppingListState(items.filter((i) => i.id !== itemId), recurringItems));
   },
 
   toggleFavorite: async (householdId, item) => {
     await shoppingRepository.toggleFavorite(householdId, item);
+    // Optimistic: toggle favorite.
+    const { items, recurringItems } = get();
+    const updated = items.map((i) =>
+      i.id === item.id ? { ...i, isFavorite: !i.isFavorite } : i,
+    );
+    set(buildShoppingListState(updated, recurringItems));
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),

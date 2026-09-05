@@ -92,10 +92,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
 
           let profile: UserProfile | null = null;
+          let profileTimedOut = false;
           try {
             profile = await Promise.race<UserProfile | null>([
               authRepository.getOrCreateUserProfile(),
-              new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+              new Promise<null>((resolve) => {
+                setTimeout(() => {
+                  profileTimedOut = true;
+                  resolve(null);
+                }, 8000);
+              }),
             ]);
           } catch {
             profile = null;
@@ -109,7 +115,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 new Promise<void>((resolve) => setTimeout(resolve, 3000)),
               ]);
             }
-          } else if (!profile?.activeHouseholdId && fastPathDone) {
+          } else if (!profile?.activeHouseholdId && fastPathDone && !profileTimedOut) {
+            // Only reset household if the server positively confirmed no
+            // household — never on timeout (mirrors native: timeout does not
+            // clear a valid local household or sign the user out).
             useHouseholdStore.getState().reset();
           }
 

@@ -48,6 +48,7 @@ import {
   HouseholdHistoryIndex,
 } from '../../src/services/householdHistoryIndex';
 import { perfMark } from '../../src/utils/perf';
+import { useVoiceInput } from '../../src/hooks/useVoiceInput';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
@@ -81,6 +82,8 @@ export default function ShoppingListScreen() {
   const [boughtExpanded, setBoughtExpanded] = useState(false);
   const [boughtVisibleCount, setBoughtVisibleCount] = useState(BOUGHT_ITEMS_PAGE_SIZE);
   const [quickAddName, setQuickAddName] = useState('');
+  const [quickAddQuantity, setQuickAddQuantity] = useState(1);
+  const [quickAddUnit, setQuickAddUnit] = useState<ItemUnit | null>(null);
   const [quickAddSuggestions, setQuickAddSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [isQuickAddAutocompleteVisible, setIsQuickAddAutocompleteVisible] = useState(false);
   const [quickAddCategory, setQuickAddCategory] = useState<ItemCategory | null>(null);
@@ -166,12 +169,27 @@ export default function ShoppingListScreen() {
   const handleQuickAddNameChange = useCallback(
     (text: string) => {
       setQuickAddName(text);
+      setQuickAddQuantity(1);
+      setQuickAddUnit(null);
       setQuickAddCategory(null);
       setQuickAddError(null);
       refreshQuickAddAutocomplete(text);
     },
     [refreshQuickAddAutocomplete],
   );
+
+  const { isListening: isQuickAddListening, startListening: startQuickAddListening, stopListening: stopQuickAddListening } =
+    useVoiceInput({
+      onResult: (parsed) => {
+        if (!parsed.name) return;
+        setQuickAddName(parsed.name);
+        setQuickAddQuantity(parsed.quantity);
+        setQuickAddUnit(parsed.unit);
+        setQuickAddCategory(detectCategory(parsed.name));
+        setQuickAddError(null);
+        refreshQuickAddAutocomplete(parsed.name);
+      },
+    });
 
   const performQuickAdd = useCallback(
     async (itemName: string, quantity: number, unit: ItemUnit | null, category: ItemCategory) => {
@@ -191,6 +209,8 @@ export default function ShoppingListScreen() {
           boughtByName: null,
         });
         setQuickAddName('');
+        setQuickAddQuantity(1);
+        setQuickAddUnit(null);
         setQuickAddCategory(null);
       } catch {
         setQuickAddError('generic');
@@ -212,6 +232,8 @@ export default function ShoppingListScreen() {
           quantity: existing.quantity + addQuantity,
         });
         setQuickAddName('');
+        setQuickAddQuantity(1);
+        setQuickAddUnit(null);
         setQuickAddCategory(null);
       } catch {
         setQuickAddError('generic');
@@ -279,15 +301,15 @@ export default function ShoppingListScreen() {
       Keyboard.dismiss();
       setQuickAddDuplicateDialog({
         duplicateMatch: dup,
-        addQuantity: 1,
+        addQuantity: quickAddQuantity,
         itemName: name,
         itemCategory,
-        itemUnit: null,
+        itemUnit: quickAddUnit,
       });
       return;
     }
 
-    void performQuickAdd(name, 1, null, itemCategory);
+    void performQuickAdd(name, quickAddQuantity, quickAddUnit, itemCategory);
   }, [
     activeHouseholdId,
     activeItems,
@@ -295,6 +317,8 @@ export default function ShoppingListScreen() {
     performQuickAdd,
     quickAddCategory,
     quickAddName,
+    quickAddQuantity,
+    quickAddUnit,
   ]);
 
   const handleBoughtSectionToggle = () => {
@@ -313,15 +337,21 @@ export default function ShoppingListScreen() {
 
   const handleMarkBought = useCallback(
     (item: ShoppingItem) => {
-      if (activeHouseholdId) markAsBought(activeHouseholdId, item.id);
+      if (!activeHouseholdId) return;
+      markAsBought(activeHouseholdId, item.id).catch(() => {
+        Alert.alert('', t('error_generic'));
+      });
     },
-    [activeHouseholdId, markAsBought]
+    [activeHouseholdId, markAsBought, t]
   );
   const handleMarkActive = useCallback(
     (item: ShoppingItem) => {
-      if (activeHouseholdId) markAsActive(activeHouseholdId, item.id);
+      if (!activeHouseholdId) return;
+      markAsActive(activeHouseholdId, item.id).catch(() => {
+        Alert.alert('', t('error_generic'));
+      });
     },
-    [activeHouseholdId, markAsActive]
+    [activeHouseholdId, markAsActive, t]
   );
   const handleDelete = useCallback(
     (item: ShoppingItem) => {
@@ -330,7 +360,12 @@ export default function ShoppingListScreen() {
         {
           text: t('shopping_list_delete'),
           style: 'destructive',
-          onPress: () => activeHouseholdId && deleteItem(activeHouseholdId, item.id, item.name),
+          onPress: () => {
+            if (!activeHouseholdId) return;
+            deleteItem(activeHouseholdId, item.id, item.name).catch(() => {
+              Alert.alert('', t('error_generic'));
+            });
+          },
         },
       ]);
     },
@@ -408,6 +443,9 @@ export default function ShoppingListScreen() {
         addLabel={t('item_add')}
         emptyErrorText={t('item_error_empty_name')}
         genericErrorText={t('error_generic')}
+        isListening={isQuickAddListening}
+        onVoicePress={isQuickAddListening ? stopQuickAddListening : startQuickAddListening}
+        voiceLabel={t('voice_input_action')}
       />
 
       <View ref={filtersAnchor.ref} style={filtersAnchor.highlightStyle} collapsable={false}>
@@ -528,6 +566,9 @@ export default function ShoppingListScreen() {
             addLabel={t('item_add')}
             emptyErrorText={t('item_error_empty_name')}
             genericErrorText={t('error_generic')}
+            isListening={isQuickAddListening}
+            onVoicePress={isQuickAddListening ? stopQuickAddListening : startQuickAddListening}
+            voiceLabel={t('voice_input_action')}
           />
           <EmptyState
             icon="cart-outline"
@@ -708,6 +749,9 @@ function QuickAddItemField({
   addLabel,
   emptyErrorText,
   genericErrorText,
+  isListening,
+  onVoicePress,
+  voiceLabel,
 }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -722,6 +766,9 @@ function QuickAddItemField({
   addLabel: string;
   emptyErrorText: string;
   genericErrorText: string;
+  isListening: boolean;
+  onVoicePress: () => void;
+  voiceLabel: string;
 }) {
   const colors = useThemeColors();
 
@@ -739,9 +786,36 @@ function QuickAddItemField({
           onSubmitEditing={onAdd}
           suggestionsMaxHeight={260}
           onFocusChange={onFocusChange}
-          // Keep text clear of the trailing + button (logical end side).
-          contentStyle={{ paddingEnd: 52 }}
+          cornerRadius={28}
+          outlineColor={colors.outlineVariant}
+          activeOutlineColor={colors.outlineVariant}
+          // Keep text clear of the trailing microphone and + buttons.
+          contentStyle={{ paddingEnd: 112 }}
         />
+        <View
+          pointerEvents="none"
+          style={[
+            styles.quickAddDivider,
+            { backgroundColor: `${colors.outline}80` },
+          ]}
+        />
+        <Pressable
+          onPress={onVoicePress}
+          accessibilityRole="button"
+          accessibilityLabel={voiceLabel}
+          style={({ pressed }) => [
+            styles.quickAddButton,
+            styles.quickAddVoiceButtonEnd,
+            { backgroundColor: '#0D9488' },
+            pressed && styles.quickAddButtonPressed,
+          ]}
+        >
+          <MaterialCommunityIcons
+            name={isListening ? 'microphone-off' : 'microphone'}
+            size={24}
+            color="#FFFFFF"
+          />
+        </Pressable>
         <Pressable
           onPress={onAdd}
           disabled={!value.trim() || isAdding}
@@ -749,7 +823,7 @@ function QuickAddItemField({
           accessibilityLabel={addLabel}
           style={({ pressed }) => [
             styles.quickAddButton,
-            { backgroundColor: colors.primary },
+            styles.quickAddPlusButton,
             // Match native trailingIcon: logical end (left in RTL, right in LTR).
             // Avoid left/right — RN mirrors them under forceRTL and flips the button.
             styles.quickAddButtonEnd,
@@ -757,7 +831,7 @@ function QuickAddItemField({
             pressed && styles.quickAddButtonPressed,
           ]}
         >
-          <MaterialCommunityIcons name="plus" size={26} color="#102326" />
+          <MaterialCommunityIcons name="plus" size={28} color={colors.primary} />
         </Pressable>
       </View>
       {error && (
@@ -791,6 +865,7 @@ function CurvedTopBar({
   title: string;
   badge: string;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const settingsAnchor = useTourAnchor('list.settings');
@@ -878,6 +953,7 @@ function CurvedTopBar({
                 icon="cog"
                 tint={tintSettings}
                 onPress={() => router.push('/(main)/settings')}
+                accessibilityLabel={t('settings_title')}
               />
             </View>
             <View
@@ -889,12 +965,14 @@ function CurvedTopBar({
                 icon="timeline"
                 tint={tintActivity}
                 onPress={() => router.push('/(main)/activity')}
+                accessibilityLabel={t('activity_feed_title')}
               />
             </View>
             <TopBarIconButton
               icon="history"
               tint={tintHistory}
               onPress={() => router.push('/(main)/history')}
+              accessibilityLabel={t('history_title')}
             />
           </View>
         </View>
@@ -907,15 +985,19 @@ function TopBarIconButton({
   icon,
   tint,
   onPress,
+  accessibilityLabel,
 }: {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   tint: string;
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={6}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
       style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.5 : 1 }]}
     >
       <MaterialCommunityIcons name={icon} size={22} color={tint} />
@@ -927,15 +1009,19 @@ function TopBarMaterialIconButton({
   icon,
   tint,
   onPress,
+  accessibilityLabel,
 }: {
   icon: keyof typeof MaterialIcons.glyphMap;
   tint: string;
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={6}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
       style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.5 : 1 }]}
     >
       <MaterialIcons name={icon} size={22} color={tint} />
@@ -1041,6 +1127,20 @@ const styles = StyleSheet.create({
   },
   quickAddButtonEnd: {
     end: 6,
+  },
+  quickAddVoiceButtonEnd: {
+    end: 62,
+  },
+  quickAddPlusButton: {
+    backgroundColor: 'transparent',
+  },
+  quickAddDivider: {
+    position: 'absolute',
+    top: 17,
+    end: 53,
+    width: 1,
+    height: 22,
+    zIndex: 2,
   },
   quickAddButtonDisabled: {
     opacity: 0.45,

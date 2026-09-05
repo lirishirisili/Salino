@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { useCategoryAutoDetection } from '../../src/hooks/useCategoryAutoDetection';
+import { useVoiceInput } from '../../src/hooks/useVoiceInput';
 import { ItemCategory, ItemUnit, ShoppingItem } from '../../src/models';
 import {
   ItemNameAutocompleteField,
@@ -28,13 +30,11 @@ import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { HouseholdHistoryIndex, AutocompleteSuggestion } from '../../src/services/householdHistoryIndex';
 import { suggestAutocomplete } from '../../src/services/itemNameAutocompleteEngine';
 import { warmUpCatalog } from '../../src/services/categoryKeywordCatalog';
-import { detectCategory } from '../../src/services';
 
 const ALL_CATEGORIES = Object.values(ItemCategory);
 const ALL_UNITS = Object.values(ItemUnit);
 
 const AUTOCOMPLETE_DEBOUNCE_MS = 80;
-const NAME_DERIVATIVES_DEBOUNCE_MS = 280;
 
 export default function EditItemScreen() {
   const { t } = useTranslation();
@@ -56,11 +56,26 @@ export default function EditItemScreen() {
   const [isUrgent, setIsUrgent] = useState(item?.isUrgent || false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoDetected, setAutoDetected] = useState(false);
 
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [isAutocompleteVisible, setIsAutocompleteVisible] = useState(false);
   const autocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const derivativesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const {
+    scheduleDetection,
+    onManualCategorySelect,
+    onSuggestionCategory,
+  } = useCategoryAutoDetection({ setCategory, setAutoDetected });
+
+  const { isListening, startListening, stopListening } = useVoiceInput({
+    onResult: (parsed) => {
+      if (parsed.name) setName(parsed.name);
+      if (parsed.quantity) setQuantity(String(parsed.quantity));
+      if (parsed.unit) setUnit(parsed.unit);
+      if (parsed.name) scheduleDetection(parsed.name);
+    },
+  });
 
   const historyIndex = useMemo(
     () => HouseholdHistoryIndex.from(activeItems, boughtItems, recurringItems),
@@ -96,29 +111,14 @@ export default function EditItemScreen() {
     [historyIndex],
   );
 
-  const scheduleNameDerivatives = useCallback(
-    (text: string) => {
-      if (derivativesTimerRef.current) clearTimeout(derivativesTimerRef.current);
-      derivativesTimerRef.current = setTimeout(() => {
-        if (text.trim().length >= 2) {
-          const detected = detectCategory(text);
-          if (detected) {
-            setCategory((prev) => (detected !== prev ? detected : prev));
-          }
-        }
-      }, NAME_DERIVATIVES_DEBOUNCE_MS);
-    },
-    [],
-  );
-
   const handleNameChange = useCallback(
     (text: string) => {
       setName(text);
       setError(null);
       refreshAutocomplete(text);
-      scheduleNameDerivatives(text);
+      scheduleDetection(text);
     },
-    [refreshAutocomplete, scheduleNameDerivatives],
+    [refreshAutocomplete, scheduleDetection],
   );
 
   const handleSuggestionSelected = useCallback(
@@ -127,7 +127,7 @@ export default function EditItemScreen() {
       setIsAutocompleteVisible(false);
       setAutocompleteSuggestions([]);
       if (suggestion.category) {
-        setCategory(suggestion.category);
+        onSuggestionCategory(suggestion.category);
       }
       if (suggestion.unit !== undefined && suggestion.unit !== null) {
         setUnit(suggestion.unit);
@@ -136,7 +136,7 @@ export default function EditItemScreen() {
         setQuantity(String(suggestion.quantity));
       }
     },
-    [],
+    [onSuggestionCategory],
   );
 
   if (!item) {
@@ -185,10 +185,13 @@ export default function EditItemScreen() {
         text: t('shopping_list_delete'),
         style: 'destructive',
         onPress: async () => {
-          if (activeHouseholdId) {
+          if (!activeHouseholdId) return;
+          try {
             await deleteItem(activeHouseholdId, item.id, item.name);
+            router.back();
+          } catch {
+            Alert.alert('', t('error_generic'));
           }
-          router.back();
         },
       },
     ]);
@@ -210,6 +213,8 @@ export default function EditItemScreen() {
           <Pressable
             onPress={handleDelete}
             hitSlop={8}
+            accessibilityLabel={t('shopping_list_delete')}
+            accessibilityRole="button"
             style={({ pressed }) => [
               { padding: 8, opacity: pressed ? 0.6 : 1 },
             ]}
@@ -245,17 +250,42 @@ export default function EditItemScreen() {
               </Text>
               <View style={{ height: 20 }} />
 
-              <ItemNameAutocompleteField
-                value={name}
-                onChangeText={handleNameChange}
-                suggestions={autocompleteSuggestions}
-                isAutocompleteVisible={isAutocompleteVisible}
-                onSuggestionSelected={handleSuggestionSelected}
-                label={t('item_name_label')}
-                isError={error === 'empty_name'}
-                onSubmitEditing={handleSave}
-                suggestionsMaxHeight={320}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <ItemNameAutocompleteField
+                    value={name}
+                    onChangeText={handleNameChange}
+                    suggestions={autocompleteSuggestions}
+                    isAutocompleteVisible={isAutocompleteVisible}
+                    onSuggestionSelected={handleSuggestionSelected}
+                    label={t('item_name_label')}
+                    isError={error === 'empty_name'}
+                    onSubmitEditing={handleSave}
+                    suggestionsMaxHeight={320}
+                  />
+                </View>
+                <Pressable
+                  onPress={isListening ? stopListening : startListening}
+                  accessibilityLabel={t('voice_input_action')}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  style={({ pressed }) => [
+                    {
+                      marginTop: 12,
+                      padding: 10,
+                      borderRadius: 50,
+                      backgroundColor: isListening ? colors.error : colors.primaryContainer,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={isListening ? 'microphone-off' : 'microphone'}
+                    size={24}
+                    color={isListening ? colors.onError : colors.onPrimaryContainer}
+                  />
+                </Pressable>
+              </View>
               {errorText && error === 'empty_name' && (
                 <Text
                   style={[
@@ -336,12 +366,24 @@ export default function EditItemScreen() {
                       key={c}
                       label={t(`category_${c.toLowerCase()}`)}
                       selected={selected}
-                      onPress={() => setCategory(c)}
+                      onPress={() => onManualCategorySelect(c)}
                       colors={colors}
                     />
                   );
                 })}
               </ScrollView>
+              {autoDetected && (
+                <Text
+                  style={[
+                    Typography.bodySmall,
+                    { color: colors.primary, marginTop: 8 } as any,
+                  ]}
+                >
+                  {t('category_auto_detected', {
+                    category: t(`category_${category.toLowerCase()}`),
+                  })}
+                </Text>
+              )}
 
               <View style={{ height: 16 }} />
 

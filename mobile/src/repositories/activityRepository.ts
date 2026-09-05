@@ -1,14 +1,11 @@
 import { ActivityLog } from '../models';
 import { subscribeToActivity } from '../remote/firestoreService';
-import { localSetActivity } from '../local/storage';
+import { mergeRemoteActivity } from '../local/storage';
+import { flush } from '../services/syncQueueProcessor';
 
-function activitySignature(logs: ActivityLog[]): string {
-  const firstId = logs.length > 0 ? logs[0].id : '';
-  const lastId = logs.length > 0 ? logs[logs.length - 1].id : '';
-  return `${logs.length}:${firstId}:${lastId}`;
+function runBackground(work: Promise<unknown>): void {
+  work.catch(() => {});
 }
-
-const lastPersistedSignature = new Map<string, string>();
 
 export const activityRepository = {
   subscribeToActivity: (
@@ -18,13 +15,11 @@ export const activityRepository = {
   ) => {
     return subscribeToActivity(
       householdId,
-      (logs) => {
-        const signature = activitySignature(logs);
-        if (lastPersistedSignature.get(householdId) !== signature) {
-          lastPersistedSignature.set(householdId, signature);
-          localSetActivity(householdId, logs).catch(() => {});
-        }
-        onData(logs);
+      (remoteLogs) => {
+        // Protected merge — keep pending local activity writes intact.
+        runBackground(mergeRemoteActivity(householdId, remoteLogs));
+        runBackground(flush(householdId));
+        onData(remoteLogs);
       },
       onError
     );

@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { useCategoryAutoDetection } from '../../src/hooks/useCategoryAutoDetection';
+import { useVoiceInput } from '../../src/hooks/useVoiceInput';
 import { DuplicateReason, ItemCategory, ItemUnit, type DuplicateMatch, type ShoppingItem } from '../../src/models';
 import { detectCategory, findDuplicate } from '../../src/services';
 import {
@@ -40,7 +42,6 @@ const ALL_CATEGORIES = Object.values(ItemCategory);
 const ALL_UNITS = Object.values(ItemUnit);
 
 const AUTOCOMPLETE_DEBOUNCE_MS = 80;
-const NAME_DERIVATIVES_DEBOUNCE_MS = 280;
 
 type SaveOverrides = {
   name?: string;
@@ -97,8 +98,22 @@ export default function AddItemScreen() {
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [isAutocompleteVisible, setIsAutocompleteVisible] = useState(false);
   const autocompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const derivativesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const {
+    scheduleDetection,
+    onManualCategorySelect,
+    onSuggestionCategory,
+  } = useCategoryAutoDetection({ setCategory, setAutoDetected });
+
+  const { isListening, startListening, stopListening } = useVoiceInput({
+    onResult: (parsed) => {
+      if (parsed.name) setName(parsed.name);
+      if (parsed.quantity) setQuantity(String(parsed.quantity));
+      if (parsed.unit) setUnit(parsed.unit);
+      if (parsed.name) scheduleDetection(parsed.name);
+    },
+  });
 
   const historyIndex = useMemo(
     () => HouseholdHistoryIndex.from(activeItems, boughtItems, recurringItems),
@@ -134,39 +149,14 @@ export default function AddItemScreen() {
     [historyIndex],
   );
 
-  const scheduleNameDerivatives = useCallback(
-    (text: string) => {
-      if (derivativesTimerRef.current) clearTimeout(derivativesTimerRef.current);
-      derivativesTimerRef.current = setTimeout(() => {
-        if (text.trim().length >= 2) {
-          const detected = detectCategory(text);
-          if (detected) {
-            setCategory((prev) => {
-              if (detected !== prev) {
-                setAutoDetected(true);
-                return detected;
-              }
-              return prev;
-            });
-          } else {
-            setAutoDetected(false);
-          }
-        } else {
-          setAutoDetected(false);
-        }
-      }, NAME_DERIVATIVES_DEBOUNCE_MS);
-    },
-    [],
-  );
-
   const handleNameChange = useCallback(
     (text: string) => {
       setName(text);
       setError(null);
       refreshAutocomplete(text);
-      scheduleNameDerivatives(text);
+      scheduleDetection(text);
     },
-    [refreshAutocomplete, scheduleNameDerivatives],
+    [refreshAutocomplete, scheduleDetection],
   );
 
   const performSave = useCallback(
@@ -305,7 +295,6 @@ export default function AddItemScreen() {
 
   const handleSuggestionSelected = useCallback(
     (suggestion: AutocompleteSuggestion) => {
-      if (derivativesTimerRef.current) clearTimeout(derivativesTimerRef.current);
       if (autocompleteTimerRef.current) clearTimeout(autocompleteTimerRef.current);
       setIsAutocompleteVisible(false);
       setAutocompleteSuggestions([]);
@@ -318,6 +307,8 @@ export default function AddItemScreen() {
         }
       }
 
+      onSuggestionCategory(itemCategory);
+
       attemptSave({
         name: suggestion.displayName,
         quantity: suggestion.quantity ?? (parseFloat(quantity) || 1),
@@ -328,7 +319,7 @@ export default function AddItemScreen() {
         category: itemCategory,
       });
     },
-    [attemptSave, category, quantity, unit],
+    [attemptSave, category, onSuggestionCategory, quantity, unit],
   );
 
   const errorText =
@@ -375,18 +366,39 @@ export default function AddItemScreen() {
               </Text>
               <View style={{ height: 20 }} />
 
-              <ItemNameAutocompleteField
-                value={name}
-                onChangeText={handleNameChange}
-                suggestions={autocompleteSuggestions}
-                isAutocompleteVisible={isAutocompleteVisible}
-                onSuggestionSelected={handleSuggestionSelected}
-                label={t('item_name_label')}
-                placeholder={t('item_name_hint')}
-                isError={error === 'empty_name'}
-                onSubmitEditing={handleSave}
-                suggestionsMaxHeight={320}
-              />
+              <View style={styles.nameFieldWrap}>
+                <ItemNameAutocompleteField
+                  value={name}
+                  onChangeText={handleNameChange}
+                  suggestions={autocompleteSuggestions}
+                  isAutocompleteVisible={isAutocompleteVisible}
+                  onSuggestionSelected={handleSuggestionSelected}
+                  placeholder={t('item_name_hint')}
+                  isError={error === 'empty_name'}
+                  onSubmitEditing={handleSave}
+                  suggestionsMaxHeight={320}
+                  cornerRadius={28}
+                  outlineColor={colors.outlineVariant}
+                  activeOutlineColor={colors.outlineVariant}
+                  contentStyle={{ paddingEnd: 60 }}
+                />
+                <Pressable
+                  onPress={isListening ? stopListening : startListening}
+                  accessibilityLabel={t('voice_input_action')}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  style={({ pressed }) => [
+                    styles.nameVoiceButton,
+                    pressed && styles.nameVoiceButtonPressed,
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={isListening ? 'microphone-off' : 'microphone'}
+                    size={24}
+                    color="#FFFFFF"
+                  />
+                </Pressable>
+              </View>
               {errorText && error === 'empty_name' && (
                 <Text
                   style={[
@@ -467,10 +479,7 @@ export default function AddItemScreen() {
                       key={c}
                       label={t(`category_${c.toLowerCase()}`)}
                       selected={selected}
-                      onPress={() => {
-                        setCategory(c);
-                        setAutoDetected(false);
-                      }}
+                      onPress={() => onManualCategorySelect(c)}
                       colors={colors}
                     />
                   );
@@ -774,5 +783,24 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: 'transparent',
+  },
+  nameFieldWrap: {
+    position: 'relative',
+    width: '100%',
+  },
+  nameVoiceButton: {
+    position: 'absolute',
+    top: 8,
+    end: 6,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0D9488',
+    zIndex: 2,
+  },
+  nameVoiceButtonPressed: {
+    opacity: 0.75,
   },
 });

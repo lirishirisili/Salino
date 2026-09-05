@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocFromServer,
   getDocs,
   setDoc,
   updateDoc,
@@ -40,7 +41,7 @@ export const subscribeToItems = (
   onData: (items: ShoppingItem[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe => {
-  const q = query(itemsCol(householdId), orderBy('createdAt', 'desc'));
+  const q = query(itemsCol(householdId), orderBy('updatedAt', 'desc'));
   return onSnapshot(
     q,
     (snapshot) => {
@@ -224,6 +225,36 @@ export const firestoreGetUser = async (userId: string) => {
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() };
+};
+
+const SERVER_READ_ATTEMPTS = 4;
+const SERVER_READ_RETRY_DELAY_MS = 250;
+
+/**
+ * Read user doc from the server (not cache) with retries — mirrors native
+ * `fetchUserSnapshotFromServer` with 4 attempts and backoff.
+ *
+ * Returns `null` if the document does not exist (valid server answer).
+ * Throws only on exhausted retries.
+ */
+export const firestoreGetUserFromServer = async (
+  userId: string,
+): Promise<Record<string, unknown> | null> => {
+  const ref = doc(db, 'users', userId);
+  let lastError: unknown;
+  for (let attempt = 0; attempt < SERVER_READ_ATTEMPTS; attempt++) {
+    try {
+      const snap = await getDocFromServer(ref);
+      if (!snap.exists()) return null;
+      return { id: snap.id, ...snap.data() };
+    } catch (e) {
+      lastError = e;
+      if (attempt < SERVER_READ_ATTEMPTS - 1) {
+        await new Promise((r) => setTimeout(r, SERVER_READ_RETRY_DELAY_MS * (attempt + 1)));
+      }
+    }
+  }
+  throw lastError;
 };
 
 export const firestoreSetUser = async (userId: string, data: Record<string, unknown>) => {

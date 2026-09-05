@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { firebaseConfig } from './firebaseConfig';
 
@@ -18,5 +19,8 @@ export const auth = initializeAuth(app, {
 export const db = initializeFirestore(app, {
   experimentalAutoDetectLongPolling: true,
 });
+
+/** Cloud Functions instance (europe-west1) — mirrors Android AppModule wiring. */
+export const functions = getFunctions(app, 'europe-west1');
 
 export default app;

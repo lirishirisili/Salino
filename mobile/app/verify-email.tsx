@@ -50,6 +50,11 @@ export default function VerifyEmailScreen() {
     try {
       const verified = await checkEmailVerified();
       if (verified) {
+        // Fetch authoritative profile from server before routing — mirrors
+        // native's post-verification flow. This ensures the household routing
+        // decision uses the server's activeHouseholdId, not stale cache.
+        const { authRepository } = require('../src/repositories') as typeof import('../src/repositories');
+        await authRepository.getOrCreateUserProfile().catch(() => {});
         router.replace('/');
       }
     } catch {

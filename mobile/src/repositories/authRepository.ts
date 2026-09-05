@@ -16,6 +16,7 @@ import { auth } from '../remote/firebase';
 import i18n from 'i18next';
 import {
   firestoreGetUser,
+  firestoreGetUserFromServer,
   firestoreSetUser,
   firestoreDeleteUser,
   firestoreGetMemberCount,
@@ -118,16 +119,37 @@ export const authRepository = {
     const user = auth.currentUser;
     if (!user) return null;
 
-    const existing = await firestoreGetUser(user.uid);
+    // Always read from the server (with retries) — mirrors native
+    // `fetchUserSnapshotFromServer`. Never trust cache-first reads for
+    // routing decisions (partial pending writes can lack activeHouseholdId).
+    let existing: Record<string, unknown> | null = null;
+    try {
+      existing = await firestoreGetUserFromServer(user.uid);
+    } catch {
+      // All server attempts exhausted — fall back to cache read so the app
+      // can still open from the local fast path. This is better than hanging.
+      existing = await firestoreGetUser(user.uid);
+    }
+
     if (existing) {
       let activeHouseholdId = (existing.activeHouseholdId as string | null) ?? null;
       if (activeHouseholdId) {
-        const isMember = await firestoreIsHouseholdMember(activeHouseholdId, user.uid);
-        if (!isMember) {
-          activeHouseholdId = null;
-          await firestoreSetUser(user.uid, { activeHouseholdId: null });
-        } else {
-          await localSetActiveHouseholdId(user.uid, activeHouseholdId);
+        // Validate membership. On failure do NOT write null — the server is
+        // authoritative and we may just be offline or transiently failing.
+        try {
+          const isMember = await firestoreIsHouseholdMember(activeHouseholdId, user.uid);
+          if (!isMember) {
+            activeHouseholdId = null;
+            await firestoreSetUser(user.uid, { activeHouseholdId: null });
+          } else {
+            await localSetActiveHouseholdId(user.uid, activeHouseholdId);
+          }
+        } catch {
+          // Network error during membership check — keep activeHouseholdId as-is
+          // from server; don't clear it because we can't confirm membership status.
+          if (activeHouseholdId) {
+            await localSetActiveHouseholdId(user.uid, activeHouseholdId);
+          }
         }
       }
       return {
@@ -136,6 +158,7 @@ export const authRepository = {
       };
     }
 
+    // User profile does not exist on server — create one (new account).
     const profile: UserProfile = {
       id: user.uid,
       displayName: user.displayName || user.email?.split('@')[0] || 'User',

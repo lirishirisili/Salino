@@ -1,17 +1,27 @@
 import { Timestamp } from 'firebase/firestore';
 import { RecurringItem, ItemCategory, ActivityType } from '../models';
+import { subscribeToRecurringItems } from '../remote/firestoreService';
 import {
-  subscribeToRecurringItems,
-  firestoreUpsertRecurring,
-  firestoreDeleteRecurring,
-} from '../remote/firestoreService';
-import { localSetRecurring, localUpsertRecurring } from '../local/storage';
+  localUpsertRecurring,
+  localDeleteRecurring,
+  mergeRemoteRecurring,
+} from '../local/storage';
 import { auth } from '../remote/firebase';
 import { normalizeItemName } from '../utils/textUtils';
 import { shoppingRepository } from './shoppingRepository';
+import { enqueueUpsert, enqueueDelete, flush } from '../services/syncQueueProcessor';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+function runBackground(work: Promise<unknown>): void {
+  work.catch((e) => {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn('[recurringRepository] background write failed', e);
+    }
+  });
 }
 
 export const recurringRepository = {
@@ -22,9 +32,11 @@ export const recurringRepository = {
   ) => {
     return subscribeToRecurringItems(
       householdId,
-      (items) => {
-        localSetRecurring(householdId, items);
-        onData(items);
+      (remoteItems) => {
+        // Protected merge — keep pending local writes intact.
+        runBackground(mergeRemoteRecurring(householdId, remoteItems));
+        runBackground(flush(householdId));
+        onData(remoteItems);
       },
       onError
     );
@@ -58,21 +70,26 @@ export const recurringRepository = {
       enabled: true,
       nextDueAt,
       lastCompletedAt: null,
-      createdAt: data.id ? now : now, // Existing items keep their createdAt on server
+      createdAt: now,
       updatedAt: now,
     };
 
+    // Local-first.
     await localUpsertRecurring(householdId, item);
-    await firestoreUpsertRecurring(householdId, item);
+    await enqueueUpsert(householdId, 'RECURRING', item.id);
+    runBackground(flush(householdId));
 
     const activityType = data.id ? ActivityType.RECURRING_UPDATED : ActivityType.RECURRING_CREATED;
-    await shoppingRepository.logActivity(householdId, activityType, item.id, item.name);
+    runBackground(shoppingRepository.logActivity(householdId, activityType, item.id, item.name));
 
     return item;
   },
 
   deleteRecurringItem: async (householdId: string, itemId: string): Promise<void> => {
-    await firestoreDeleteRecurring(householdId, itemId);
+    // Local-first — also delete locally (previously only deleted on server).
+    await localDeleteRecurring(householdId, itemId);
+    await enqueueDelete(householdId, 'RECURRING', itemId);
+    runBackground(flush(householdId));
   },
 
   updateNextDueDate: async (
@@ -88,6 +105,7 @@ export const recurringRepository = {
       updatedAt: Timestamp.now(),
     };
     await localUpsertRecurring(householdId, updated);
-    await firestoreUpsertRecurring(householdId, updated);
+    await enqueueUpsert(householdId, 'RECURRING', updated.id);
+    runBackground(flush(householdId));
   },
 };

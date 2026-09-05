@@ -60,9 +60,11 @@ export default function RootLayout() {
       authTimeout = setTimeout(() => {
         const state = useAuthStore.getState();
         if (state.isLoading) {
+          // Timeout: exit splash but do NOT flip isSignedIn to false if
+          // Firebase Auth still has a user — mirrors native behaviour where
+          // a profile timeout never signs the user out.
           useAuthStore.setState({
             isLoading: false,
-            isSignedIn: false,
             hasBootstrapped: true,
           });
         }

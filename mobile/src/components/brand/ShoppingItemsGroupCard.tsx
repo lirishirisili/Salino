@@ -98,7 +98,13 @@ const ShoppingItemRow = React.memo(function ShoppingItemRow({
     <>
     <View style={styles.row}>
       {/* Left circular checkbox */}
-      <Pressable onPress={handleToggle} hitSlop={8} style={styles.checkboxHit}>
+      <Pressable
+        onPress={handleToggle}
+        hitSlop={8}
+        style={styles.checkboxHit}
+        accessibilityLabel={isBought ? t('shopping_list_undo_bought') : t('shopping_list_mark_bought')}
+        accessibilityRole="button"
+      >
         <View
           style={[
             styles.checkbox,
@@ -151,7 +157,13 @@ const ShoppingItemRow = React.memo(function ShoppingItemRow({
 
       {/* Right delete */}
       {handleDelete && !isBought ? (
-        <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteHit}>
+        <Pressable
+          onPress={handleDelete}
+          hitSlop={8}
+          style={styles.deleteHit}
+          accessibilityLabel={t('shopping_list_delete')}
+          accessibilityRole="button"
+        >
           <Text style={{ fontSize: 19, color: `${colors.onSurfaceVariant}e6` }}>{'🗑️'}</Text>
         </Pressable>
       ) : (

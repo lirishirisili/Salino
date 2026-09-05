@@ -1,30 +1,23 @@
 import { Timestamp } from 'firebase/firestore';
-import { ShoppingItem, ItemStatus, ActivityType } from '../models';
-import {
-  subscribeToItems,
-  firestoreAddItem,
-  firestoreUpdateItem,
-  firestoreDeleteItem,
-  firestoreLogActivity,
-} from '../remote/firestoreService';
+import { ShoppingItem, RecurringItem, ItemStatus, ActivityType, ActivityLog } from '../models';
+import { subscribeToItems } from '../remote/firestoreService';
 import {
   localGetItems,
-  localSetItems,
   localUpsertItem,
   localDeleteItem,
+  localUpsertActivity,
+  mergeRemoteItems,
 } from '../local/storage';
 import { auth } from '../remote/firebase';
 import { normalizeItemName } from '../utils/textUtils';
+import { enqueueUpsert, enqueueDelete, flush } from '../services/syncQueueProcessor';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
 /**
- * Runs a persistence/remote side-effect off the UI critical path. Mutations
- * return immediately; Firestore's own latency compensation updates the list via
- * the active snapshot listener, so the UI reflects the change without waiting
- * on the full local read-modify-write or the activity-log write.
+ * Runs a persistence/remote side-effect off the UI critical path.
  */
 function runBackground(work: Promise<unknown>): void {
   work.catch((e) => {
@@ -35,24 +28,6 @@ function runBackground(work: Promise<unknown>): void {
   });
 }
 
-/**
- * Cheap signature of an items list so we can skip rewriting the full cache blob
- * when a snapshot carries no meaningful change (e.g. pending-write metadata
- * flips). Uses count + newest updatedAt + last id — enough to detect real edits
- * without hashing every field.
- */
-function itemsSignature(items: ShoppingItem[]): string {
-  let newest = 0;
-  for (const item of items) {
-    const ms = item.updatedAt?.toMillis?.() ?? item.createdAt?.toMillis?.() ?? 0;
-    if (ms > newest) newest = ms;
-  }
-  const lastId = items.length > 0 ? items[items.length - 1].id : '';
-  return `${items.length}:${newest}:${lastId}`;
-}
-
-const lastPersistedSignature = new Map<string, string>();
-
 export const shoppingRepository = {
   subscribeToItems: (
     householdId: string,
@@ -61,14 +36,16 @@ export const shoppingRepository = {
   ) => {
     return subscribeToItems(
       householdId,
-      (items) => {
-        // Only rewrite the full cache blob when the data actually changed.
-        const signature = itemsSignature(items);
-        if (lastPersistedSignature.get(householdId) !== signature) {
-          lastPersistedSignature.set(householdId, signature);
-          runBackground(localSetItems(householdId, items));
-        }
-        onData(items);
+      async (remoteItems) => {
+        // Protected merge — keep local pending writes intact.
+        runBackground(mergeRemoteItems(householdId, remoteItems));
+        // Try flushing any pending ops while online.
+        runBackground(flush(householdId));
+
+        // For Zustand we still pass the remote items directly — they reflect
+        // the authoritative server state. Pending local writes are already in
+        // the store via optimistic updates.
+        onData(remoteItems);
       },
       onError
     );
@@ -102,12 +79,12 @@ export const shoppingRepository = {
       updatedAt: now,
     };
 
-    // Persist locally for offline durability and write remotely in parallel;
-    // the active snapshot listener (latency-compensated) surfaces the new item.
-    runBackground(localUpsertItem(householdId, newItem));
-    await firestoreAddItem(householdId, newItem);
+    // Local-first: write local → enqueue → flush in background.
+    await localUpsertItem(householdId, newItem);
+    await enqueueUpsert(householdId, 'ITEM', newItem.id);
+    runBackground(flush(householdId));
 
-    // Activity logging is not on the critical path.
+    // Activity logging — local-first too.
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_ADDED, newItem.id, newItem.name)
     );
@@ -121,54 +98,81 @@ export const shoppingRepository = {
       normalizedName: normalizeItemName(item.name),
       updatedAt: Timestamp.now(),
     };
-    runBackground(localUpsertItem(householdId, updated));
-    await firestoreUpdateItem(householdId, item.id, updated);
+    await localUpsertItem(householdId, updated);
+    await enqueueUpsert(householdId, 'ITEM', item.id);
+    runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_UPDATED, item.id, item.name)
     );
   },
 
-  markAsBought: async (householdId: string, itemId: string, items: ShoppingItem[]): Promise<void> => {
+  markAsBought: async (
+    householdId: string,
+    itemId: string,
+    items: ShoppingItem[],
+    recurringItems?: RecurringItem[],
+  ): Promise<void> => {
     const uid = auth.currentUser!.uid;
     const displayName = auth.currentUser!.displayName || auth.currentUser!.email?.split('@')[0] || 'User';
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
-    const updated: Partial<ShoppingItem> = {
+    const boughtAt = Date.now();
+    const boughtItem: ShoppingItem = {
+      ...item,
       status: ItemStatus.BOUGHT,
       boughtBy: uid,
       boughtByName: displayName,
       updatedAt: Timestamp.now(),
     };
 
-    runBackground(localUpsertItem(householdId, { ...item, ...updated } as ShoppingItem));
-    await firestoreUpdateItem(householdId, itemId, updated);
+    await localUpsertItem(householdId, boughtItem);
+    await enqueueUpsert(householdId, 'ITEM', itemId);
+    runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_BOUGHT, itemId, item.name)
     );
+
+    // Advance matching recurring item schedule — mirrors native behaviour.
+    if (recurringItems?.length) {
+      const normalizedBought = normalizeItemName(item.name);
+      const match = recurringItems.find(
+        (r) => r.normalizedName === normalizedBought,
+      );
+      if (match) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { recurringRepository } = require('./recurringRepository') as typeof import('./recurringRepository');
+        runBackground(
+          recurringRepository.updateNextDueDate(householdId, match, boughtAt),
+        );
+      }
+    }
   },
 
   markAsActive: async (householdId: string, itemId: string, items: ShoppingItem[]): Promise<void> => {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
-    const updated: Partial<ShoppingItem> = {
+    const activeItem: ShoppingItem = {
+      ...item,
       status: ItemStatus.ACTIVE,
       boughtBy: null,
       boughtByName: null,
       updatedAt: Timestamp.now(),
     };
 
-    runBackground(localUpsertItem(householdId, { ...item, ...updated } as ShoppingItem));
-    await firestoreUpdateItem(householdId, itemId, updated);
+    await localUpsertItem(householdId, activeItem);
+    await enqueueUpsert(householdId, 'ITEM', itemId);
+    runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_RESTORED, itemId, item.name)
     );
   },
 
   deleteItem: async (householdId: string, itemId: string, itemName: string): Promise<void> => {
-    runBackground(localDeleteItem(householdId, itemId));
-    await firestoreDeleteItem(householdId, itemId);
+    await localDeleteItem(householdId, itemId);
+    await enqueueDelete(householdId, 'ITEM', itemId);
+    runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_DELETED, itemId, itemName)
     );
@@ -176,20 +180,21 @@ export const shoppingRepository = {
 
   toggleFavorite: async (householdId: string, item: ShoppingItem): Promise<void> => {
     const updated = { ...item, isFavorite: !item.isFavorite, updatedAt: Timestamp.now() };
-    runBackground(localUpsertItem(householdId, updated));
-    await firestoreUpdateItem(householdId, item.id, { isFavorite: updated.isFavorite });
+    await localUpsertItem(householdId, updated);
+    await enqueueUpsert(householdId, 'ITEM', item.id);
+    runBackground(flush(householdId));
   },
 
   logActivity: async (
     householdId: string,
     type: ActivityType,
     itemId: string,
-    itemName: string
+    itemName: string,
   ): Promise<void> => {
     const uid = auth.currentUser!.uid;
     const displayName = auth.currentUser!.displayName || auth.currentUser!.email?.split('@')[0] || 'User';
 
-    const log = {
+    const log: ActivityLog = {
       id: generateId(),
       householdId,
       type,
@@ -201,6 +206,9 @@ export const shoppingRepository = {
       createdAt: Timestamp.now(),
     };
 
-    await firestoreLogActivity(householdId, log);
+    // Local-first activity log.
+    await localUpsertActivity(householdId, log);
+    await enqueueUpsert(householdId, 'ACTIVITY', log.id);
+    runBackground(flush(householdId));
   },
 };
