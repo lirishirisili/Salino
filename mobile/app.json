@@ -2,7 +2,7 @@
   "expo": {
     "name": "Haserli",
     "slug": "haserli",
-    "version": "1.3.45",
+    "version": "1.3.46",
     "orientation": "portrait",
     "scheme": "haserli",
     "userInterfaceStyle": "automatic",
@@ -26,6 +26,8 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "NSMicrophoneUsageDescription": "Microphone access is needed for voice input to add items to your shopping list.",
+        "NSSpeechRecognitionUsageDescription": "Speech recognition is used to convert your voice into shopping list items.",
+        "NSPhotoLibraryUsageDescription": "Haserli may access the photo library when advertising partners need it to deliver ads and keep the app free.",
         "NSUserTrackingUsageDescription": "Haserli uses this identifier to deliver relevant ads and keep the app free.",
         "FacebookAppID": "1294857219184340",
         "FacebookDisplayName": "Haserli",
@@ -113,7 +115,7 @@
     },
     "android": {
       "package": "com.salino.sali",
-      "versionCode": 73,
+      "versionCode": 74,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon-zoomed-out.png",
