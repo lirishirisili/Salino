@@ -22,7 +22,7 @@ import {
   firestoreGetMemberCount,
   firestoreDeleteHousehold,
   firestoreLeaveHousehold,
-  firestoreIsHouseholdMember,
+  firestoreIsHouseholdMemberFromServer,
 } from '../remote/firestoreService';
 import {
   localSetActiveHouseholdId,
@@ -31,6 +31,7 @@ import {
 } from '../local/storage';
 import { resetSessionState } from '../session/resetSession';
 import { UserProfile } from '../models';
+import type { ProfileLoadResult } from '../session/sessionRouting';
 
 /** Sync Firebase Auth language with the app's current i18n language. */
 function syncAuthLanguage(): void {
@@ -115,58 +116,82 @@ export const authRepository = {
     await sendPasswordResetEmail(auth, email);
   },
 
-  getOrCreateUserProfile: async (): Promise<UserProfile | null> => {
+  getOrCreateUserProfile: async (): Promise<ProfileLoadResult> => {
     const user = auth.currentUser;
-    if (!user) return null;
+    if (!user) {
+      return { status: 'incomplete', profile: null, reason: 'no_auth' };
+    }
 
     // Always read from the server (with retries) — mirrors native
     // `fetchUserSnapshotFromServer`. Never trust cache-first reads for
     // routing decisions (partial pending writes can lack activeHouseholdId).
-    let existing: Record<string, unknown> | null = null;
+    let serverDoc: Record<string, unknown> | null | undefined;
+    let serverFailed = false;
     try {
-      existing = await firestoreGetUserFromServer(user.uid);
+      serverDoc = await firestoreGetUserFromServer(user.uid);
     } catch {
-      // All server attempts exhausted — fall back to cache read so the app
-      // can still open from the local fast path. This is better than hanging.
-      existing = await firestoreGetUser(user.uid);
+      serverFailed = true;
+      serverDoc = undefined;
     }
 
-    if (existing) {
-      let activeHouseholdId = (existing.activeHouseholdId as string | null) ?? null;
-      if (activeHouseholdId) {
-        // Validate membership. On failure do NOT write null — the server is
-        // authoritative and we may just be offline or transiently failing.
-        try {
-          const isMember = await firestoreIsHouseholdMember(activeHouseholdId, user.uid);
-          if (!isMember) {
-            activeHouseholdId = null;
-            await firestoreSetUser(user.uid, { activeHouseholdId: null });
-          } else {
-            await localSetActiveHouseholdId(user.uid, activeHouseholdId);
-          }
-        } catch {
-          // Network error during membership check — keep activeHouseholdId as-is
-          // from server; don't clear it because we can't confirm membership status.
-          if (activeHouseholdId) {
-            await localSetActiveHouseholdId(user.uid, activeHouseholdId);
-          }
+    if (!serverFailed && serverDoc) {
+      const profile = await resolveAuthoritativeProfile(user.uid, serverDoc);
+      return { status: 'ready', source: 'server', profile };
+    }
+
+    if (!serverFailed && serverDoc === null) {
+      // Server confirmed the document does not exist — new account.
+      // Do NOT write activeHouseholdId: null; a merge of that field would
+      // clobber a household if this read was wrong. Re-read after create.
+      await firestoreSetUser(user.uid, {
+        displayName: user.displayName || user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+      });
+      try {
+        const confirmed = await firestoreGetUserFromServer(user.uid);
+        if (confirmed) {
+          const profile = await resolveAuthoritativeProfile(user.uid, confirmed);
+          return { status: 'created', profile };
         }
+      } catch {
+        // Created locally; household still unknown — caller must not route
+        // to join-house from this incomplete confirmation.
       }
       return {
-        ...(existing as unknown as UserProfile),
-        activeHouseholdId,
+        status: 'incomplete',
+        profile: {
+          id: user.uid,
+          displayName: user.displayName || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          activeHouseholdId: null,
+        },
+        reason: 'created_unconfirmed',
       };
     }
 
-    // User profile does not exist on server — create one (new account).
-    const profile: UserProfile = {
-      id: user.uid,
-      displayName: user.displayName || user.email?.split('@')[0] || 'User',
-      email: user.email || '',
-      activeHouseholdId: null,
+    // Server read failed. Cache is only usable when it already has a household.
+    // A partial FCM merge doc without activeHouseholdId is NOT "no household".
+    const cached = await firestoreGetUser(user.uid);
+    const cachedHouseholdId =
+      typeof cached?.activeHouseholdId === 'string' && cached.activeHouseholdId.length > 0
+        ? cached.activeHouseholdId
+        : null;
+    if (cached && cachedHouseholdId) {
+      await localSetActiveHouseholdId(user.uid, cachedHouseholdId).catch(() => undefined);
+      return {
+        status: 'ready',
+        source: 'cache',
+        profile: {
+          ...(cached as unknown as UserProfile),
+          activeHouseholdId: cachedHouseholdId,
+        },
+      };
+    }
+    return {
+      status: 'incomplete',
+      profile: cached ? (cached as unknown as UserProfile) : null,
+      reason: 'server_failed',
     };
-    await firestoreSetUser(user.uid, profile as unknown as Record<string, unknown>);
-    return profile;
   },
 
   updateActiveHousehold: async (householdId: string): Promise<void> => {
@@ -174,6 +199,8 @@ export const authRepository = {
     if (!uid) return;
     await firestoreSetUser(uid, { activeHouseholdId: householdId });
     await localSetActiveHouseholdId(uid, householdId);
+    const { rememberSessionHousehold } = await import('../session/sessionRestore');
+    await rememberSessionHousehold(householdId);
   },
 
   signOut: async (): Promise<void> => {
@@ -211,3 +238,34 @@ export const authRepository = {
     return auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'User';
   },
 };
+
+async function resolveAuthoritativeProfile(
+  uid: string,
+  existing: Record<string, unknown>
+): Promise<UserProfile> {
+  let activeHouseholdId =
+    typeof existing.activeHouseholdId === 'string' && existing.activeHouseholdId.length > 0
+      ? existing.activeHouseholdId
+      : null;
+
+  if (activeHouseholdId) {
+    try {
+      const isMember = await firestoreIsHouseholdMemberFromServer(activeHouseholdId, uid);
+      if (!isMember) {
+        activeHouseholdId = null;
+        await firestoreSetUser(uid, { activeHouseholdId: null });
+      } else {
+        await localSetActiveHouseholdId(uid, activeHouseholdId);
+      }
+    } catch {
+      // Network error during membership check — keep the server household id.
+      await localSetActiveHouseholdId(uid, activeHouseholdId).catch(() => undefined);
+    }
+  }
+
+  return {
+    ...(existing as unknown as UserProfile),
+    id: uid,
+    activeHouseholdId,
+  };
+}

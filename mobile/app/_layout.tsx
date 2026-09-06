@@ -9,6 +9,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LightTheme, DarkTheme } from '../src/theme';
 import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
+import { SessionRouteGuard } from '../src/session/SessionRouteGuard';
+import { getSessionSnapshotSync } from '../src/session/sessionRestore';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
 import { initLevelPlay } from '../src/services/initLevelPlay';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
@@ -51,23 +53,35 @@ export default function RootLayout() {
 
   useEffect(() => {
     let cancelled = false;
-    let authUnsubscribe: (() => void) | undefined;
     let authTimeout: ReturnType<typeof setTimeout> | undefined;
 
     // Start auth listener immediately (in parallel with i18n boot)
     try {
-      authUnsubscribe = initialize();
+      initialize();
       authTimeout = setTimeout(() => {
         const state = useAuthStore.getState();
-        if (state.isLoading) {
-          // Timeout: exit splash but do NOT flip isSignedIn to false if
-          // Firebase Auth still has a user — mirrors native behaviour where
-          // a profile timeout never signs the user out.
-          useAuthStore.setState({
-            isLoading: false,
-            hasBootstrapped: true,
-          });
+        if (!state.isLoading && state.hasBootstrapped && !state.isRestoringSession) {
+          return;
         }
+        // Timeout: exit splash but do NOT flip isSignedIn to false.
+        // If a last-known session exists, keep the user in their house
+        // instead of dumping them on login / join-house.
+        const snap = getSessionSnapshotSync();
+        const householdId = state.lastHouseholdId ?? snap?.householdId ?? null;
+        useAuthStore.setState({
+          isLoading: false,
+          hasBootstrapped: true,
+          isRestoringSession: false,
+          ...(snap?.uid
+            ? {
+                isSignedIn: true,
+                lastHouseholdId: householdId,
+                householdResolution: householdId
+                  ? 'has_household'
+                  : state.householdResolution,
+              }
+            : {}),
+        });
       }, 8000);
     } catch (e: unknown) {
       console.error('Auth init error:', e);
@@ -107,7 +121,8 @@ export default function RootLayout() {
       cancelled = true;
       clearTimeout(failsafe);
       if (authTimeout) clearTimeout(authTimeout);
-      if (authUnsubscribe) authUnsubscribe();
+      // Do not unsubscribe auth — a remount resubscribe can emit a transient
+      // null and was the resume path that dumped users onto login / join-house.
     };
   }, []);
 
@@ -126,6 +141,7 @@ export default function RootLayout() {
             ) : (
               <View style={{ flex: 1 }}>
                 <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} translucent />
+                <SessionRouteGuard />
                 <Stack
                   screenOptions={{
                     headerShown: false,

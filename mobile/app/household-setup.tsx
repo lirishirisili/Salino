@@ -14,9 +14,11 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuthStore, useHouseholdStore, useInviteDeepLinkStore } from '../src/hooks';
+import { useSessionRoute } from '../src/hooks/useSessionRoute';
 import { PRIVACY_POLICY_URL } from '../src/constants/legal';
 import {
   BrandLogo,
+  LoadingScreen,
   SalinoGradientBackground,
   SalinoPrimaryButton,
   SalinoWebSegmentedTabs,
@@ -29,6 +31,7 @@ export default function HouseholdSetupScreen() {
   const colors = useThemeColors();
   const { createHousehold, joinHousehold, isLoading, error, clearError } = useHouseholdStore();
   const { signOut, deleteAccount } = useAuthStore();
+  const sessionRoute = useSessionRoute();
 
   const [tab, setTab] = useState(0);
   const [householdName, setHouseholdName] = useState('');
@@ -42,6 +45,16 @@ export default function HouseholdSetupScreen() {
     setInviteCode(code);
     setTab(1);
   }, [consumePendingInviteCode, pendingInviteCode]);
+
+  useEffect(() => {
+    if (sessionRoute === 'main') {
+      router.replace('/(main)/shopping-list');
+    }
+  }, [sessionRoute]);
+
+  if (sessionRoute === 'loading' || sessionRoute === 'main') {
+    return <LoadingScreen />;
+  }
 
   const goToShoppingList = () => {
     router.replace('/(main)/shopping-list');

@@ -2,7 +2,22 @@ import { create } from 'zustand';
 import { Household, HouseholdMember } from '../models';
 import { householdRepository } from '../repositories';
 import { useShoppingStore } from './useShoppingStore';
+import { rememberSessionHousehold } from '../session/sessionRestore';
 import { Unsubscribe } from 'firebase/firestore';
+
+function syncHouseholdSession(householdId: string | null): void {
+  void rememberSessionHousehold(householdId);
+  try {
+    // Lazy import avoids a cycle with useAuthStore → useHouseholdStore.
+    const { useAuthStore } = require('./useAuthStore') as typeof import('./useAuthStore');
+    useAuthStore.getState().markHouseholdResolution(
+      householdId ? 'has_household' : 'no_household'
+    );
+    useAuthStore.setState({ lastHouseholdId: householdId });
+  } catch {
+    // Auth store may not be initialized yet during first import.
+  }
+}
 
 interface HouseholdState {
   household: Household | null;
@@ -31,6 +46,7 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
 
   setActiveHouseholdFromProfile: async (householdId: string) => {
     set({ activeHouseholdId: householdId, household: null, members: [] });
+    syncHouseholdSession(householdId);
     await useShoppingStore.getState().preloadFromCache(householdId);
   },
 
@@ -49,6 +65,7 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
     try {
       const household = await householdRepository.createHousehold(name);
       set({ household, activeHouseholdId: household.id, isLoading: false });
+      syncHouseholdSession(household.id);
       void useShoppingStore.getState().preloadFromCache(household.id);
     } catch (e: any) {
       set({ error: 'household_error_generic', isLoading: false });
@@ -60,6 +77,7 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
     try {
       const household = await householdRepository.joinHousehold(inviteCode);
       set({ household, activeHouseholdId: household.id, isLoading: false });
+      syncHouseholdSession(household.id);
       void useShoppingStore.getState().preloadFromCache(household.id);
     } catch (e: any) {
       const errorKey = e.message === 'INVALID_CODE' ? 'household_error_invalid_code' : 'household_error_generic';
@@ -96,6 +114,7 @@ export const useHouseholdStore = create<HouseholdState>((set, get) => ({
     if (!activeHouseholdId) return;
     await householdRepository.leaveHousehold(activeHouseholdId);
     set({ household: null, members: [], activeHouseholdId: null });
+    syncHouseholdSession(null);
   },
 
   clearError: () => set({ error: null }),

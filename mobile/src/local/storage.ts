@@ -361,6 +361,7 @@ const PRESERVED_ASYNC_PREFIXES = [
   '@salino/tour_completed',
   '@app_language',
   '@rtl_boot_reload_attempted',
+  '@session_restore',
 ] as const;
 
 function isPreservedAsyncKey(key: string): boolean {

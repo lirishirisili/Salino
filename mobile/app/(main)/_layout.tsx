@@ -15,6 +15,8 @@ import {
   requestPermissionAndRegister,
 } from '../../src/services/notificationService';
 import { flush as flushSyncQueue } from '../../src/services/syncQueueProcessor';
+import { rememberSessionHousehold, rememberSessionUser } from '../../src/session/sessionRestore';
+import { auth } from '../../src/remote/firebase';
 
 export const unstable_settings = {
   initialRouteName: 'shopping-list',
@@ -47,6 +49,12 @@ export default function MainLayout() {
     });
     return () => sub.remove();
   }, []);
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !activeHouseholdId) return;
+    void rememberSessionUser(uid).then(() => rememberSessionHousehold(activeHouseholdId));
+  }, [activeHouseholdId]);
 
   useEffect(() => {
     if (!activeHouseholdId) return;

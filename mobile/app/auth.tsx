@@ -22,9 +22,11 @@ import {
   statusCodes,
   type SignInResponse,
 } from '@react-native-google-signin/google-signin';
-import { useAuthStore, useHouseholdStore } from '../src/hooks';
+import { useAuthStore } from '../src/hooks';
+import { useSessionRoute } from '../src/hooks/useSessionRoute';
 import {
   BrandLogo,
+  LoadingScreen,
   SalinoGradientBackground,
   SalinoPrimaryButton,
 } from '../src/components';
@@ -80,12 +82,9 @@ export default function AuthScreen() {
     sendPasswordReset,
     error,
     isSubmitting,
-    isSignedIn,
-    user,
-    profile,
     clearError,
   } = useAuthStore();
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  const sessionRoute = useSessionRoute();
 
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
@@ -94,27 +93,22 @@ export default function AuthScreen() {
   const [appleAvailable, setAppleAvailable] = useState(false);
 
   // After Google/email/Apple sign-in the root navigator stays mounted (back-stack
-  // fix), so nothing remounts through index. Leave /auth explicitly once the
-  // auth observer finishes loading the profile/household.
+  // fix), so nothing remounts through index. Leave /auth only when the session
+  // route is fully resolved — never bounce to join-house while household is unknown.
   useEffect(() => {
-    if (!isSignedIn || isSubmitting) return;
-
-    const needsEmailVerification =
-      !!user &&
-      !user.emailVerified &&
-      user.providerData?.[0]?.providerId === 'password';
-    if (needsEmailVerification) {
+    if (sessionRoute === 'loading' || sessionRoute === 'auth') return;
+    if (sessionRoute === 'verify-email') {
       router.replace('/verify-email');
       return;
     }
-
-    if (activeHouseholdId || profile?.activeHouseholdId) {
+    if (sessionRoute === 'main') {
       router.replace('/(main)/shopping-list');
       return;
     }
-
-    router.replace('/household-setup');
-  }, [isSignedIn, isSubmitting, user, profile?.activeHouseholdId, activeHouseholdId]);
+    if (sessionRoute === 'household-setup') {
+      router.replace('/household-setup');
+    }
+  }, [sessionRoute]);
 
   useEffect(() => {
     let mounted = true;
@@ -130,6 +124,15 @@ export default function AuthScreen() {
       mounted = false;
     };
   }, []);
+
+  if (
+    sessionRoute === 'loading' ||
+    sessionRoute === 'main' ||
+    sessionRoute === 'household-setup' ||
+    sessionRoute === 'verify-email'
+  ) {
+    return <LoadingScreen />;
+  }
 
   const handleGoogleSignIn = async () => {
     if (!isGoogleSignInAvailable()) {

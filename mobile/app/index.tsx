@@ -1,28 +1,23 @@
 import { Redirect } from 'expo-router';
-import { useAuthStore, useHouseholdStore } from '../src/hooks';
 import { LoadingScreen } from '../src/components';
+import { useSessionRoute } from '../src/hooks/useSessionRoute';
 
 export default function Index() {
-  const isSignedIn = useAuthStore((s) => s.isSignedIn);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const profile = useAuthStore((s) => s.profile);
-  const user = useAuthStore((s) => s.user);
-  const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  const route = useSessionRoute();
 
-  if (!isSignedIn) {
-    return <Redirect href="/auth" />;
-  }
-
-  if (isLoading) {
+  if (route === 'loading') {
     return <LoadingScreen />;
   }
 
-  // Require email verification for email/password users
-  if (user && !user.emailVerified && user.providerData?.[0]?.providerId === 'password') {
+  if (route === 'auth') {
+    return <Redirect href="/auth" />;
+  }
+
+  if (route === 'verify-email') {
     return <Redirect href="/verify-email" />;
   }
 
-  if (activeHouseholdId || profile?.activeHouseholdId) {
+  if (route === 'main') {
     return <Redirect href="/(main)/shopping-list" />;
   }
 

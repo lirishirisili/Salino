@@ -214,6 +214,16 @@ export const firestoreIsHouseholdMember = async (
   return snap.exists();
 };
 
+/** Server-only membership check. Throws on network failure — never invents "not a member". */
+export const firestoreIsHouseholdMemberFromServer = async (
+  householdId: string,
+  userId: string
+): Promise<boolean> => {
+  const ref = doc(db, 'households', householdId, 'members', userId);
+  const snap = await getDocFromServer(ref);
+  return snap.exists();
+};
+
 export const firestoreUpdateHouseholdName = async (householdId: string, name: string) => {
   const ref = doc(db, 'households', householdId);
   await updateDoc(ref, { name });

@@ -5,7 +5,10 @@ import { useActivityStore } from '../hooks/useActivityStore';
 import { useNotificationStore } from '../hooks/useNotificationStore';
 import { useTourStore } from '../features/tour';
 
-/** Wipes in-memory stores and all @-prefixed AsyncStorage (per-user household cache). */
+/**
+ * Wipes in-memory stores and @-prefixed AsyncStorage (per-user household cache).
+ * `@session_restore` is preserved so a mistaken wipe can still recover the last house.
+ */
 export async function resetSessionState(): Promise<void> {
   useHouseholdStore.getState().reset();
   useShoppingStore.getState().reset();
