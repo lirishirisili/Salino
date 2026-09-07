@@ -12,6 +12,7 @@ import {
   encodeMember,
   decodeMember,
 } from './timestampCodec';
+import { sortShoppingItems } from './itemOrder';
 
 const KEYS = {
   ITEMS: (hId: string) => `@items_${hId}`,
@@ -69,7 +70,7 @@ async function readItemsRaw(householdId: string): Promise<ShoppingItem[]> {
 }
 
 async function writeItemsRaw(householdId: string, items: ShoppingItem[]): Promise<void> {
-  await setJSON(KEYS.ITEMS(householdId), items.map(encodeItem));
+  await setJSON(KEYS.ITEMS(householdId), sortShoppingItems(items).map(encodeItem));
 }
 
 export const localGetItems = async (householdId: string): Promise<ShoppingItem[]> => {

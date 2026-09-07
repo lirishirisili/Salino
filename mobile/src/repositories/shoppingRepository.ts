@@ -11,6 +11,7 @@ import {
 import { auth } from '../remote/firebase';
 import { normalizeItemName } from '../utils/textUtils';
 import { enqueueUpsert, enqueueDelete, flush } from '../services/syncQueueProcessor';
+import { sortShoppingItems } from '../local/itemOrder';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -52,7 +53,7 @@ export const shoppingRepository = {
   },
 
   getLocalItems: async (householdId: string): Promise<ShoppingItem[]> => {
-    return localGetItems(householdId);
+    return sortShoppingItems(await localGetItems(householdId));
   },
 
   addItem: async (householdId: string, item: Omit<ShoppingItem, 'id' | 'addedBy' | 'addedByName' | 'status' | 'createdAt' | 'updatedAt' | 'normalizedName'>): Promise<ShoppingItem> => {
