@@ -37,8 +37,9 @@ function getScrollInsets(screen: TourScrollScreen): { top: number; bottom: numbe
   const safeTop = initialWindowMetrics?.insets.top ?? 0;
   const safeBottom = initialWindowMetrics?.insets.bottom ?? 0;
   const fabClearance = screen === 'shopping-list' ? TOUR_FAB_ROW_HEIGHT : 0;
-  const bannerClearance =
-    screen === 'shopping-list' || screen === 'settings' ? 0 : TOUR_AD_BANNER_HEIGHT;
+  // Shopping-list already clears the bottom via FAB height; settings needs
+  // explicit banner clearance now that MainAdBannerHost shows ads everywhere.
+  const bannerClearance = screen === 'shopping-list' ? 0 : TOUR_AD_BANNER_HEIGHT;
   const sheetClearance = TOUR_SHEET_APPROX_HEIGHT + 24;
   return {
     top: safeTop + TOUR_TOP_BAR_HEIGHT,
