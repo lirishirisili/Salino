@@ -17,6 +17,8 @@ workflows:
         SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataSimulator
         APPETIZE_ZIP: $CM_BUILD_DIR/Haserli-simulator-appetize.zip
         APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
+        # Bypass broken repo1.maven.org → repo.reactnative.dev for RN iOS prebuilts.
+        ENTERPRISE_REPOSITORY: https://maven-central.storage-download.googleapis.com/maven2
         # Do NOT use `ios_signing` here — profiles are created at build time via
         # App Store Connect API (see .github/scripts/ios-testflight-run.sh), like Aria.
     scripts:
@@ -53,6 +55,7 @@ workflows:
         SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataSimulator
         APPETIZE_ZIP: $CM_BUILD_DIR/Haserli-simulator-appetize.zip
         APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
+        ENTERPRISE_REPOSITORY: https://maven-central.storage-download.googleapis.com/maven2
     scripts:
       - name: Run iOS Simulator (Appetize) pipeline
         script: |
@@ -77,6 +80,7 @@ workflows:
         BUILD_DIR: $CM_BUILD_DIR
         SIMULATOR_DERIVED_DATA: $CM_BUILD_DIR/DerivedDataAppPreview
         APP_PREVIEW_DIR: $CM_BUILD_DIR/app-preview
+        ENTERPRISE_REPOSITORY: https://maven-central.storage-download.googleapis.com/maven2
     scripts:
       - name: Install JS dependencies
         script: |
@@ -93,6 +97,7 @@ workflows:
       - name: Install CocoaPods
         script: |
           set -euxo pipefail
+          export ENTERPRISE_REPOSITORY="${ENTERPRISE_REPOSITORY:-https://maven-central.storage-download.googleapis.com/maven2}"
           cd "$EXPO_DIR/ios"
           pod install --repo-update
 

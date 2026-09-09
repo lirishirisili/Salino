@@ -18,7 +18,22 @@ CI=1 npx expo prebuild --platform ios --clean
 
 echo "=== Install CocoaPods ==="
 cd "$REPO_ROOT/$EXPO_DIR/ios"
+rm -rf ReactNativeDependencies-artifacts hermes-engine-artifacts
+echo "ENTERPRISE_REPOSITORY=${ENTERPRISE_REPOSITORY:-<unset>}"
 pod install --repo-update
+
+if [ -d ReactNativeDependencies-artifacts ]; then
+  for f in ReactNativeDependencies-artifacts/*.tar.gz; do
+    [ -f "$f" ] || continue
+    if ! gzip -t "$f" 2>/dev/null; then
+      echo "ERROR: $f is not a valid gzip (likely a Maven/CDN error page)." >&2
+      head -c 200 "$f" >&2 || true
+      echo >&2
+      exit 1
+    fi
+    echo "OK: $(basename "$f") is valid gzip ($(wc -c < "$f" | tr -d ' ') bytes)"
+  done
+fi
 
 echo "=== Build Simulator zip for Appetize ==="
 bash "$SCRIPT_DIR/ios-simulator-artifacts.sh"

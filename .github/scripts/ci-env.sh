@@ -18,6 +18,13 @@ export APPETIZE_ZIP="${APPETIZE_ZIP:-$BUILD_DIR/Haserli-simulator-appetize.zip}"
 export APP_PREVIEW_DIR="${APP_PREVIEW_DIR:-$BUILD_DIR/app-preview}"
 export ASC_KEY_FILE="${ASC_KEY_FILE:-/tmp/AuthKey.p8}"
 
+# React Native iOS prebuilts (ReactNativeDependencies / hermes / RN core) download from
+# Maven. As of 2026-09, repo1.maven.org 301s these to repo.reactnative.dev, which can
+# return plain-text 404 ("Upstream temporarily unavailable"). curl without -f then
+# caches that body as *.tar.gz → "tar: Unrecognized archive format" at archive time.
+# Google's Maven Central mirror serves the real gzip artifacts (same layout).
+export ENTERPRISE_REPOSITORY="${ENTERPRISE_REPOSITORY:-https://maven-central.storage-download.googleapis.com/maven2}"
+
 # Codemagic CLI tools (venv — avoids macOS PEP 668 on GitHub runners).
 export CI_VENV="${CI_VENV:-$REPO_ROOT/.ci-venv}"
 export PATH="$CI_VENV/bin:$PATH"

@@ -13,6 +13,7 @@ env:
   SIMULATOR_DERIVED_DATA: ${{ github.workspace }}/build/DerivedDataSimulator
   APPETIZE_ZIP: ${{ github.workspace }}/build/Haserli-simulator-appetize.zip
   APP_PREVIEW_DIR: ${{ github.workspace }}/build/app-preview
+  ENTERPRISE_REPOSITORY: https://maven-central.storage-download.googleapis.com/maven2
 
 jobs:
   simulator-appetize:
