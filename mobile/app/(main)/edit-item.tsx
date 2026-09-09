@@ -26,7 +26,7 @@ import {
   SalinoSurfaceCard,
   SalinoWebInnerTopBar,
 } from '../../src/components';
-import { Layout, Typography, useThemeColors } from '../../src/theme';
+import { Layout, Typography, useIsDark, useThemeColors } from '../../src/theme';
 import { HouseholdHistoryIndex, AutocompleteSuggestion } from '../../src/services/householdHistoryIndex';
 import { suggestAutocomplete } from '../../src/services/itemNameAutocompleteEngine';
 import { warmUpCatalog } from '../../src/services/categoryKeywordCatalog';
@@ -40,6 +40,14 @@ export default function EditItemScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const isDark = useIsDark();
+  // Outlined TextInput floating labels paint theme.colors.background behind the
+  // text. Match SalinoSurfaceCard so dark mode does not show a black strip.
+  const cardSurface = isDark ? colors.surfaceBright : colors.surface;
+  const outlinedFieldTheme = useMemo(
+    () => ({ colors: { background: cardSurface } }),
+    [cardSurface]
+  );
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const { items, updateItem, deleteItem, activeItems, boughtItems, recurringItems } = useShoppingStore();
@@ -307,6 +315,7 @@ export default function EditItemScreen() {
                   label={t('item_quantity_label')}
                   mode="outlined"
                   keyboardType="decimal-pad"
+                  theme={outlinedFieldTheme}
                   outlineStyle={{ borderRadius: Layout.inputCorner }}
                   style={[styles.input, { flex: 1 }]}
                   returnKeyType="done"
@@ -395,6 +404,7 @@ export default function EditItemScreen() {
                 mode="outlined"
                 multiline
                 numberOfLines={3}
+                theme={outlinedFieldTheme}
                 outlineStyle={{ borderRadius: Layout.inputCorner }}
                 style={[styles.input, { minHeight: 90 }]}
                 editable={!isAutocompleteVisible}

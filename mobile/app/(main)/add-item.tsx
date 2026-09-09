@@ -63,6 +63,13 @@ export default function AddItemScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const isDark = useIsDark();
+  // Outlined TextInput floating labels paint theme.colors.background behind the
+  // text. Match SalinoSurfaceCard so dark mode does not show a black strip.
+  const cardSurface = isDark ? colors.surfaceBright : colors.surface;
+  const outlinedFieldTheme = useMemo(
+    () => ({ colors: { background: cardSurface } }),
+    [cardSurface]
+  );
 
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const { addItem, updateItem, activeItems, boughtItems, recurringItems } = useShoppingStore();
@@ -420,6 +427,7 @@ export default function AddItemScreen() {
                   label={t('item_quantity_label')}
                   mode="outlined"
                   keyboardType="decimal-pad"
+                  theme={outlinedFieldTheme}
                   outlineStyle={{ borderRadius: Layout.inputCorner }}
                   style={[styles.input, { flex: 1 }]}
                   returnKeyType="done"
@@ -508,6 +516,7 @@ export default function AddItemScreen() {
                 mode="outlined"
                 multiline
                 numberOfLines={3}
+                theme={outlinedFieldTheme}
                 outlineStyle={{ borderRadius: Layout.inputCorner }}
                 style={[styles.input, { minHeight: 90 }]}
                 editable={!isAutocompleteVisible}
@@ -532,6 +541,7 @@ export default function AddItemScreen() {
                     label={t('recurring_every_days_label')}
                     mode="outlined"
                     keyboardType="number-pad"
+                    theme={outlinedFieldTheme}
                     outlineStyle={{ borderRadius: Layout.inputCorner }}
                     style={styles.input}
                     returnKeyType="done"
