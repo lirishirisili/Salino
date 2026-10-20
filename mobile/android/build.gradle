@@ -18,6 +18,8 @@ allprojects {
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
+    // @appodeal-repo (managed by withAppodealAndroid.js)
+    maven { url 'https://artifactory.appodeal.com/appodeal' }
   }
 }
 

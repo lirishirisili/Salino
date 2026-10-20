@@ -12,7 +12,7 @@ import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
 import { SessionRouteGuard } from '../src/session/SessionRouteGuard';
 import { getSessionSnapshotSync } from '../src/session/sessionRestore';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
-import { initLevelPlay } from '../src/services/initLevelPlay';
+import { initAppodeal } from '../src/services/initAppodeal';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
 import { BootErrorBoundary } from '../src/boot/BootErrorBoundary';
@@ -45,8 +45,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     void (async () => {
-      // iOS: ATT runs inside initLevelPlay before ads; analytics starts after.
-      await initLevelPlay();
+      // iOS: ATT runs inside initAppodeal before ads; analytics starts after.
+      await initAppodeal();
       await initMobileAnalytics();
     })();
   }, []);

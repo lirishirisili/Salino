@@ -8,7 +8,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
-import com.salino.sali.ads.LevelPlayInitializer
 import com.salino.sali.data.service.SalinoMessagingService
 import com.salino.sali.di.AutocompleteWarmupEntryPoint
 import dagger.hilt.android.HiltAndroidApp
@@ -27,12 +26,7 @@ class SalinoApp : Application() {
         } catch (e: Throwable) {
             Log.e(TAG, "Firebase Analytics init failed", e)
         }
-        // Active monetization path: Unity LevelPlay (banner only), initialized once.
-        try {
-            LevelPlayInitializer.initialize(this)
-        } catch (e: Throwable) {
-            Log.e(TAG, "LevelPlay initialization failure", e)
-        }
+        // Appodeal is initialized from MainActivity (requires Activity context).
         try {
             EntryPointAccessors.fromApplication(this, AutocompleteWarmupEntryPoint::class.java)
                 .itemNameAutocompleteStore()

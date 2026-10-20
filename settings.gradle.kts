@@ -18,6 +18,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Appodeal SDK + adapters (https://docs.appodeal.com/android/get-started)
+        maven { url = uri("https://artifactory.appodeal.com/appodeal") }
     }
 }
 

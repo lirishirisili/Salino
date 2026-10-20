@@ -1,5 +1,8 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeColors } from '../../theme';
+import { APPODEAL_BANNER_RESERVED_HEIGHT } from '../../config/appodeal';
 import { SalinoGradientBackground } from '../brand';
 import { BottomBannerAd } from './BottomBannerAd';
 
@@ -8,20 +11,30 @@ type MainAdBannerHostProps = {
 };
 
 /**
- * Stacks main navigation above a bottom banner (in document flow, not overlay).
- * The shared SalinoGradientBackground wraps both content and banner so the ad
- * sits on the same glow layer as Kotlin's transparent Scaffold.
- *
- * One banner instance stays mounted for the whole (main) stack so every
- * authenticated screen (list, supermarket, history, activity, settings,
- * add/edit item) shows the same bottom ad without remount churn.
+ * Content on the gradient; banner in a dedicated strip below (outside absoluteFill
+ * glow layers so Appodeal is not covered and FABs stay above the ad).
  */
 export function MainAdBannerHost({ children }: MainAdBannerHostProps) {
+  const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const bannerStripHeight = APPODEAL_BANNER_RESERVED_HEIGHT + insets.bottom;
+
   return (
-    <SalinoGradientBackground style={styles.root}>
-      <View style={styles.content}>{children}</View>
-      <BottomBannerAd visible />
-    </SalinoGradientBackground>
+    <View style={styles.root}>
+      <SalinoGradientBackground style={styles.content}>{children}</SalinoGradientBackground>
+      <View
+        style={[
+          styles.bannerStrip,
+          {
+            height: bannerStripHeight,
+            paddingBottom: insets.bottom,
+            backgroundColor: colors.background,
+          },
+        ]}
+      >
+        <BottomBannerAd visible />
+      </View>
+    </View>
   );
 }
 
@@ -32,5 +45,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     minHeight: 0,
+  },
+  bannerStrip: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
   },
 });

@@ -9,27 +9,23 @@
 # Keep data model classes for Firestore serialization
 -keep class com.salino.sali.data.model.** { *; }
 
-# Unity LevelPlay (ironSource) mediation + Unity Ads adapter
--keepclassmembers class com.ironsource.sdk.controller.IronSourceWebView$JSInterface {
-    public *;
-}
--keepclassmembers class * implements android.os.Parcelable {
-    public static final android.os.Parcelable$Creator *;
-}
--keep public class com.google.android.gms.ads.** {
-    public *;
-}
--keep class com.unity3d.mediation.** { *; }
--keep class com.unity3d.mediation.banner.** { *; }
--keep interface com.unity3d.mediation.** { *; }
--keep class com.ironsource.** { *; }
--keep class com.ironsource.adapters.** { *; }
--keep class com.ironsource.unity.androidbridge.** { *; }
+# Appodeal SDK + adapters (banner mediation, no AdMob)
+-keep class com.appodeal.** { *; }
+-keep class com.explorestack.** { *; }
+-keep class com.applovin.** { *; }
+-keep class io.bidmachine.** { *; }
+-keep class org.bidon.** { *; }
+-keep class com.facebook.ads.** { *; }
 -keep class com.unity3d.ads.** { *; }
 -keep class com.unity3d.services.** { *; }
--dontwarn com.ironsource.mediationsdk.**
--dontwarn com.ironsource.adapters.**
--dontwarn com.ironsource.**
+-keep class com.unity3d.mediation.** { *; }
+-keep class com.ironsource.** { *; }
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
+-dontwarn com.appodeal.**
+-dontwarn com.explorestack.**
+-dontwarn com.applovin.**
+-dontwarn io.bidmachine.**
+-dontwarn org.bidon.**
+-dontwarn com.facebook.ads.**

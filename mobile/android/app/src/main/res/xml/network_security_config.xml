@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- @levelplay-meta-network-security (managed by withLevelPlayAndroid.js) -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">127.0.0.1</domain>
-    </domain-config>
+    <!-- @appodeal-network-security (managed by withAppodealAndroid.js) -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>

@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://hsr.lirshir.com/</loc>
-    <lastmod>2026-05-24</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-  </url>
+  <url><loc>https://hsr.lirshir.com/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/he/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/about/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/he/about/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/team/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/he/team/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/contact/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/he/contact/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/privacy/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/he/privacy/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/terms/</loc><lastmod>2026-09-27</lastmod></url>
+  <url><loc>https://hsr.lirshir.com/he/terms/</loc><lastmod>2026-09-27</lastmod></url>
 </urlset>

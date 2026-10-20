@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Restored 2026-09-23. This is the ruleset that was live from 2026-03-31
+    // until a 2026-09-19 deploy replaced it with another app's rules and
+    // blocked every household read/write.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
