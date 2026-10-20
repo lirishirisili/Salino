@@ -13,14 +13,7 @@
 
 # Add any project specific keep options here:
 
-# @appodeal-proguard (managed by withAppodealAndroid.js)
--keep class com.appodeal.** { *; }
--keep class com.explorestack.** { *; }
--keep class com.applovin.** { *; }
--keep class io.bidmachine.** { *; }
--keep class org.bidon.** { *; }
--keep class com.facebook.ads.** { *; }
--dontwarn com.appodeal.**
--dontwarn com.explorestack.**
+# @levelplay-meta-proguard (managed by withLevelPlayAndroid.js)
 -dontwarn com.facebook.ads.internal.**
 -keeppackagenames com.facebook.*
+-keep public class com.facebook.ads.** {*;}

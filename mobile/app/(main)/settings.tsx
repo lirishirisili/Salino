@@ -31,8 +31,6 @@ import {
   SalinoSurfaceCard,
   SalinoWebAppBarTitle,
 } from '../../src/components';
-import { AppodealDebugAdPanel } from '../../src/components/ads';
-import { isNativeDebuggableBuild } from '../../src/utils/isNativeDebuggableBuild';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
 import { buildInviteUrl } from '../../src/constants/urls';
@@ -203,12 +201,6 @@ export default function SettingsScreen() {
         ]}
       >
         <View ref={scrollContentRef} style={styles.inner}>
-          {isNativeDebuggableBuild() ? (
-            <>
-              <AppodealDebugAdPanel />
-              <View style={{ height: 14 }} />
-            </>
-          ) : null}
           {household && (
             <SalinoSurfaceCard>
               <Text
