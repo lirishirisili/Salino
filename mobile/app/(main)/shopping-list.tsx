@@ -55,7 +55,7 @@ const BOUGHT_ITEMS_PAGE_SIZE = 10;
 const NOOP = () => {};
 
 export default function ShoppingListScreen() {
-  const { height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -407,24 +407,33 @@ export default function ShoppingListScreen() {
       ? previewItems.filter((i) => i.category === selectedCategory)
       : previewItems
     : filteredActive;
+  const showEmptyState = isEmpty && suggestions.length === 0 && !tourActive;
 
   // Inline element (not an inner component) so FlatList re-renders do not remount
-  // the TextInput and dismiss the keyboard.
+  // the TextInput and dismiss the keyboard. The empty state lives in the same tree
+  // (QuickAddItemField keeps its child slot) so adding the first item, or suggestions
+  // arriving, does not remount the field mid-typing.
   const listContent = (
     <View
       ref={listContentRef}
-      style={{ paddingHorizontal: Layout.horizontalPadding, paddingBottom: 130 }}
+      style={{
+        width: Math.min(windowWidth, Layout.maxContentWidth),
+        paddingHorizontal: Layout.horizontalPadding,
+        paddingBottom: 130,
+      }}
     >
-      <View ref={heroAnchor.ref} style={heroAnchor.highlightStyle} collapsable={false}>
-        <View style={{ paddingVertical: 8 }}>
-          <HeroSuggestionsCard
-            title={t('suggestions_title')}
-            subtitle={t('suggestions_subtitle_home')}
-            suggestions={listSuggestions}
-            onSuggestionPress={showTourPreview ? NOOP : handleSuggestionPress}
-          />
+      {!showEmptyState && (
+        <View ref={heroAnchor.ref} style={heroAnchor.highlightStyle} collapsable={false}>
+          <View style={{ paddingVertical: 8 }}>
+            <HeroSuggestionsCard
+              title={t('suggestions_title')}
+              subtitle={t('suggestions_subtitle_home')}
+              suggestions={listSuggestions}
+              onSuggestionPress={showTourPreview ? NOOP : handleSuggestionPress}
+            />
+          </View>
         </View>
-      </View>
+      )}
 
       <QuickAddItemField
         value={quickAddName}
@@ -448,71 +457,83 @@ export default function ShoppingListScreen() {
         voiceLabel={t('voice_input_action')}
       />
 
-      <View ref={filtersAnchor.ref} style={filtersAnchor.highlightStyle} collapsable={false}>
-        <CategoryFilterRow
-          selectedCategory={selectedCategory as ItemCategory | null}
-          onSelect={(c) => setSelectedCategory(c)}
+      {showEmptyState ? (
+        <EmptyState
+          icon="cart-outline"
+          title={t('shopping_list_empty_title')}
+          subtitle={t('shopping_list_empty_subtitle')}
+          actionLabel={t('item_add')}
+          onAction={() => router.push('/(main)/add-item')}
         />
-      </View>
-
-      <SalinoSectionTitle
-        text={
-          showTourPreview
-            ? `${t('shopping_list_active_section')} (${listActiveItems.length}) · ${t('tour.preview.label')}`
-            : `${t('shopping_list_active_section')} (${filteredActive.length})`
-        }
-      />
-
-      <View style={{ paddingVertical: 6 }}>
-        <ShoppingItemsGroupCard
-          items={listActiveItems}
-          onToggleBought={showTourPreview ? NOOP : handleMarkBought}
-          onItemPress={showTourPreview ? NOOP : openEditItem}
-          onDelete={showTourPreview ? undefined : handleDelete}
-        />
-      </View>
-
-      {sortedBoughtItems.length > 0 && (
+      ) : (
         <>
-          <Pressable
-            onPress={handleBoughtSectionToggle}
-            style={styles.boughtToggleRow}
-          >
-            <SalinoSectionTitle text={t('shopping_list_bought_section')} />
-            <MaterialCommunityIcons
-              name={boughtExpanded ? 'chevron-up' : 'chevron-down'}
-              size={22}
-              color={colors.onSurfaceVariant}
+          <View ref={filtersAnchor.ref} style={filtersAnchor.highlightStyle} collapsable={false}>
+            <CategoryFilterRow
+              selectedCategory={selectedCategory as ItemCategory | null}
+              onSelect={(c) => setSelectedCategory(c)}
             />
-          </Pressable>
-          {boughtExpanded && (
-            <View style={{ paddingVertical: 4 }}>
-              <ShoppingItemsGroupCard
-                items={visibleBoughtItems}
-                onToggleBought={handleMarkActive}
-                onItemPress={openEditItem}
-              />
-              {hasMoreBoughtItems && (
-                <Pressable
-                  onPress={() =>
-                    setBoughtVisibleCount((count) => count + BOUGHT_ITEMS_PAGE_SIZE)
-                  }
-                  style={({ pressed }) => [
-                    styles.showMoreButton,
-                    pressed && { opacity: 0.7 },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      Typography.labelLarge,
-                      { color: colors.primary, textAlign: 'center' } as any,
-                    ]}
-                  >
-                    {t('shopping_list_bought_show_more')}
-                  </Text>
-                </Pressable>
+          </View>
+
+          <SalinoSectionTitle
+            text={
+              showTourPreview
+                ? `${t('shopping_list_active_section')} (${listActiveItems.length}) · ${t('tour.preview.label')}`
+                : `${t('shopping_list_active_section')} (${filteredActive.length})`
+            }
+          />
+
+          <View style={{ paddingVertical: 6 }}>
+            <ShoppingItemsGroupCard
+              items={listActiveItems}
+              onToggleBought={showTourPreview ? NOOP : handleMarkBought}
+              onItemPress={showTourPreview ? NOOP : openEditItem}
+              onDelete={showTourPreview ? undefined : handleDelete}
+            />
+          </View>
+
+          {sortedBoughtItems.length > 0 && (
+            <>
+              <Pressable
+                onPress={handleBoughtSectionToggle}
+                style={styles.boughtToggleRow}
+              >
+                <SalinoSectionTitle text={t('shopping_list_bought_section')} />
+                <MaterialCommunityIcons
+                  name={boughtExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={22}
+                  color={colors.onSurfaceVariant}
+                />
+              </Pressable>
+              {boughtExpanded && (
+                <View style={{ paddingVertical: 4 }}>
+                  <ShoppingItemsGroupCard
+                    items={visibleBoughtItems}
+                    onToggleBought={handleMarkActive}
+                    onItemPress={openEditItem}
+                  />
+                  {hasMoreBoughtItems && (
+                    <Pressable
+                      onPress={() =>
+                        setBoughtVisibleCount((count) => count + BOUGHT_ITEMS_PAGE_SIZE)
+                      }
+                      style={({ pressed }) => [
+                        styles.showMoreButton,
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          Typography.labelLarge,
+                          { color: colors.primary, textAlign: 'center' } as any,
+                        ]}
+                      >
+                        {t('shopping_list_bought_show_more')}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
               )}
-            </View>
+            </>
           )}
         </>
       )}
@@ -539,45 +560,6 @@ export default function ShoppingListScreen() {
             {t('loading')}
           </Text>
         </View>
-      ) : isEmpty && suggestions.length === 0 && !tourActive ? (
-        <View
-          style={{
-            flex: 1,
-            paddingHorizontal: Layout.horizontalPadding,
-            alignSelf: 'center',
-            width: '100%',
-            maxWidth: Layout.maxContentWidth,
-          }}
-        >
-          <QuickAddItemField
-            value={quickAddName}
-            onChangeText={handleQuickAddNameChange}
-            suggestions={quickAddSuggestions}
-            isAutocompleteVisible={isQuickAddAutocompleteVisible}
-            onSuggestionSelected={handleQuickAddSuggestionSelected}
-            onFocusChange={(focused) => {
-              if (focused) refreshQuickAddAutocomplete(quickAddName);
-              else setIsQuickAddAutocompleteVisible(false);
-            }}
-            onAdd={() => void handleQuickAdd()}
-            isAdding={isQuickAdding}
-            error={quickAddError}
-            placeholder={t('quick_add_placeholder')}
-            addLabel={t('item_add')}
-            emptyErrorText={t('item_error_empty_name')}
-            genericErrorText={t('error_generic')}
-            isListening={isQuickAddListening}
-            onVoicePress={isQuickAddListening ? stopQuickAddListening : startQuickAddListening}
-            voiceLabel={t('voice_input_action')}
-          />
-          <EmptyState
-            icon="cart-outline"
-            title={t('shopping_list_empty_title')}
-            subtitle={t('shopping_list_empty_subtitle')}
-            actionLabel={t('item_add')}
-            onAction={() => router.push('/(main)/add-item')}
-          />
-        </View>
       ) : (
         <FlatList
           ref={listRef}
@@ -599,7 +581,7 @@ export default function ShoppingListScreen() {
 
       {!showInitialLoading && (
         <View
-          style={[styles.fabRow, { paddingBottom: insets.bottom + 12 }]}
+          style={[styles.fabRow, { paddingBottom: 12 }]}
           pointerEvents="box-none"
         >
           <View
