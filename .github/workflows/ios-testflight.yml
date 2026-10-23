@@ -73,7 +73,17 @@ jobs:
           IOS_MARKETING_VERSION: ${{ vars.IOS_MARKETING_VERSION }}
         run: bash .github/scripts/ios-testflight-run.sh
 
+      # Publish before Actions artifacts. A full storage quota must not block App Store Connect.
+      - name: Publish to TestFlight
+        continue-on-error: true
+        env:
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
+          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: bash .github/scripts/ios-publish-testflight.sh
+
       - name: Upload build artifacts
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ios-testflight-${{ github.run_number }}
@@ -82,24 +92,16 @@ jobs:
             build/Haserli-simulator-appetize.zip
             build/app-preview/**/*.app
             build/build.xcarchive
-          if-no-files-found: error
-          retention-days: 30
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Upload Appetize zip (standalone)
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           # Download THIS artifact for Appetize — not ios-testflight-* (nested build/ folder).
           name: haserli-appetize-${{ github.run_number }}
           path: build/Haserli-simulator-appetize.zip
-          if-no-files-found: error
-          retention-days: 30
+          if-no-files-found: warn
+          retention-days: 1
           compression-level: 0
-
-      # Soft-fail: missing Beta App Information must not block later steps.
-      - name: Publish to TestFlight
-        continue-on-error: true
-        env:
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
-          APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-        run: bash .github/scripts/ios-publish-testflight.sh
