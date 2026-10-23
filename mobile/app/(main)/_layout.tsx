@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { MainAdBannerHost } from '../../src/components/ads';
+import { initLevelPlay, isLevelPlayReady } from '../../src/services/initLevelPlay';
+import { logScreenView } from '../../src/services/initMobileAnalytics';
+import { registerInterstitialUser } from '../../src/services/interstitialAd';
 import { TourController } from '../../src/components/tour/TourProvider';
 import { useTourStore } from '../../src/features/tour';
 import {
@@ -22,6 +25,9 @@ export const unstable_settings = {
   initialRouteName: 'shopping-list',
 };
 
+/** Never let a stuck notification prompt / FCM call block ads init. */
+const NOTIFICATION_PROMPT_TIMEOUT_MS = 20_000;
+
 export default function MainLayout() {
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const subscribeHousehold = useHouseholdStore((s) => s.subscribe);
@@ -30,6 +36,7 @@ export default function MainLayout() {
   const setPermissionGranted = useNotificationStore((s) => s.setPermissionGranted);
   const tourBootstrapStatus = useTourStore((s) => s.bootstrapStatus);
   const permissionRequestedRef = useRef(false);
+  const adsInitAllowedRef = useRef(false);
 
   // Incremented when the app returns to foreground so the subscription effect
   // tears down stale Firestore listeners and re-registers fresh ones — mirrors
@@ -87,13 +94,36 @@ export default function MainLayout() {
     let cancelled = false;
     (async () => {
       // OS permission only — FCM register failures must not clear the UI flag.
-      const granted = await requestPermissionAndRegister();
+      const granted = await Promise.race([
+        requestPermissionAndRegister(),
+        new Promise<boolean>((r) => setTimeout(() => r(false), NOTIFICATION_PROMPT_TIMEOUT_MS)),
+      ]);
       if (!cancelled) setPermissionGranted(granted);
+      // Ads consent (UMP → ATT) only after the notification prompt so system
+      // dialogs never stack on top of each other.
+      adsInitAllowedRef.current = true;
+      void initLevelPlay();
     })();
     return () => {
       cancelled = true;
     };
   }, [tourBootstrapStatus, setPermissionGranted]);
+
+  // Retry a failed / consent-blocked ads init when the app returns to foreground.
+  useEffect(() => {
+    if (foregroundKey === 0 || !adsInitAllowedRef.current || isLevelPlayReady()) return;
+    void initLevelPlay();
+  }, [foregroundKey]);
+
+  // Starts the interstitial grace-period clock on first reach of the main stack.
+  useEffect(() => {
+    void registerInterstitialUser();
+  }, []);
+
+  const pathname = usePathname();
+  useEffect(() => {
+    logScreenView(pathname.replace(/^\//, '') || 'shopping-list');
+  }, [pathname]);
 
   return (
     <MainAdBannerHost>

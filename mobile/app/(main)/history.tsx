@@ -15,9 +15,14 @@ import {
   SalinoSurfaceCard,
   SalinoWebInnerTopBar,
 } from '../../src/components';
+import { MrecAd } from '../../src/components/ads';
+import { LEVELPLAY_PLACEMENTS } from '../../src/config/levelPlay';
 import { ItemCategory } from '../../src/models';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { formatRelativeTime } from '../../src/utils';
+
+/** One inline MREC per screen, placed after this many date groups (or at the end). */
+const MREC_AFTER_DAYS = 6;
 
 export default function HistoryScreen() {
   const { t } = useTranslation();
@@ -79,10 +84,14 @@ export default function HistoryScreen() {
           ]}
         >
           <View style={styles.inner}>
-            {days.map(([dateLabel, items]) => {
+            {days.map(([dateLabel, items], dayIndex) => {
               const isExpanded = !!expanded[dateLabel];
               return (
-                <View key={dateLabel}>
+                <React.Fragment key={dateLabel}>
+                {dayIndex === MREC_AFTER_DAYS && (
+                  <MrecAd placement={LEVELPLAY_PLACEMENTS.historyMrec} />
+                )}
+                <View>
                   <Pressable
                     onPress={() => setExpanded((p) => ({ ...p, [dateLabel]: !p[dateLabel] }))}
                     style={styles.dayHeader}
@@ -157,8 +166,13 @@ export default function HistoryScreen() {
                       </SalinoSurfaceCard>
                     ))}
                 </View>
+                </React.Fragment>
               );
             })}
+            {/* Short history: the single MREC sits at the end instead. */}
+            {days.length <= MREC_AFTER_DAYS && (
+              <MrecAd placement={LEVELPLAY_PLACEMENTS.historyMrec} />
+            )}
           </View>
         </ScrollView>
       )}

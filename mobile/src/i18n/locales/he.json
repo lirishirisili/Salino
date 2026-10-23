@@ -281,5 +281,14 @@
   "settings_notifications_shopping_complete": "הקניות הושלמו",
   "settings_notifications_shopping_complete_desc": "כשכל הפריטים נקנו",
   "settings_notifications_member_joined": "חבר חדש",
-  "settings_notifications_member_joined_desc": "כשמישהו מצטרף למשק הבית"
+  "settings_notifications_member_joined_desc": "כשמישהו מצטרף למשק הבית",
+  "ads_att_explainer_title": "שומרים על חסרלי בחינם",
+  "ads_att_explainer_message": "חסרלי חינמית בזכות פרסומות. במסך הבא אפשר לבחור אם להתאים לך את הפרסומות. בכל מקרה האפליקציה נשארת בחינם.",
+  "ads_att_explainer_continue": "המשך",
+  "settings_ad_privacy": "הגדרות פרטיות לפרסומות",
+  "ads_label": "מודעה",
+  "ads_consent_title": "הפרטיות שלך",
+  "ads_consent_message": "חסרלי חינמית בזכות פרסומות מהשותפים שלנו (ironSource, Unity Ads, Meta). האם הם יכולים להשתמש בנתונים מהמכשיר כדי להציג לך פרסומות מותאמות אישית? אם תסרב/י, עדיין יוצגו פרסומות, רק פחות רלוונטיות. אפשר לשנות את זה בכל עת בהגדרות.",
+  "ads_consent_accept": "אישור",
+  "ads_consent_decline": "סירוב"
 }

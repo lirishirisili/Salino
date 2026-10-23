@@ -244,5 +244,14 @@
   "settings_notifications_shopping_complete": "Courses terminées",
   "settings_notifications_shopping_complete_desc": "Quand tous les articles ont été achetés",
   "settings_notifications_member_joined": "Nouveau membre",
-  "settings_notifications_member_joined_desc": "Quand quelqu’un rejoint le foyer"
+  "settings_notifications_member_joined_desc": "Quand quelqu’un rejoint le foyer",
+  "ads_att_explainer_title": "Haserli reste gratuit",
+  "ads_att_explainer_message": "Haserli est gratuit grâce aux publicités. À l'écran suivant, vous pouvez choisir si les publicités peuvent être personnalisées pour vous. Dans tous les cas, l'application reste gratuite.",
+  "ads_att_explainer_continue": "Continuer",
+  "settings_ad_privacy": "Confidentialité des publicités",
+  "ads_label": "Annonce",
+  "ads_consent_title": "Votre vie privée",
+  "ads_consent_message": "Haserli est gratuit grâce aux publicités de nos partenaires (ironSource, Unity Ads, Meta). Peuvent-ils utiliser les données de votre appareil pour vous montrer des publicités personnalisées ? Si vous refusez, vous verrez toujours des publicités, simplement moins pertinentes. Vous pouvez modifier ce choix à tout moment dans les réglages.",
+  "ads_consent_accept": "Accepter",
+  "ads_consent_decline": "Refuser"
 }

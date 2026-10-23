@@ -22,7 +22,8 @@ import {
   LEVELPLAY_BANNER_PLACEMENT_NAME,
   LEVELPLAY_BANNER_RESERVED_HEIGHT,
 } from '../../config/levelPlay';
-import { initLevelPlay, subscribeLevelPlayReady } from '../../services/initLevelPlay';
+import { subscribeLevelPlayReady } from '../../services/initLevelPlay';
+import { subscribeFullscreenAd } from '../../services/interstitialAd';
 
 type BottomBannerAdProps = {
   visible?: boolean;
@@ -108,6 +109,19 @@ function LevelPlayBannerSlot({
     });
     return () => sub.remove();
   }, []);
+
+  // No hidden refreshes while an interstitial covers the screen.
+  useEffect(
+    () =>
+      subscribeFullscreenAd((showing) => {
+        if (showing) {
+          bannerRef.current?.pauseAutoRefresh();
+        } else {
+          bannerRef.current?.resumeAutoRefresh();
+        }
+      }),
+    [],
+  );
 
   const scheduleRetry = useCallback(() => {
     attemptRef.current += 1;
@@ -206,9 +220,9 @@ export function BottomBannerAd({ visible = true }: BottomBannerAdProps) {
   }, []);
 
   // Gate on LevelPlay init success — banner is only created after onInitSuccess.
+  // Init itself is started by the (main) layout after onboarding (consent / ATT).
   useEffect(() => {
     if (!isRenderableEnv) return;
-    void initLevelPlay();
     const unsubscribe = subscribeLevelPlayReady((ready) => {
       log(`${LOG} sdk ready=${ready}`);
       setSdkReady(ready);

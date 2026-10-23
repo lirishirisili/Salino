@@ -2,7 +2,7 @@
   "expo": {
     "name": "Haserli",
     "slug": "haserli",
-    "version": "1.3.52",
+    "version": "1.3.53",
     "orientation": "portrait",
     "scheme": "haserli",
     "userInterfaceStyle": "automatic",
@@ -30,6 +30,7 @@
         "NSPhotoLibraryUsageDescription": "Haserli may access the photo library when advertising partners need it to deliver ads and keep the app free.",
         "NSUserTrackingUsageDescription": "Haserli uses this identifier to deliver relevant ads and keep the app free.",
         "FacebookAppID": "1294857219184340",
+        "FacebookClientToken": "5267d638f2b44d0d07a25278d22803b9",
         "FacebookDisplayName": "Haserli",
         "ITSAppUsesNonExemptEncryption": false,
         "SKAdNetworkItems": [
@@ -115,7 +116,7 @@
     },
     "android": {
       "package": "com.salino.sali",
-      "versionCode": 80,
+      "versionCode": 81,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon-zoomed-out.png",

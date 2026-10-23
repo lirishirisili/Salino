@@ -33,6 +33,7 @@ import {
 } from '../../src/components';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
+import { changeGdprConsent, isGdprRegion } from '../../src/services/adsConsent';
 import { buildInviteUrl } from '../../src/constants/urls';
 import {
   ensureFcmTokenRegistered,
@@ -96,6 +97,12 @@ export default function SettingsScreen() {
     Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
       Alert.alert('', t('settings_privacy_open_error'));
     });
+  };
+
+  // GDPR regions must offer a way to change ad consent.
+  const [adPrivacyOptionsRequired] = useState(isGdprRegion);
+  const openAdPrivacyOptions = () => {
+    void changeGdprConsent().catch(() => undefined);
   };
 
   const handleCopy = async () => {
@@ -339,6 +346,24 @@ export default function SettingsScreen() {
               </Text>
               <MaterialCommunityIcons name="open-in-new" size={18} color={colors.onSurfaceVariant} />
             </Pressable>
+            {adPrivacyOptionsRequired && (
+              <>
+                <Divider />
+                <Pressable
+                  onPress={openAdPrivacyOptions}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 10 }}
+                >
+                  <MaterialCommunityIcons
+                    name="tune-variant"
+                    size={20}
+                    color={colors.onSurfaceVariant}
+                  />
+                  <Text style={[Typography.bodyLarge, { flex: 1, color: colors.primary } as any]}>
+                    {t('settings_ad_privacy')}
+                  </Text>
+                </Pressable>
+              </>
+            )}
             <Divider />
             <Pressable
               onPress={() => setShowSignOut(true)}

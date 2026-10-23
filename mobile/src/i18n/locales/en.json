@@ -281,5 +281,14 @@
   "settings_notifications_shopping_complete": "Shopping complete",
   "settings_notifications_shopping_complete_desc": "When all items have been bought",
   "settings_notifications_member_joined": "New member",
-  "settings_notifications_member_joined_desc": "When someone joins the household"
+  "settings_notifications_member_joined_desc": "When someone joins the household",
+  "ads_att_explainer_title": "Keeping Haserli free",
+  "ads_att_explainer_message": "Haserli is free thanks to ads. On the next screen you can choose whether ads may be personalized for you. Either way, the app stays free.",
+  "ads_att_explainer_continue": "Continue",
+  "settings_ad_privacy": "Ad privacy settings",
+  "ads_label": "Ad",
+  "ads_consent_title": "Your privacy",
+  "ads_consent_message": "Haserli is free thanks to ads from our partners (ironSource, Unity Ads, Meta). May they use data from your device to show you personalized ads? If you decline, you will still see ads, just less relevant ones. You can change this anytime in Settings.",
+  "ads_consent_accept": "Accept",
+  "ads_consent_decline": "Decline"
 }

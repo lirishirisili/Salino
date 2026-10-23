@@ -244,5 +244,14 @@
   "settings_notifications_shopping_complete": "ግዢ ተጠናቀቀ",
   "settings_notifications_shopping_complete_desc": "ሁሉም ዕቃዎች ሲገዙ",
   "settings_notifications_member_joined": "አዲስ አባል",
-  "settings_notifications_member_joined_desc": "አንድ ሰው ወደ ቤተሰቡ ሲቀላቀል"
+  "settings_notifications_member_joined_desc": "አንድ ሰው ወደ ቤተሰቡ ሲቀላቀል",
+  "ads_att_explainer_title": "ሃሰርሊን ነፃ ማድረግ",
+  "ads_att_explainer_message": "ሃሰርሊ በማስታወቂያዎች ምክንያት ነፃ ነው። በሚቀጥለው ገጽ ማስታወቂያዎች ለእርስዎ እንዲበጁ መፍቀድ ወይም አለመፍቀድ መምረጥ ይችላሉ። በማንኛውም ሁኔታ መተግበሪያው ነፃ ሆኖ ይቀጥላል።",
+  "ads_att_explainer_continue": "ቀጥል",
+  "settings_ad_privacy": "የማስታወቂያ ግላዊነት ቅንብሮች",
+  "ads_label": "ማስታወቂያ",
+  "ads_consent_title": "የእርስዎ ግላዊነት",
+  "ads_consent_message": "ሃሰርሊ ከአጋሮቻችን (ironSource፣ Unity Ads፣ Meta) በሚመጡ ማስታወቂያዎች ምክንያት ነፃ ነው። ለእርስዎ የተበጁ ማስታወቂያዎችን ለማሳየት ከመሣሪያዎ የሚገኝ ውሂብ መጠቀም ይችላሉ? ካልተቀበሉ አሁንም ማስታወቂያዎችን ያያሉ፣ ግን ያነሰ ተዛማጅ ይሆናሉ። ይህን በማንኛውም ጊዜ በቅንብሮች ውስጥ መቀየር ይችላሉ።",
+  "ads_consent_accept": "ተቀበል",
+  "ads_consent_decline": "አትቀበል"
 }

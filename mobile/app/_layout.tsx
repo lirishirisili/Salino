@@ -12,7 +12,6 @@ import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
 import { SessionRouteGuard } from '../src/session/SessionRouteGuard';
 import { getSessionSnapshotSync } from '../src/session/sessionRestore';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
-import { initLevelPlay } from '../src/services/initLevelPlay';
 import { initMobileAnalytics } from '../src/services/initMobileAnalytics';
 import { applyBootRtl } from '../src/boot/applyBootRtl';
 import { BootErrorBoundary } from '../src/boot/BootErrorBoundary';
@@ -43,12 +42,10 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
+  // Ads (UMP consent → ATT → LevelPlay.init) start from the (main) layout once
+  // the onboarding tour and notification prompt are done — ads only show there.
   useEffect(() => {
-    void (async () => {
-      // iOS: ATT runs inside initLevelPlay before ads; analytics starts after.
-      await initLevelPlay();
-      await initMobileAnalytics();
-    })();
+    void initMobileAnalytics();
   }, []);
 
   useEffect(() => {

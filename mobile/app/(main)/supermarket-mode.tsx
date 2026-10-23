@@ -16,6 +16,13 @@ import { ShoppingItem, ItemCategory } from '../../src/models';
 import { EmptyState, SalinoGradientBackground } from '../../src/components';
 import { Typography, useThemeColors } from '../../src/theme';
 import { auth } from '../../src/remote/firebase';
+import { MrecAd } from '../../src/components/ads';
+import { LEVELPLAY_PLACEMENTS } from '../../src/config/levelPlay';
+import { subscribeLevelPlayReady } from '../../src/services/initLevelPlay';
+import {
+  maybeShowTripEndInterstitial,
+  preloadTripEndInterstitial,
+} from '../../src/services/interstitialAd';
 
 type Filter = 'ALL' | 'URGENT' | 'MINE' | 'PHARMACY' | 'NOT_FOUND';
 
@@ -38,6 +45,17 @@ export default function SupermarketModeScreen() {
   const [sessionBought, setSessionBought] = useState<ShoppingItem[]>([]);
   const sessionStartCountRef = useRef<number | null>(null);
   const sessionStartedRef = useRef(false);
+  const tripStartedAtRef = useRef(Date.now());
+  const tripEndingRef = useRef(false);
+
+  // Preload the trip-end interstitial while the user shops (no-op when capped).
+  useEffect(
+    () =>
+      subscribeLevelPlayReady((ready) => {
+        if (ready) void preloadTripEndInterstitial();
+      }),
+    [],
+  );
 
   // Initialise sessionStartItemCount on the FIRST emission of active items —
   // mirrors Android `if (!sessionStarted) { sessionStartItemCount = items.size }`.
@@ -130,10 +148,20 @@ export default function SupermarketModeScreen() {
 
   const remainingCount = filteredActive.length;
 
+  // Trip end is the one natural break for a full-screen ad (capped in interstitialAd.ts).
+  const endTrip = () => {
+    if (tripEndingRef.current) return;
+    tripEndingRef.current = true;
+    void maybeShowTripEndInterstitial(
+      { boughtCount: boughtInSession, tripStartedAt: tripStartedAtRef.current },
+      () => router.back(),
+    );
+  };
+
   const handleFinish = () => {
     const remaining = activeItems.filter((i) => !notFoundIds[i.id]).length;
     if (remaining === 0) {
-      router.back();
+      endTrip();
       return;
     }
     Alert.alert(
@@ -143,7 +171,7 @@ export default function SupermarketModeScreen() {
         { text: t('cancel'), style: 'cancel' },
         {
           text: t('supermarket_mode_finish_confirm'),
-          onPress: () => router.back(),
+          onPress: endTrip,
         },
       ]
     );
@@ -667,6 +695,7 @@ function AllDoneBanner() {
       >
         {t('supermarket_mode_all_done_subtitle')}
       </Text>
+      <MrecAd placement={LEVELPLAY_PLACEMENTS.allDoneMrec} />
     </View>
   );
 }

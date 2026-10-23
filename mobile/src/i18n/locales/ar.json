@@ -244,5 +244,14 @@
   "settings_notifications_shopping_complete": "اكتمل التسوق",
   "settings_notifications_shopping_complete_desc": "عند شراء جميع المنتجات",
   "settings_notifications_member_joined": "عضو جديد",
-  "settings_notifications_member_joined_desc": "عند انضمام شخص ما إلى المنزل"
+  "settings_notifications_member_joined_desc": "عند انضمام شخص ما إلى المنزل",
+  "ads_att_explainer_title": "نحافظ على حصرلي مجانيًا",
+  "ads_att_explainer_message": "حصرلي مجاني بفضل الإعلانات. في الشاشة التالية يمكنك اختيار ما إذا كان يمكن تخصيص الإعلانات لك. في كل الأحوال يبقى التطبيق مجانيًا.",
+  "ads_att_explainer_continue": "متابعة",
+  "settings_ad_privacy": "إعدادات خصوصية الإعلانات",
+  "ads_label": "إعلان",
+  "ads_consent_title": "خصوصيتك",
+  "ads_consent_message": "حصرلي مجاني بفضل إعلانات شركائنا (ironSource وUnity Ads وMeta). هل يمكنهم استخدام بيانات جهازك لعرض إعلانات مخصصة لك؟ إذا رفضت، ستظل ترى إعلانات ولكنها أقل صلة. يمكنك تغيير ذلك في أي وقت من الإعدادات.",
+  "ads_consent_accept": "موافقة",
+  "ads_consent_decline": "رفض"
 }

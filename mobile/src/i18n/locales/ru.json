@@ -244,5 +244,14 @@
   "settings_notifications_shopping_complete": "Покупки завершены",
   "settings_notifications_shopping_complete_desc": "Когда все товары куплены",
   "settings_notifications_member_joined": "Новый участник",
-  "settings_notifications_member_joined_desc": "Когда кто-то присоединяется к семье"
+  "settings_notifications_member_joined_desc": "Когда кто-то присоединяется к семье",
+  "ads_att_explainer_title": "Хасерли остаётся бесплатным",
+  "ads_att_explainer_message": "Хасерли бесплатен благодаря рекламе. На следующем экране вы можете выбрать, можно ли персонализировать рекламу для вас. В любом случае приложение останется бесплатным.",
+  "ads_att_explainer_continue": "Продолжить",
+  "settings_ad_privacy": "Конфиденциальность рекламы",
+  "ads_label": "Реклама",
+  "ads_consent_title": "Ваша конфиденциальность",
+  "ads_consent_message": "Хасерли бесплатен благодаря рекламе наших партнёров (ironSource, Unity Ads, Meta). Можно ли им использовать данные вашего устройства для показа персонализированной рекламы? Если вы откажетесь, реклама всё равно будет показываться, но менее релевантная. Это можно изменить в любое время в настройках.",
+  "ads_consent_accept": "Принять",
+  "ads_consent_decline": "Отклонить"
 }

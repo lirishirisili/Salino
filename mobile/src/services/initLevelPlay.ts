@@ -4,7 +4,7 @@ import {
   getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync,
 } from 'expo-tracking-transparency';
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import { Alert, AppState, AppStateStatus, Platform } from 'react-native';
 import {
   LevelPlay,
   LevelPlayInitRequest,
@@ -15,6 +15,9 @@ import {
 } from 'unity-levelplay-mediation';
 import { setMetaAdvertiserTrackingEnabled } from '../../modules/meta-att-bridge';
 import { LEVELPLAY_APP_KEY } from '../config/levelPlay';
+import i18n from '../i18n';
+import { ensureGdprConsent } from './adsConsent';
+import { logAdImpression } from './initMobileAnalytics';
 
 const LOG = '[LEVELPLAY]';
 
@@ -99,6 +102,18 @@ function isTrackingAuthorized(status: PermissionStatus): boolean {
   return status === PermissionStatus.GRANTED;
 }
 
+/** Short pre-prompt explainer; its only button leads straight to the system ATT dialog. */
+function showAttExplainer(): Promise<void> {
+  return new Promise((resolve) => {
+    Alert.alert(
+      i18n.t('ads_att_explainer_title'),
+      i18n.t('ads_att_explainer_message'),
+      [{ text: i18n.t('ads_att_explainer_continue'), onPress: () => resolve() }],
+      { cancelable: false, onDismiss: () => resolve() },
+    );
+  });
+}
+
 /**
  * iOS ATT prompt + Meta FAN advertiser tracking must resolve before LevelPlay.init
  * (same path as PoofCam). ATT outcome is NOT treated as GDPR/CCPA consent.
@@ -112,6 +127,7 @@ async function ensureIosPrivacyBeforeInit(): Promise<void> {
     await new Promise((r) => setTimeout(r, ATT_PROMPT_DELAY_MS));
     let { status: attStatus } = await getTrackingPermissionsAsync();
     if (attStatus === PermissionStatus.UNDETERMINED) {
+      await showAttExplainer();
       ({ status: attStatus } = await requestTrackingPermissionsAsync());
     }
     const trackingEnabled = isTrackingAuthorized(attStatus);
@@ -125,19 +141,29 @@ async function ensureIosPrivacyBeforeInit(): Promise<void> {
   }
 }
 
-/** Register the impression listener before init so no impressions are missed. */
+/**
+ * Register the impression listener before init so no impressions are missed.
+ * Every impression (all formats) is forwarded to Firebase as `ad_impression`
+ * so ad revenue can be compared against retention per format / placement.
+ */
 async function registerImpressionListener(): Promise<void> {
   try {
     await LevelPlay.addImpressionDataListener({
       onImpressionSuccess: (data: LevelPlayImpressionData) => {
-        const format = (data.adFormat ?? '').toUpperCase();
-        if (format === 'BANNER' || format === '') {
-          log(
-            `[BANNER] impression adUnit=${data.mediationAdUnitId ?? ''} ` +
-              `network=${data.adNetwork ?? ''} placement=${data.placement ?? ''} ` +
-              `revenue=${data.revenue ?? ''} precision=${data.precision ?? ''}`,
-          );
-        }
+        const format = (data.adFormat ?? '').toUpperCase() || 'BANNER';
+        log(
+          `[${format}] impression adUnit=${data.mediationAdUnitId ?? ''} ` +
+            `network=${data.adNetwork ?? ''} placement=${data.placement ?? ''} ` +
+            `revenue=${data.revenue ?? ''} precision=${data.precision ?? ''}`,
+        );
+        logAdImpression({
+          adSource: data.adNetwork,
+          adFormat: format,
+          adUnitName: data.mediationAdUnitName ?? data.mediationAdUnitId,
+          placement: data.placement,
+          revenue: data.revenue,
+          precision: data.precision,
+        });
       },
     });
   } catch (err) {
@@ -195,6 +221,14 @@ export function initLevelPlay(): Promise<boolean> {
         } catch (err) {
           console.warn(`${LOG} setAdaptersDebug failed:`, err);
         }
+      }
+
+      // GDPR (EEA / UK / CH device region only), then iOS ATT.
+      try {
+        await waitForActiveState();
+        await ensureGdprConsent();
+      } catch (err) {
+        console.warn(`${LOG} GDPR consent step failed:`, err);
       }
 
       await ensureIosPrivacyBeforeInit();
