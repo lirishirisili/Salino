@@ -4,6 +4,7 @@ import { shoppingRepository, recurringRepository } from '../repositories';
 import { localGetRecurring } from '../local/storage';
 import { buildShoppingListState } from './shoppingListState';
 import { perfMark } from '../utils/perf';
+import { isExpired } from '../utils/householdExpiry';
 import { Unsubscribe } from 'firebase/firestore';
 
 /**
@@ -39,6 +40,19 @@ interface ShoppingListState {
   reset: () => void;
 }
 
+/**
+ * Ended trip homes are view-only. Screens hide their write controls, but this
+ * also stops a stale screen (or a deep link) from writing into an ended home.
+ */
+function assertWritable(householdId: string): void {
+  // Lazy import avoids a cycle: useHouseholdStore → useShoppingStore.
+  const { useHouseholdStore } = require('./useHouseholdStore') as typeof import('./useHouseholdStore');
+  const { household } = useHouseholdStore.getState();
+  if (household?.id === householdId && isExpired(household)) {
+    throw new Error('HOUSEHOLD_READ_ONLY');
+  }
+}
+
 async function readCachedList(householdId: string) {
   perfMark('cache_read_start');
   const [items, recurringItems] = await Promise.all([
@@ -64,11 +78,21 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   preloadFromCache: async (householdId: string) => {
     try {
       const { items, recurringItems } = await readCachedList(householdId);
+      // A later home switch won the race: don't resurrect this home's rows.
+      const { useHouseholdStore } = require('./useHouseholdStore') as typeof import('./useHouseholdStore');
+      const activeId = useHouseholdStore.getState().activeHouseholdId;
+      if (activeId && activeId !== householdId) return;
       // Mark this household's cache as hydrated so subscribe() won't re-read it.
       cacheHydratedHouseholdId = householdId;
       if (items.length === 0) {
-        // Mark household so subscribe() won't treat it as a switch
-        set({ subscribedHouseholdId: householdId, isLoading: false });
+        // Mark household so subscribe() won't treat it as a switch — and drop
+        // the previous home's rows when this preload is itself a home switch.
+        const switching = get().subscribedHouseholdId !== householdId;
+        set({
+          subscribedHouseholdId: householdId,
+          isLoading: false,
+          ...(switching ? buildShoppingListState([], recurringItems) : {}),
+        });
         return;
       }
       set({
@@ -179,6 +203,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   addItem: async (householdId, item) => {
+    assertWritable(householdId);
     const newItem = await shoppingRepository.addItem(householdId, item);
     // Optimistic: add to Zustand immediately so the UI reflects before snapshot.
     const { items, recurringItems } = get();
@@ -187,6 +212,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   updateItem: async (householdId, item) => {
+    assertWritable(householdId);
     await shoppingRepository.updateItem(householdId, item);
     // Optimistic: replace the item in the store.
     const { items, recurringItems } = get();
@@ -195,6 +221,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   markAsBought: async (householdId, itemId) => {
+    assertWritable(householdId);
     const { items, recurringItems } = get();
     await shoppingRepository.markAsBought(householdId, itemId, items, recurringItems);
     // Optimistic: move item to bought in the store.
@@ -205,6 +232,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   markAsActive: async (householdId, itemId) => {
+    assertWritable(householdId);
     const { items, recurringItems } = get();
     await shoppingRepository.markAsActive(householdId, itemId, items);
     // Optimistic: move item back to active.
@@ -215,6 +243,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   deleteItem: async (householdId, itemId, itemName) => {
+    assertWritable(householdId);
     await shoppingRepository.deleteItem(householdId, itemId, itemName);
     // Optimistic: remove from store.
     const { items, recurringItems } = get();
@@ -222,6 +251,7 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
   },
 
   toggleFavorite: async (householdId, item) => {
+    assertWritable(householdId);
     await shoppingRepository.toggleFavorite(householdId, item);
     // Optimistic: toggle favorite.
     const { items, recurringItems } = get();

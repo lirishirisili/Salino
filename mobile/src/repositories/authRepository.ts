@@ -23,6 +23,8 @@ import {
   firestoreDeleteHousehold,
   firestoreLeaveHousehold,
   firestoreIsHouseholdMemberFromServer,
+  firestoreAddUserHousehold,
+  firestoreRemoveUserHousehold,
 } from '../remote/firestoreService';
 import {
   localSetActiveHouseholdId,
@@ -215,10 +217,9 @@ export const authRepository = {
     }
 
     const profile = await firestoreGetUser(user.uid);
-    const householdId =
-      (profile?.activeHouseholdId as string | null | undefined) ?? null;
+    const householdIds = profileHouseholdIds(profile);
 
-    if (householdId) {
+    for (const householdId of householdIds) {
       const memberCount = await firestoreGetMemberCount(householdId);
       if (memberCount <= 1) {
         await firestoreDeleteHousehold(householdId);
@@ -226,6 +227,8 @@ export const authRepository = {
         await firestoreLeaveHousehold(householdId, user.uid);
       }
       await localClearHouseholdData(householdId);
+    }
+    if (householdIds.length > 0) {
       await localClearActiveHousehold(user.uid);
     }
 
@@ -239,6 +242,20 @@ export const authRepository = {
   },
 };
 
+/** Every home id on a profile doc (`householdIds` plus the active one), active first. */
+function profileHouseholdIds(profile: Record<string, unknown> | null | undefined): string[] {
+  const ids: string[] = [];
+  const active = profile?.activeHouseholdId;
+  if (typeof active === 'string' && active.length > 0) ids.push(active);
+  const list = profile?.householdIds;
+  if (Array.isArray(list)) {
+    for (const id of list) {
+      if (typeof id === 'string' && id.length > 0 && !ids.includes(id)) ids.push(id);
+    }
+  }
+  return ids;
+}
+
 async function resolveAuthoritativeProfile(
   uid: string,
   existing: Record<string, unknown>
@@ -247,18 +264,54 @@ async function resolveAuthoritativeProfile(
     typeof existing.activeHouseholdId === 'string' && existing.activeHouseholdId.length > 0
       ? existing.activeHouseholdId
       : null;
+  let householdIds = profileHouseholdIds(existing);
+
+  // Profiles from before multi-home only know their active home.
+  if (activeHouseholdId && !Array.isArray(existing.householdIds)) {
+    await firestoreAddUserHousehold(uid, activeHouseholdId).catch(() => undefined);
+  }
+
+  // First remaining home the user still belongs to; confirmed non-memberships are pruned.
+  const pickFallback = async (candidates: string[]): Promise<string | null> => {
+    for (const candidate of candidates) {
+      // A network error here is not "not a member" — keep the candidate.
+      const stillMember = await firestoreIsHouseholdMemberFromServer(candidate, uid).catch(() => true);
+      if (stillMember) return candidate;
+      householdIds = householdIds.filter((id) => id !== candidate);
+      await firestoreRemoveUserHousehold(uid, candidate).catch(() => undefined);
+    }
+    return null;
+  };
 
   if (activeHouseholdId) {
     try {
       const isMember = await firestoreIsHouseholdMemberFromServer(activeHouseholdId, uid);
       if (!isMember) {
-        activeHouseholdId = null;
-        await firestoreSetUser(uid, { activeHouseholdId: null });
+        const lostId = activeHouseholdId;
+        householdIds = householdIds.filter((id) => id !== lostId);
+        await firestoreRemoveUserHousehold(uid, lostId).catch(() => undefined);
+        // Fall back to another home the user still belongs to before giving up.
+        activeHouseholdId = await pickFallback(householdIds);
+        await firestoreSetUser(uid, { activeHouseholdId });
+        if (activeHouseholdId) {
+          await localSetActiveHouseholdId(uid, activeHouseholdId);
+        } else {
+          await localClearActiveHousehold(uid).catch(() => undefined);
+        }
       } else {
         await localSetActiveHouseholdId(uid, activeHouseholdId);
       }
     } catch {
       // Network error during membership check — keep the server household id.
+      if (activeHouseholdId) {
+        await localSetActiveHouseholdId(uid, activeHouseholdId).catch(() => undefined);
+      }
+    }
+  } else if (householdIds.length > 0) {
+    // No active home but memberships remain (e.g. left a home before the list loaded).
+    activeHouseholdId = await pickFallback(householdIds);
+    if (activeHouseholdId) {
+      await firestoreSetUser(uid, { activeHouseholdId }).catch(() => undefined);
       await localSetActiveHouseholdId(uid, activeHouseholdId).catch(() => undefined);
     }
   }
@@ -267,5 +320,6 @@ async function resolveAuthoritativeProfile(
     ...(existing as unknown as UserProfile),
     id: uid,
     activeHouseholdId,
+    householdIds,
   };
 }

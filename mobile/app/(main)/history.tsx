@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { useIsHouseholdReadOnly } from '../../src/hooks/useHouseholdExpiry';
 import { useTourAnchor } from '../../src/features/tour';
 import {
   CategoryChip,
@@ -30,6 +31,7 @@ export default function HistoryScreen() {
   const colors = useThemeColors();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   const { boughtItems, markAsActive } = useShoppingStore();
+  const readOnly = useIsHouseholdReadOnly();
   const historyTitleAnchor = useTourAnchor('history.title');
 
   const days = useMemo(() => {
@@ -148,8 +150,9 @@ export default function HistoryScreen() {
                               <CategoryChip category={it.category as ItemCategory} />
                             )}
                             <View style={{ height: 8 }} />
+                            {!readOnly && (
                             <Pressable
-                              onPress={() => activeHouseholdId && markAsActive(activeHouseholdId, it.id)}
+                              onPress={() => activeHouseholdId && markAsActive(activeHouseholdId, it.id).catch(() => undefined)}
                               hitSlop={6}
                             >
                               <Text
@@ -161,6 +164,7 @@ export default function HistoryScreen() {
                                 {t('shopping_list_undo_bought')}
                               </Text>
                             </Pressable>
+                            )}
                           </View>
                         </View>
                       </SalinoSurfaceCard>

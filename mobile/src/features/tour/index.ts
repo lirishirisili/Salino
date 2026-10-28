@@ -1,5 +1,11 @@
 export { TOUR_ENABLED } from './config';
-export { clearTourCompleted, hasCompletedTour, markTourCompleted } from './tourStorage';
+export {
+  clearTourCompleted,
+  hasCompletedTour,
+  hasSeenWhatsNew,
+  markTourCompleted,
+  markWhatsNewSeen,
+} from './tourStorage';
 export { useTourStore } from './tourStore';
 export type { TourBootstrapStatus } from './tourStore';
 export { useTourAnchor } from './useTourAnchor';

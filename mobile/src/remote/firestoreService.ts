@@ -59,7 +59,9 @@ export const subscribeToItems = (
 export const subscribeToHousehold = (
   householdId: string,
   onData: (household: Household) => void,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
+  /** Server confirmed the home doc no longer exists (e.g. an ended trip home was deleted). */
+  onMissing?: () => void
 ): Unsubscribe => {
   const ref = doc(db, 'households', householdId);
   return onSnapshot(
@@ -67,6 +69,8 @@ export const subscribeToHousehold = (
     (snapshot) => {
       if (snapshot.exists()) {
         onData({ id: snapshot.id, ...snapshot.data() } as Household);
+      } else if (!snapshot.metadata.fromCache) {
+        onMissing?.();
       }
     },
     onError
@@ -227,6 +231,23 @@ export const firestoreIsHouseholdMemberFromServer = async (
 export const firestoreUpdateHouseholdName = async (householdId: string, name: string) => {
   const ref = doc(db, 'households', householdId);
   await updateDoc(ref, { name });
+};
+
+/** Moves a temporary home's end date and re-arms the server's reminder / expired pushes. */
+export const firestoreExtendHousehold = async (householdId: string, expiresAt: Timestamp) => {
+  const ref = doc(db, 'households', householdId);
+  await updateDoc(ref, { expiresAt, reminderSentAt: null, expiredNotifiedAt: null });
+};
+
+// Membership list on the user profile (home switcher)
+export const firestoreAddUserHousehold = async (userId: string, householdId: string) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, { householdIds: arrayUnion(householdId) }, { merge: true });
+};
+
+export const firestoreRemoveUserHousehold = async (userId: string, householdId: string) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, { householdIds: arrayRemove(householdId) }, { merge: true });
 };
 
 // User profile

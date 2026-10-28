@@ -143,6 +143,7 @@ export default function MainLayout() {
         <Stack.Screen name="activity" />
         <Stack.Screen name="supermarket-mode" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="create-temporary-home" />
       </Stack>
     </MainAdBannerHost>
   );

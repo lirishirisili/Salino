@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { useLeaveIfReadOnly } from '../../src/hooks/useHouseholdExpiry';
 import { ShoppingItem, ItemCategory } from '../../src/models';
 import { EmptyState, SalinoGradientBackground } from '../../src/components';
 import { Typography, useThemeColors } from '../../src/theme';
@@ -32,6 +33,7 @@ export default function SupermarketModeScreen() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  useLeaveIfReadOnly();
   const { activeItems, markAsBought, markAsActive, isLoading } = useShoppingStore();
 
   const [filter, setFilter] = useState<Filter>('ALL');

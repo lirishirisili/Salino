@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
+import { useLeaveIfReadOnly } from '../../src/hooks/useHouseholdExpiry';
 import { useCategoryAutoDetection } from '../../src/hooks/useCategoryAutoDetection';
 import { useVoiceInput } from '../../src/hooks/useVoiceInput';
 import { ItemCategory, ItemUnit, ShoppingItem } from '../../src/models';
@@ -50,6 +51,7 @@ export default function EditItemScreen() {
   );
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
+  useLeaveIfReadOnly();
   const { items, updateItem, deleteItem, activeItems, boughtItems, recurringItems } = useShoppingStore();
 
   const item = items.find((i) => i.id === itemId);

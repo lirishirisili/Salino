@@ -9,7 +9,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, TextInput } from 'react-native-paper';
+import { Switch, Text, TextInput } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -24,6 +24,10 @@ import {
   SalinoWebSegmentedTabs,
 } from '../src/components';
 import { Layout, Typography, useThemeColors } from '../src/theme';
+import { TemporaryDurationPicker } from '../src/components/household';
+import { endOfDayInDays, toExpiresAt } from '../src/utils/householdExpiry';
+
+const DEFAULT_TEMP_DAYS = 7;
 
 export default function HouseholdSetupScreen() {
   const { t } = useTranslation();
@@ -36,6 +40,8 @@ export default function HouseholdSetupScreen() {
   const [tab, setTab] = useState(0);
   const [householdName, setHouseholdName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [isTemporary, setIsTemporary] = useState(false);
+  const [tempEndDate, setTempEndDate] = useState(() => endOfDayInDays(DEFAULT_TEMP_DAYS));
   const consumePendingInviteCode = useInviteDeepLinkStore((s) => s.consumePendingInviteCode);
   const pendingInviteCode = useInviteDeepLinkStore((s) => s.pendingInviteCode);
 
@@ -62,7 +68,7 @@ export default function HouseholdSetupScreen() {
 
   const handleCreate = async () => {
     if (!householdName.trim()) return;
-    await createHousehold(householdName.trim());
+    await createHousehold(householdName.trim(), isTemporary ? toExpiresAt(tempEndDate) : undefined);
     const { household, error: storeError } = useHouseholdStore.getState();
     if (storeError || !household) return;
     goToShoppingList();
@@ -172,6 +178,24 @@ export default function HouseholdSetupScreen() {
                     disabled={isLoading}
                   />
                 </View>
+                <View style={styles.tempToggleRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[Typography.titleSmall, { color: colors.onSurface } as any]}>
+                      {t('household_temp_toggle')}
+                    </Text>
+                    <Text style={[Typography.bodySmall, { color: colors.onSurfaceVariant } as any]}>
+                      {t('household_temp_toggle_hint')}
+                    </Text>
+                  </View>
+                  <Switch value={isTemporary} onValueChange={setIsTemporary} disabled={isLoading} />
+                </View>
+                {isTemporary && (
+                  <TemporaryDurationPicker
+                    value={tempEndDate}
+                    onChange={setTempEndDate}
+                    initialPresetDays={DEFAULT_TEMP_DAYS}
+                  />
+                )}
                 <SalinoPrimaryButton
                   text={isLoading ? t('household_creating') : t('household_create_button')}
                   onPress={handleCreate}
@@ -311,5 +335,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: Layout.maxContentWidth,
     justifyContent: 'center',
+  },
+  tempToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
 });

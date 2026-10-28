@@ -26,6 +26,11 @@ export interface Household {
   createdBy: string;
   createdAt: Timestamp | null;
   inviteCode: string;
+  /** Set only for temporary (trip) homes: after this moment the home is read-only. */
+  expiresAt?: Timestamp | null;
+  /** Server-only bookkeeping for the expiry job (reminder / expired pushes). */
+  reminderSentAt?: Timestamp | null;
+  expiredNotifiedAt?: Timestamp | null;
 }
 
 export interface HouseholdMember {
@@ -47,6 +52,8 @@ export interface UserProfile {
   displayName: string;
   email: string;
   activeHouseholdId: string | null;
+  /** Every home the user belongs to, the active one included. */
+  householdIds?: string[];
   fcmTokens?: string[];
   notificationPreferences?: NotificationPreferences;
   language?: string;

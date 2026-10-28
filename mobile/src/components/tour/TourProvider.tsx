@@ -7,7 +7,9 @@ import { useAuthStore, useHouseholdStore, useShoppingStore } from '../../hooks';
 import {
   TOUR_ENABLED,
   hasCompletedTour,
+  hasSeenWhatsNew,
   markTourCompleted,
+  markWhatsNewSeen,
   stepsForUser,
   useTourStore,
 } from '../../features/tour';
@@ -76,6 +78,7 @@ export function TourController() {
   const shoppingListReady = hasReceivedRemoteSnapshot;
 
   const active = useTourStore((s) => s.active);
+  const mode = useTourStore((s) => s.mode);
   const stepIndex = useTourStore((s) => s.stepIndex);
   const replayRequested = useTourStore((s) => s.replayRequested);
   const bootstrapStatus = useTourStore((s) => s.bootstrapStatus);
@@ -89,7 +92,7 @@ export function TourController() {
   const markBootstrapDone = useTourStore((s) => s.markBootstrapDone);
   const resetBootstrap = useTourStore((s) => s.resetBootstrap);
 
-  const steps = useMemo(() => stepsForUser(), []);
+  const steps = useMemo(() => stepsForUser(mode), [mode]);
   const currentStep: TourStep | null = steps[stepIndex] ?? null;
 
   const [, setReady] = useState(false);
@@ -129,10 +132,12 @@ export function TourController() {
       lastPreparedStepId.current = null;
       markBootstrapDone();
       if (completed && uid) {
-        await markTourCompleted(uid);
+        // The full tour already covers the current "what's new" feature.
+        if (mode === 'full') await markTourCompleted(uid);
+        await markWhatsNewSeen(uid);
       }
     },
-    [stop, uid, markBootstrapDone],
+    [stop, uid, mode, markBootstrapDone],
   );
 
   const handleSkip = useCallback(() => {
@@ -172,19 +177,22 @@ export function TourController() {
     const requestId = ++autoStartRequestId.current;
     autoStartPending.current = true;
 
-    void hasCompletedTour(uid).then((done) => {
+    void (async () => {
+      const done = await hasCompletedTour(uid);
+      // Users who finished the tour before this release get a one-off "what's new".
+      const showWhatsNew = done && !(await hasSeenWhatsNew(uid));
       if (requestId !== autoStartRequestId.current) return;
       autoStartPending.current = false;
       if (autoStartChecked.current) return;
       autoStartChecked.current = true;
-      if (done) {
+      if (done && !showWhatsNew) {
         markBootstrapDone();
         return;
       }
       InteractionManager.runAfterInteractions(() => {
-        requestAnimationFrame(() => start());
+        requestAnimationFrame(() => start(showWhatsNew ? 'whatsNew' : 'full'));
       });
-    });
+    })();
 
     return () => {
       // Invalidate in-flight check and clear pending so a remount can retry.
@@ -265,16 +273,21 @@ export function TourController() {
 
       const sheetPlacement = await resolveSheetPlacement(currentStep.anchorId);
 
-      const stepLabel = t('tour.stepOf', {
-        current: stepIndex + 1,
-        total: steps.length,
-      });
+      const isWhatsNew = mode === 'whatsNew';
+      const stepLabel = isWhatsNew
+        ? t('tour.whatsNew.badge')
+        : t('tour.stepOf', {
+            current: stepIndex + 1,
+            total: steps.length,
+          });
       showOverlay({
         title: t(currentStep.titleKey),
         body: t(currentStep.bodyKey),
         stepLabel,
         isLast: stepIndex >= steps.length - 1,
         sheetPlacement,
+        finishLabel: isWhatsNew ? t('tour.whatsNew.gotIt') : undefined,
+        hideSkip: isWhatsNew,
       });
       lastPreparedStepId.current = currentStep.id;
       setReady(true);
@@ -288,6 +301,7 @@ export function TourController() {
   }, [
     canRun,
     currentStep,
+    mode,
     stepIndex,
     steps.length,
     router,

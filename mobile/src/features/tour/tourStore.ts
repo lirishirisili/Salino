@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import type { TourAnchorId } from './types';
+import type { TourAnchorId, TourMode } from './types';
 
 export type TourBootstrapStatus = 'pending' | 'running' | 'done';
 
@@ -10,17 +10,21 @@ interface OverlayData {
   stepLabel: string;
   isLast: boolean;
   sheetPlacement: 'top' | 'bottom';
+  /** Overrides the last step's button label ("Got it" for what's new). */
+  finishLabel?: string;
+  hideSkip?: boolean;
 }
 
 interface TourState {
   active: boolean;
+  mode: TourMode;
   stepIndex: number;
   replayRequested: boolean;
   activeAnchorId: TourAnchorId | null;
   overlay: OverlayData | null;
   /** Post-login gate for deferred notification permission. */
   bootstrapStatus: TourBootstrapStatus;
-  start: () => void;
+  start: (mode?: TourMode) => void;
   requestReplay: () => void;
   clearReplayRequest: () => void;
   stop: () => void;
@@ -37,15 +41,17 @@ interface TourState {
 
 export const useTourStore = create<TourState>((set, get) => ({
   active: false,
+  mode: 'full',
   stepIndex: 0,
   replayRequested: false,
   activeAnchorId: null,
   overlay: null,
   bootstrapStatus: 'pending',
 
-  start: () =>
+  start: (mode = 'full') =>
     set({
       active: true,
+      mode,
       stepIndex: 0,
       replayRequested: false,
       activeAnchorId: null,

@@ -69,11 +69,13 @@ export function TourOverlay() {
           </Text>
           <View style={styles.actions}>
             <Button mode="contained" onPress={() => tourHandlers.onNext()}>
-              {overlay.isLast ? t('tour.finish') : t('tour.next')}
+              {overlay.isLast ? overlay.finishLabel ?? t('tour.finish') : t('tour.next')}
             </Button>
-            <Button mode="text" onPress={() => tourHandlers.onSkip()}>
-              {t('tour.skip')}
-            </Button>
+            {!overlay.hideSkip && (
+              <Button mode="text" onPress={() => tourHandlers.onSkip()}>
+                {t('tour.skip')}
+              </Button>
+            )}
           </View>
         </SalinoSurfaceCard>
       </View>

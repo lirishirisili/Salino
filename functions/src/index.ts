@@ -8,6 +8,7 @@ import {
   onDocumentCreated,
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 initializeApp();
 
@@ -230,7 +231,15 @@ type NotificationType =
   | "itemAdded"
   | "urgentItem"
   | "shoppingComplete"
-  | "memberJoined";
+  | "memberJoined"
+  | "householdExpiringSoon"
+  | "householdExpired";
+
+/** Trip-home lifecycle notices: always sent, not behind the per-type opt-in toggles. */
+const SYSTEM_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
+  "householdExpiringSoon",
+  "householdExpired",
+]);
 
 const SUPPORTED_LANGS = ["en", "he", "ar", "fr", "es", "ru", "am"] as const;
 
@@ -283,6 +292,25 @@ const NOTIFICATION_BODIES: Record<NotificationType, Record<string, string>> = {
     ru: "{{name}} присоединился(ась) к семье",
     am: "{{name}} ወደ ቤተሰቡ ተቀላቀለ",
   },
+  // {{name}} is the home's name for the two trip-home notices.
+  householdExpiringSoon: {
+    en: "\"{{name}}\" ends within 24 hours. The creator can extend it in the app.",
+    he: "\"{{name}}\" מסתיים בעוד פחות מיממה. יוצר הבית יכול להאריך אותו באפליקציה.",
+    ar: "\"{{name}}\" ينتهي خلال 24 ساعة. يمكن للمنشئ تمديده في التطبيق.",
+    fr: "« {{name}} » se termine dans moins de 24 heures. Le créateur peut le prolonger dans l'app.",
+    es: "\"{{name}}\" termina en menos de 24 horas. El creador puede extenderlo en la app.",
+    ru: "«{{name}}» закончится в течение 24 часов. Создатель может продлить его в приложении.",
+    am: "\"{{name}}\" በ24 ሰዓት ውስጥ ያበቃል። ፈጣሪው በመተግበሪያው ማራዘም ይችላል።",
+  },
+  householdExpired: {
+    en: "\"{{name}}\" has ended. The list stays viewable for 30 days.",
+    he: "\"{{name}}\" הסתיים. הרשימה תישאר לצפייה עוד 30 יום.",
+    ar: "انتهى \"{{name}}\". تبقى القائمة متاحة للعرض لمدة 30 يومًا.",
+    fr: "« {{name}} » est terminé. La liste reste consultable 30 jours.",
+    es: "\"{{name}}\" ha terminado. La lista se puede ver durante 30 días.",
+    ru: "«{{name}}» завершён. Список можно просматривать ещё 30 дней.",
+    am: "\"{{name}}\" አብቅቷል። ዝርዝሩ ለ30 ቀናት ሊታይ ይችላል።",
+  },
 };
 
 function normalizeLang(lang: unknown): string {
@@ -326,6 +354,15 @@ async function sendToHouseholdMembers(
     .map((d) => d.id)
     .filter((id) => id && id !== excludeUid);
 
+  // Users in several homes (e.g. home + a trip) need to know which list changed.
+  const householdName = await db
+    .collection("households")
+    .doc(householdId)
+    .get()
+    .then((snap) => (snap.data()?.name as string | undefined)?.trim() || "")
+    .catch(() => "");
+  const isSystemNotice = SYSTEM_NOTIFICATION_TYPES.has(type);
+
   if (recipientIds.length === 0) {
     console.info(`[push] ${type} household=${householdId}: no recipients (solo or empty)`);
     return;
@@ -354,13 +391,18 @@ async function sendToHouseholdMembers(
 
       const prefs = (data.notificationPreferences ?? {}) as Record<string, unknown>;
       // Preferences default to disabled when unset (opt-in via Settings).
-      if (prefs[type] !== true) {
+      if (!isSystemNotice && prefs[type] !== true) {
         skippedPrefsOff += 1;
         return;
       }
 
       const lang = normalizeLang(data.language);
-      const title = APP_NAME[lang] ?? APP_NAME.en;
+      const appName = APP_NAME[lang] ?? APP_NAME.en;
+      const homeCount = Array.isArray(data.householdIds) ? data.householdIds.length : 1;
+      const title =
+        homeCount > 1 && householdName && !isSystemNotice
+          ? `${appName} · ${householdName}`
+          : appName;
       const body = buildBody(type, lang, params);
 
       for (const token of tokens) {
@@ -552,5 +594,120 @@ export const onMemberJoined = onDocumentCreated(
     // When a household is created the owner is the only member, so there are no
     // other recipients and nothing is sent.
     await sendToHouseholdMembers(householdId, userId, "memberJoined", { name });
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Temporary (trip) homes
+// ---------------------------------------------------------------------------
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Ended trip homes stay readable this long before being deleted (mirrors the app). */
+const TEMP_HOME_GRACE_DAYS = 30;
+
+/**
+ * Removes a deleted home from each former member's profile, moving anyone who
+ * had it active to another of their homes (or none → household setup).
+ */
+async function detachHouseholdFromUsers(householdId: string, memberIds: string[]): Promise<void> {
+  const db = getFirestore();
+  await Promise.all(
+    memberIds.map((uid) =>
+      db
+        .runTransaction(async (tx) => {
+          const ref = db.collection("users").doc(uid);
+          const snap = await tx.get(ref);
+          if (!snap.exists) return;
+          const data = snap.data() ?? {};
+          const remaining = (Array.isArray(data.householdIds) ? data.householdIds : []).filter(
+            (id: unknown): id is string => typeof id === "string" && id !== householdId
+          );
+          const update: Record<string, unknown> = {
+            householdIds: FieldValue.arrayRemove(householdId),
+          };
+          if (data.activeHouseholdId === householdId) {
+            update.activeHouseholdId = remaining[0] ?? null;
+          }
+          tx.update(ref, update);
+        })
+        .catch((e) => console.warn(`[tempHomes] detach uid=${uid} household=${householdId} failed`, e))
+    )
+  );
+}
+
+/**
+ * Hourly: reminds members a day before a trip home ends, tells them when it has
+ * ended (the app then shows it read-only), and deletes it after the grace period.
+ */
+export const processTemporaryHouseholds = onSchedule(
+  {
+    schedule: "every 60 minutes",
+    region: NOTIFICATION_REGION,
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const db = getFirestore();
+    const nowMs = Date.now();
+    const snap = await db
+      .collection("households")
+      .where("expiresAt", "<=", Timestamp.fromMillis(nowMs + DAY_MS))
+      .get();
+
+    let reminded = 0;
+    let ended = 0;
+    let deleted = 0;
+
+    for (const doc of snap.docs) {
+      try {
+        // Re-read inside a transaction: the owner may have extended the trip since
+        // the query ran, and an extend clears the markers this job relies on.
+        const action = await db.runTransaction(async (tx) => {
+          const fresh = await tx.get(doc.ref);
+          const data = fresh.data();
+          const expiresAt = data?.expiresAt as Timestamp | null | undefined;
+          if (!data || !expiresAt || typeof expiresAt.toMillis !== "function") return null;
+          const endMs = expiresAt.toMillis();
+          const name = (data.name as string | undefined)?.trim() || "";
+          if (endMs + TEMP_HOME_GRACE_DAYS * DAY_MS <= nowMs) {
+            return { kind: "delete" as const, name };
+          }
+          if (endMs <= nowMs) {
+            if (data.expiredNotifiedAt) return null;
+            tx.update(doc.ref, { expiredNotifiedAt: FieldValue.serverTimestamp() });
+            return { kind: "ended" as const, name };
+          }
+          if (endMs <= nowMs + DAY_MS && !data.reminderSentAt) {
+            tx.update(doc.ref, { reminderSentAt: FieldValue.serverTimestamp() });
+            return { kind: "remind" as const, name };
+          }
+          return null;
+        });
+        if (!action) continue;
+
+        if (action.kind === "delete") {
+          // Detach first: it is idempotent, so a crash before the delete is retried
+          // next run, whereas a deleted home is never found again.
+          const membersSnap = await doc.ref.collection("members").get();
+          await detachHouseholdFromUsers(
+            doc.id,
+            membersSnap.docs.map((m) => m.id)
+          );
+          await db.recursiveDelete(doc.ref);
+          deleted += 1;
+        } else if (action.kind === "ended") {
+          await sendToHouseholdMembers(doc.id, "", "householdExpired", { name: action.name });
+          ended += 1;
+        } else {
+          await sendToHouseholdMembers(doc.id, "", "householdExpiringSoon", { name: action.name });
+          reminded += 1;
+        }
+      } catch (e) {
+        console.error(`[tempHomes] household=${doc.id} failed`, e);
+      }
+    }
+
+    console.info(
+      `[tempHomes] scanned=${snap.size} reminded=${reminded} ended=${ended} deleted=${deleted}`
+    );
   }
 );

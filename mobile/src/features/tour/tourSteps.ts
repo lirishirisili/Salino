@@ -1,4 +1,4 @@
-import type { TourStep } from './types';
+import type { TourMode, TourStep } from './types';
 
 /** Full guided tour — shopping list, settings, activity, and history. */
 export const TOUR_STEPS: TourStep[] = [
@@ -29,6 +29,13 @@ export const TOUR_STEPS: TourStep[] = [
     route: 'shopping-list',
     titleKey: 'tour.steps.supermarketFab.title',
     bodyKey: 'tour.steps.supermarketFab.body',
+  },
+  {
+    id: 'homes',
+    anchorId: 'list.homes',
+    route: 'shopping-list',
+    titleKey: 'tour.steps.homes.title',
+    bodyKey: 'tour.steps.homes.body',
   },
   {
     id: 'settings',
@@ -67,6 +74,20 @@ export const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-export function stepsForUser(): TourStep[] {
-  return TOUR_STEPS;
+/**
+ * Shown once to users who already finished the full tour before this release.
+ * Bump WHATS_NEW_ID (config.ts) and replace these steps for the next feature.
+ */
+export const WHATS_NEW_STEPS: TourStep[] = [
+  {
+    id: 'whatsNew.homes',
+    anchorId: 'list.homes',
+    route: 'shopping-list',
+    titleKey: 'tour.whatsNew.homes.title',
+    bodyKey: 'tour.whatsNew.homes.body',
+  },
+];
+
+export function stepsForUser(mode: TourMode = 'full'): TourStep[] {
+  return mode === 'whatsNew' ? WHATS_NEW_STEPS : TOUR_STEPS;
 }

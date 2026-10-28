@@ -49,6 +49,9 @@ import {
 } from '../../src/services/householdHistoryIndex';
 import { perfMark } from '../../src/utils/perf';
 import { useVoiceInput } from '../../src/hooks/useVoiceInput';
+import { useIsHouseholdReadOnly } from '../../src/hooks/useHouseholdExpiry';
+import { HouseholdHeader, useHouseholdSwitcherUi } from '../../src/components/household';
+import { isTemporary } from '../../src/utils/householdExpiry';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
@@ -76,6 +79,8 @@ export default function ShoppingListScreen() {
     hasReceivedRemoteSnapshot,
   } = useShoppingStore();
 
+  // Ended trip home: the list stays visible but nothing can be added or changed.
+  const readOnly = useIsHouseholdReadOnly();
   const tourActive = useTourStore((s) => s.active);
   const tourOverlay = useTourStore((s) => s.overlay);
 
@@ -422,7 +427,9 @@ export default function ShoppingListScreen() {
         paddingBottom: 130,
       }}
     >
-      {!showEmptyState && (
+      <HouseholdHeader />
+
+      {!showEmptyState && !readOnly && (
         <View ref={heroAnchor.ref} style={heroAnchor.highlightStyle} collapsable={false}>
           <View style={{ paddingVertical: 8 }}>
             <HeroSuggestionsCard
@@ -435,6 +442,7 @@ export default function ShoppingListScreen() {
         </View>
       )}
 
+      {!readOnly && (
       <QuickAddItemField
         value={quickAddName}
         onChangeText={handleQuickAddNameChange}
@@ -456,14 +464,15 @@ export default function ShoppingListScreen() {
         onVoicePress={isQuickAddListening ? stopQuickAddListening : startQuickAddListening}
         voiceLabel={t('voice_input_action')}
       />
+      )}
 
       {showEmptyState ? (
         <EmptyState
           icon="cart-outline"
           title={t('shopping_list_empty_title')}
           subtitle={t('shopping_list_empty_subtitle')}
-          actionLabel={t('item_add')}
-          onAction={() => router.push('/(main)/add-item')}
+          actionLabel={readOnly ? undefined : t('item_add')}
+          onAction={readOnly ? undefined : () => router.push('/(main)/add-item')}
         />
       ) : (
         <>
@@ -485,9 +494,9 @@ export default function ShoppingListScreen() {
           <View style={{ paddingVertical: 6 }}>
             <ShoppingItemsGroupCard
               items={listActiveItems}
-              onToggleBought={showTourPreview ? NOOP : handleMarkBought}
-              onItemPress={showTourPreview ? NOOP : openEditItem}
-              onDelete={showTourPreview ? undefined : handleDelete}
+              onToggleBought={showTourPreview || readOnly ? NOOP : handleMarkBought}
+              onItemPress={showTourPreview || readOnly ? NOOP : openEditItem}
+              onDelete={showTourPreview || readOnly ? undefined : handleDelete}
             />
           </View>
 
@@ -508,8 +517,8 @@ export default function ShoppingListScreen() {
                 <View style={{ paddingVertical: 4 }}>
                   <ShoppingItemsGroupCard
                     items={visibleBoughtItems}
-                    onToggleBought={handleMarkActive}
-                    onItemPress={openEditItem}
+                    onToggleBought={readOnly ? NOOP : handleMarkActive}
+                    onItemPress={readOnly ? NOOP : openEditItem}
                   />
                   {hasMoreBoughtItems && (
                     <Pressable
@@ -579,7 +588,7 @@ export default function ShoppingListScreen() {
         />
       )}
 
-      {!showInitialLoading && (
+      {!showInitialLoading && !readOnly && (
         <View
           style={[styles.fabRow, { paddingBottom: 12 }]}
           pointerEvents="box-none"
@@ -851,6 +860,10 @@ function CurvedTopBar({
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const settingsAnchor = useTourAnchor('list.settings');
+  const homesAnchor = useTourAnchor('list.homes');
+  const openHouseholdSwitcher = useHouseholdSwitcherUi((s) => s.setOpen);
+  const household = useHouseholdStore((s) => s.household);
+  const inTripHome = isTemporary(household);
   const activityAnchor = useTourAnchor('list.activity');
   const [size, setSize] = useState({ w: 0, h: 0 });
   const tintSettings = isDark ? '#FFFFFF' : AccentColors.tintSettingsLight;
@@ -925,37 +938,66 @@ function CurvedTopBar({
               </View>
             </>
           )}
-          <View style={styles.topActions}>
-            <View
-              ref={settingsAnchor.ref}
-              style={settingsAnchor.highlightStyle}
-              collapsable={false}
-            >
+          <View style={styles.topActionsColumn}>
+            <View style={styles.topActions}>
+              <View
+                ref={settingsAnchor.ref}
+                style={settingsAnchor.highlightStyle}
+                collapsable={false}
+              >
+                <TopBarIconButton
+                  icon="cog"
+                  tint={tintSettings}
+                  onPress={() => router.push('/(main)/settings')}
+                  accessibilityLabel={t('settings_title')}
+                />
+              </View>
+              <View
+                ref={activityAnchor.ref}
+                style={activityAnchor.highlightStyle}
+                collapsable={false}
+              >
+                <TopBarMaterialIconButton
+                  icon="timeline"
+                  tint={tintActivity}
+                  onPress={() => router.push('/(main)/activity')}
+                  accessibilityLabel={t('activity_feed_title')}
+                />
+              </View>
               <TopBarIconButton
-                icon="cog"
-                tint={tintSettings}
-                onPress={() => router.push('/(main)/settings')}
-                accessibilityLabel={t('settings_title')}
+                icon="history"
+                tint={tintHistory}
+                onPress={() => router.push('/(main)/history')}
+                accessibilityLabel={t('history_title')}
               />
             </View>
-            <View
-              ref={activityAnchor.ref}
-              style={activityAnchor.highlightStyle}
-              collapsable={false}
-            >
-              <TopBarMaterialIconButton
-                icon="timeline"
-                tint={tintActivity}
-                onPress={() => router.push('/(main)/activity')}
-                accessibilityLabel={t('activity_feed_title')}
-              />
+            {/* Active home's name in the free space under the icons (the logo row is
+                taller than them), so switching homes costs no extra height. */}
+            <View ref={homesAnchor.ref} style={homesAnchor.highlightStyle} collapsable={false}>
+              <Pressable
+                onPress={() => openHouseholdSwitcher(true)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('household_switcher_title')}: ${household?.name ?? ''}`}
+                style={({ pressed }) => [
+                  styles.homeChip,
+                  { borderColor: `${colors.outline}66`, opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={inTripHome ? 'bag-suitcase' : 'home'}
+                  size={14}
+                  color={colors.primary}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={[styles.homeChipText, { color: isDark ? '#FFFFFF' : colors.onSurface }]}
+                >
+                  {household?.name ?? ''}
+                </Text>
+                <MaterialCommunityIcons name="chevron-down" size={14} color={colors.onSurfaceVariant} />
+              </Pressable>
             </View>
-            <TopBarIconButton
-              icon="history"
-              tint={tintHistory}
-              onPress={() => router.push('/(main)/history')}
-              accessibilityLabel={t('history_title')}
-            />
           </View>
         </View>
       </View>
@@ -1081,6 +1123,25 @@ const styles = StyleSheet.create({
   topActions: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  topActionsColumn: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  homeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    maxWidth: 132,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 50,
+    borderWidth: 1,
+  },
+  homeChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    flexShrink: 1,
   },
   iconBtn: {
     width: 42,

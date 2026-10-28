@@ -5,6 +5,7 @@ export type TourAnchorId =
   | 'list.supermarketFab'
   | 'list.settings'
   | 'list.activity'
+  | 'list.homes'
   | 'settings.invite'
   | 'history.title';
 
@@ -16,6 +17,9 @@ export type TourRect = {
   width: number;
   height: number;
 };
+
+/** 'full' = the onboarding tour; 'whatsNew' = a short one-off about a new feature. */
+export type TourMode = 'full' | 'whatsNew';
 
 export type TourStep = {
   id: string;

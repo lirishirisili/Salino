@@ -154,14 +154,14 @@ function attachListeners(): void {
   }
 
   if (!openedAppUnsub) {
-    openedAppUnsub = messaging().onNotificationOpenedApp(() => {
-      navigateToList();
+    openedAppUnsub = messaging().onNotificationOpenedApp((remoteMessage) => {
+      navigateToList(remoteMessage?.data?.householdId);
     });
   }
 
   if (!responseSub) {
-    responseSub = Notifications.addNotificationResponseReceivedListener(() => {
-      navigateToList();
+    responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      navigateToList(response.notification.request.content.data?.householdId);
     });
   }
 }
@@ -220,7 +220,20 @@ export async function initializeNotifications(): Promise<boolean> {
   return requestPermissionAndRegister();
 }
 
-function navigateToList(): void {
+/** Opens the list; a push about another of the user's homes switches to that home first. */
+function navigateToList(householdId?: unknown): void {
+  if (typeof householdId === 'string' && householdId) {
+    try {
+      // Lazy import keeps the store graph out of this service's module init.
+      const { useHouseholdStore } = require('../hooks/useHouseholdStore') as typeof import('../hooks/useHouseholdStore');
+      const state = useHouseholdStore.getState();
+      if (state.activeHouseholdId && state.activeHouseholdId !== householdId) {
+        void state.switchHousehold(householdId).catch(() => undefined);
+      }
+    } catch {
+      // Store not ready; just open the list.
+    }
+  }
   try {
     // navigate (not push) — avoid stacking another shopping-list copy.
     router.navigate('/(main)/shopping-list');

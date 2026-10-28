@@ -24,6 +24,7 @@ const KEYS = {
   LEGACY_ACTIVE_HOUSEHOLD: '@active_household_id',
   ACTIVE_HOUSEHOLD: (userId: string) => `@active_household_${userId}`,
   PENDING_OPS: (hId: string) => `@pending_ops_${hId}`,
+  MY_HOUSEHOLDS: (userId: string) => `@my_households_${userId}`,
 };
 
 export interface PendingSyncOperation {
@@ -112,6 +113,16 @@ export const localGetHousehold = async (householdId: string): Promise<Household 
 
 export const localSetHousehold = async (household: Household): Promise<void> => {
   await setJSON(KEYS.HOUSEHOLD(household.id), encodeHousehold(household));
+};
+
+// All homes the user belongs to (home switcher), per user.
+export const localGetMyHouseholds = async (userId: string): Promise<Household[]> => {
+  const raw = (await getJSON<Record<string, unknown>[]>(KEYS.MY_HOUSEHOLDS(userId))) ?? [];
+  return raw.map(decodeHousehold);
+};
+
+export const localSetMyHouseholds = async (userId: string, households: Household[]): Promise<void> => {
+  await setJSON(KEYS.MY_HOUSEHOLDS(userId), households.map(encodeHousehold));
 };
 
 // Members
@@ -360,6 +371,7 @@ export const localClearHouseholdData = async (householdId: string): Promise<void
 const PRESERVED_ASYNC_PREFIXES = [
   '@onboarding_',
   '@salino/tour_completed',
+  '@salino/whats_new',
   '@app_language',
   '@rtl_boot_reload_attempted',
   '@session_restore',

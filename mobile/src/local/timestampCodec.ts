@@ -102,6 +102,9 @@ export function encodeHousehold(household: Household): Record<string, unknown> {
   return {
     ...household,
     createdAt: toMillisSafe(household.createdAt),
+    expiresAt: toMillisSafe(household.expiresAt),
+    reminderSentAt: toMillisSafe(household.reminderSentAt),
+    expiredNotifiedAt: toMillisSafe(household.expiredNotifiedAt),
   };
 }
 
@@ -109,6 +112,9 @@ export function decodeHousehold(raw: Record<string, unknown>): Household {
   return {
     ...(raw as unknown as Household),
     createdAt: toTimestampSafe(raw.createdAt),
+    expiresAt: toTimestampSafe(raw.expiresAt),
+    reminderSentAt: toTimestampSafe(raw.reminderSentAt),
+    expiredNotifiedAt: toTimestampSafe(raw.expiredNotifiedAt),
   };
 }
 

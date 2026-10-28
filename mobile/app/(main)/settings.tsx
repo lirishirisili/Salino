@@ -9,7 +9,6 @@ import {
   Linking,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   View,
 } from 'react-native';
@@ -34,7 +33,14 @@ import {
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
 import { changeGdprConsent, isGdprRegion } from '../../src/services/adsConsent';
-import { buildInviteUrl } from '../../src/constants/urls';
+import {
+  ExtendHouseholdDialog,
+  HouseholdSwitcherSheet,
+  JoinHouseholdDialog,
+  shareHouseholdInvite,
+} from '../../src/components/household';
+import { useHouseholdExpiry } from '../../src/hooks/useHouseholdExpiry';
+import { formatEndDate } from '../../src/utils/householdExpiry';
 import {
   ensureFcmTokenRegistered,
   getNotificationPermissionGranted,
@@ -51,6 +57,7 @@ export default function SettingsScreen() {
     leaveHousehold,
     updateHouseholdName,
   } = useHouseholdStore();
+  const expiry = useHouseholdExpiry();
   const notificationPrefs = useNotificationStore((s) => s.preferences);
   const setNotificationPref = useNotificationStore((s) => s.setPreference);
   const setPermissionGranted = useNotificationStore((s) => s.setPermissionGranted);
@@ -82,6 +89,9 @@ export default function SettingsScreen() {
   const [showLeave, setShowLeave] = useState(false);
   const [showSignOut, setShowSignOut] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
+  const [showExtend, setShowExtend] = useState(false);
+  const [showHomes, setShowHomes] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
   const [showLanguage, setShowLanguage] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -113,20 +123,21 @@ export default function SettingsScreen() {
 
   const handleShareInvite = async () => {
     if (!household?.inviteCode) return;
-    const inviteUrl = buildInviteUrl(household.inviteCode);
-    await Share.share({
-      message: t('settings_share_invite_message', { code: household.inviteCode, url: inviteUrl }),
-      url: inviteUrl,
-    });
+    await shareHouseholdInvite(household, t, i18n.language);
   };
 
   const handleLeave = async () => {
     setShowLeave(false);
-    if (user?.uid) {
+    const { myHouseholds, activeHouseholdId } = useHouseholdStore.getState();
+    const hasOtherHome = myHouseholds.some((h) => h.id !== activeHouseholdId);
+    // The tour replays for a brand-new home, not when stepping back to an existing one.
+    if (user?.uid && !hasOtherHome) {
       await clearTourCompleted(user.uid);
     }
-    await leaveHousehold();
-    router.replace('/household-setup');
+    const nextHouseholdId = await leaveHousehold();
+    // Another home is left (e.g. leaving a trip): continue there instead of setup.
+    if (nextHouseholdId) router.replace('/(main)/shopping-list');
+    else router.replace('/household-setup');
   };
 
   const handleSignOut = async () => {
@@ -220,6 +231,22 @@ export default function SettingsScreen() {
               </Text>
               <View style={{ height: 14 }} />
 
+              <Pressable onPress={() => setShowHomes(true)} accessibilityRole="button">
+                <Row
+                  icon="home-switch-outline"
+                  title={t('household_switcher_title')}
+                  subtitle={t('settings_homes_hint')}
+                  trailing={
+                    <MaterialCommunityIcons
+                      name={I18nManager.isRTL ? 'chevron-left' : 'chevron-right'}
+                      size={22}
+                      color={colors.onSurfaceVariant}
+                    />
+                  }
+                />
+              </Pressable>
+              <Divider />
+
               <Row
                 icon="home"
                 title={t('settings_household_name')}
@@ -239,6 +266,28 @@ export default function SettingsScreen() {
                 }
               />
               <Divider />
+
+              {expiry.isTemporary && expiry.endDate && (
+                <>
+                  <Row
+                    icon="bag-suitcase"
+                    title={t('settings_temp_household_ends')}
+                    subtitle={
+                      expiry.isExpired
+                        ? t('household_temp_status_ended')
+                        : formatEndDate(expiry.endDate, i18n.language)
+                    }
+                    trailing={
+                      expiry.isOwner ? (
+                        <Button compact onPress={() => setShowExtend(true)}>
+                          {t('household_extend_action')}
+                        </Button>
+                      ) : undefined
+                    }
+                  />
+                  <Divider />
+                </>
+              )}
 
               <View ref={inviteAnchor.ref} style={inviteAnchor.highlightStyle} collapsable={false}>
                 <Row
@@ -532,6 +581,18 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
+      <ExtendHouseholdDialog visible={showExtend} onDismiss={() => setShowExtend(false)} />
+      <HouseholdSwitcherSheet
+        visible={showHomes}
+        onDismiss={() => setShowHomes(false)}
+        onCreateTemporary={() => router.push('/(main)/create-temporary-home')}
+        onJoin={() => setShowJoin(true)}
+      />
+      <JoinHouseholdDialog
+        visible={showJoin}
+        onDismiss={() => setShowJoin(false)}
+        onJoined={() => router.replace('/(main)/shopping-list')}
+      />
       <Portal>
         <Dialog visible={showLeave} onDismiss={() => setShowLeave(false)}>
           <Dialog.Title>{t('settings_leave_household')}</Dialog.Title>
