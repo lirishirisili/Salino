@@ -2,6 +2,7 @@ import {
   decideNullAuthAction,
   householdIdFromProfileResult,
   isRecoverableAuthPath,
+  isSameSessionRefire,
   resolveSessionRoute,
   shouldResetHouseholdFromProfile,
   type ProfileLoadResult,
@@ -221,5 +222,28 @@ describe('isRecoverableAuthPath', () => {
     expect(isRecoverableAuthPath('/')).toBe(true);
     expect(isRecoverableAuthPath('/(main)/shopping-list')).toBe(false);
     expect(isRecoverableAuthPath('/join/ABC123')).toBe(false);
+  });
+});
+
+describe('isSameSessionRefire', () => {
+  it('treats the first sign-in after booting into /auth as a real sign-in', () => {
+    // Boot finished with no user (hasBootstrapped=true, previous uid null):
+    // a new user must run the full profile path to reach household-setup.
+    expect(isSameSessionRefire({ hasBootstrapped: true, previousUid: null, uid: 'new' })).toBe(
+      false
+    );
+  });
+
+  it('treats a repeat event for the live uid as a token-refresh re-fire', () => {
+    expect(isSameSessionRefire({ hasBootstrapped: true, previousUid: 'u1', uid: 'u1' })).toBe(true);
+  });
+
+  it('never treats a pre-boot or different-account event as a re-fire', () => {
+    expect(isSameSessionRefire({ hasBootstrapped: false, previousUid: 'u1', uid: 'u1' })).toBe(
+      false
+    );
+    expect(isSameSessionRefire({ hasBootstrapped: true, previousUid: 'u1', uid: 'u2' })).toBe(
+      false
+    );
   });
 });

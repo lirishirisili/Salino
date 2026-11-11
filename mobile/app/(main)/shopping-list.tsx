@@ -11,14 +11,15 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Button, Dialog, Portal, Text } from 'react-native-paper';
+import { Button, Dialog, Portal, Snackbar, Text } from 'react-native-paper';
+import * as Clipboard from 'expo-clipboard';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
-import { useTourAnchor, useTourScroller, useTourStore } from '../../src/features/tour';
+import { useTourAnchor, useTourScroller, useTourStore, type TourAnchor } from '../../src/features/tour';
 import {
   buildTourPreviewItems,
   buildTourPreviewSuggestions,
@@ -42,6 +43,8 @@ import { DuplicateReason, type DuplicateMatch } from '../../src/models';
 import { AccentColors, Layout, Typography, useThemeColors, useIsDark } from '../../src/theme';
 import { detectCategory, findDuplicate } from '../../src/services';
 import { suggestAutocomplete } from '../../src/services/itemNameAutocompleteEngine';
+import { parseQuickAddText, type ParsedQuickAddItem } from '../../src/services/quickAddParser';
+import type { SuggestionItem } from '../../src/models/types';
 import { warmUpCatalog } from '../../src/services/categoryKeywordCatalog';
 import {
   AutocompleteSuggestion,
@@ -50,8 +53,16 @@ import {
 import { perfMark } from '../../src/utils/perf';
 import { useVoiceInput } from '../../src/hooks/useVoiceInput';
 import { useIsHouseholdReadOnly } from '../../src/hooks/useHouseholdExpiry';
-import { HouseholdHeader, useHouseholdSwitcherUi } from '../../src/components/household';
+import {
+  HouseholdHeader,
+  InviteMembersCard,
+  useHouseholdSwitcherUi,
+} from '../../src/components/household';
 import { isTemporary } from '../../src/utils/householdExpiry';
+import { OfflineBanner } from '../../src/components/OfflineBanner';
+import { useUndoBarStore } from '../../src/hooks/useUndoBarStore';
+import { useAddParsedItems } from '../../src/hooks/useAddParsedItems';
+import { usePastePreviewStore } from '../../src/hooks/usePastePreviewStore';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
@@ -94,6 +105,14 @@ export default function ShoppingListScreen() {
   const [quickAddCategory, setQuickAddCategory] = useState<ItemCategory | null>(null);
   const [isQuickAdding, setIsQuickAdding] = useState(false);
   const [quickAddError, setQuickAddError] = useState<'empty_name' | 'generic' | null>(null);
+  // One undo bar for check-off / delete / add: the latest action replaces the previous.
+  // Global so the paste preview can add items, come back here and still offer Undo.
+  const undoState = useUndoBarStore((s) => s.entry);
+  /** Shows the bottom bar; pass `null` for a plain notice without an Undo action. */
+  const showUndo = useUndoBarStore((s) => s.show);
+  const clearUndo = useUndoBarStore((s) => s.clear);
+  const addParsed = useAddParsedItems();
+  const openPastePreview = usePastePreviewStore((s) => s.open);
   const [quickAddDuplicateDialog, setQuickAddDuplicateDialog] = useState<{
     duplicateMatch: DuplicateMatch;
     addQuantity: number;
@@ -112,6 +131,8 @@ export default function ShoppingListScreen() {
   const filtersAnchor = useTourAnchor('list.filters');
   const addFabAnchor = useTourAnchor('list.addFab');
   const supermarketFabAnchor = useTourAnchor('list.supermarketFab');
+  const quickAddAnchor = useTourAnchor('list.quickAdd');
+  const pasteAnchor = useTourAnchor('list.paste');
 
   const sortedBoughtItems = useMemo(
     () =>
@@ -285,9 +306,40 @@ export default function ShoppingListScreen() {
     [activeHouseholdId, activeItems, isQuickAdding, performQuickAdd],
   );
 
+  /**
+   * Adds several parsed items at once (pasted list / "milk, bread, eggs").
+   * Exact duplicates merge their quantity into the existing item; one undo
+   * removes everything that was newly added.
+   */
+  const addParsedItems = useCallback(
+    async (parsed: ParsedQuickAddItem[]) => {
+      if (!activeHouseholdId || isQuickAdding || parsed.length === 0) return;
+      setIsQuickAdding(true);
+      setQuickAddError(null);
+      try {
+        const result = await addParsed(
+          parsed.map((p) => ({
+            ...p,
+            category: detectCategory(p.name) ?? ItemCategory.OTHER,
+          }))
+        );
+        setQuickAddName('');
+        setQuickAddQuantity(1);
+        setQuickAddUnit(null);
+        setQuickAddCategory(null);
+        showUndo(t('quick_add_bulk_added', { count: parsed.length }), result.undo);
+      } catch {
+        setQuickAddError('generic');
+      } finally {
+        setIsQuickAdding(false);
+      }
+    },
+    [activeHouseholdId, addParsed, isQuickAdding, showUndo, t],
+  );
+
   const handleQuickAdd = useCallback(() => {
-    const name = quickAddName.trim();
-    if (!name) {
+    const raw = quickAddName.trim();
+    if (!raw) {
       setQuickAddError('empty_name');
       return;
     }
@@ -299,6 +351,18 @@ export default function ShoppingListScreen() {
     setQuickAddSuggestions([]);
     setIsQuickAddAutocompleteVisible(false);
 
+    // "2 חלב" / "חלב 3 ליטר" / "חלב, לחם, ביצים". Voice input already set the
+    // quantity/unit and a clean name, so only parse plain typed text.
+    const typed = quickAddQuantity === 1 && quickAddUnit == null;
+    const parsed = typed ? parseQuickAddText(raw) : [];
+    if (parsed.length > 1) {
+      void addParsedItems(parsed);
+      return;
+    }
+    const name = parsed[0]?.name ?? raw;
+    const quantity = parsed[0]?.quantity ?? quickAddQuantity;
+    const unit = parsed[0] ? parsed[0].unit : quickAddUnit;
+
     const itemCategory = quickAddCategory ?? detectCategory(name) ?? ItemCategory.OTHER;
 
     const dup = findDuplicate(name, activeItems);
@@ -306,18 +370,19 @@ export default function ShoppingListScreen() {
       Keyboard.dismiss();
       setQuickAddDuplicateDialog({
         duplicateMatch: dup,
-        addQuantity: quickAddQuantity,
+        addQuantity: quantity,
         itemName: name,
         itemCategory,
-        itemUnit: quickAddUnit,
+        itemUnit: unit,
       });
       return;
     }
 
-    void performQuickAdd(name, quickAddQuantity, quickAddUnit, itemCategory);
+    void performQuickAdd(name, quantity, unit, itemCategory);
   }, [
     activeHouseholdId,
     activeItems,
+    addParsedItems,
     isQuickAdding,
     performQuickAdd,
     quickAddCategory,
@@ -325,6 +390,21 @@ export default function ShoppingListScreen() {
     quickAddQuantity,
     quickAddUnit,
   ]);
+
+  /**
+   * "Paste list": the clipboard (a WhatsApp list, a sentence…) opens the preview,
+   * where the free AI sorts it into items the user can fix before adding.
+   */
+  const handlePasteList = useCallback(async () => {
+    const text = ((await Clipboard.getStringAsync().catch(() => '')) ?? '').trim();
+    if (!text) {
+      Alert.alert('', t('quick_add_paste_empty'));
+      return;
+    }
+    Keyboard.dismiss();
+    openPastePreview(text, 'clipboard');
+    router.push('/(main)/paste-preview');
+  }, [openPastePreview, t]);
 
   const handleBoughtSectionToggle = () => {
     setBoughtExpanded((expanded) => {
@@ -343,11 +423,18 @@ export default function ShoppingListScreen() {
   const handleMarkBought = useCallback(
     (item: ShoppingItem) => {
       if (!activeHouseholdId) return;
-      markAsBought(activeHouseholdId, item.id).catch(() => {
-        Alert.alert('', t('error_generic'));
-      });
+      const householdId = activeHouseholdId;
+      markAsBought(householdId, item.id)
+        .then(() =>
+          showUndo(t('undo_marked_bought', { name: item.name }), () =>
+            markAsActive(householdId, item.id)
+          )
+        )
+        .catch(() => {
+          Alert.alert('', t('error_generic'));
+        });
     },
-    [activeHouseholdId, markAsBought, t]
+    [activeHouseholdId, markAsActive, markAsBought, showUndo, t]
   );
   const handleMarkActive = useCallback(
     (item: ShoppingItem) => {
@@ -358,40 +445,67 @@ export default function ShoppingListScreen() {
     },
     [activeHouseholdId, markAsActive, t]
   );
+  // Delete at once with an undo bar instead of a confirm dialog on every delete.
   const handleDelete = useCallback(
     (item: ShoppingItem) => {
-      Alert.alert('', t('shopping_list_delete_confirm'), [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('shopping_list_delete'),
-          style: 'destructive',
-          onPress: () => {
-            if (!activeHouseholdId) return;
-            deleteItem(activeHouseholdId, item.id, item.name).catch(() => {
-              Alert.alert('', t('error_generic'));
-            });
-          },
-        },
-      ]);
+      if (!activeHouseholdId) return;
+      const householdId = activeHouseholdId;
+      deleteItem(householdId, item.id, item.name)
+        .then(() =>
+          showUndo(t('undo_deleted', { name: item.name }), () =>
+            addItem(householdId, {
+              name: item.name,
+              quantity: item.quantity,
+              unit: item.unit,
+              category: item.category,
+              note: item.note ?? '',
+              isUrgent: item.isUrgent ?? false,
+              isFavorite: item.isFavorite ?? false,
+              boughtBy: null,
+              boughtByName: null,
+            })
+          )
+        )
+        .catch(() => {
+          Alert.alert('', t('error_generic'));
+        });
     },
-    [activeHouseholdId, deleteItem, t]
+    [activeHouseholdId, addItem, deleteItem, showUndo, t]
   );
   const openEditItem = useCallback((item: ShoppingItem) => {
     router.push({ pathname: '/(main)/edit-item', params: { itemId: item.id } });
   }, []);
 
-  const handleSuggestionPress = (s: any) => {
-    router.push({
-      pathname: '/(main)/add-item',
-      params: {
-        prefillName: s.name,
-        prefillQuantity: String(s.quantity),
-        prefillUnit: s.unit || '',
-        prefillCategory: s.category,
-        prefillNote: s.note || '',
-      },
-    });
-  };
+  // One tap adds a suggestion straight to the list (undo if it was a mis-tap).
+  const handleSuggestionPress = useCallback(
+    (s: SuggestionItem) => {
+      if (!activeHouseholdId) return;
+      const householdId = activeHouseholdId;
+      const dup = findDuplicate(s.name, activeItems);
+      if (dup && dup.reason === DuplicateReason.EXACT_DUPLICATE) {
+        showUndo(t('quick_add_already_on_list', { name: dup.item.name }), null);
+        return;
+      }
+      addItem(householdId, {
+        name: s.name,
+        quantity: s.quantity || 1,
+        unit: s.unit ?? null,
+        category: s.category ?? detectCategory(s.name) ?? ItemCategory.OTHER,
+        note: s.note || '',
+        isUrgent: false,
+        isFavorite: false,
+        boughtBy: null,
+        boughtByName: null,
+      })
+        .then((added) =>
+          showUndo(t('undo_added', { name: added.name }), () =>
+            deleteItem(householdId, added.id, added.name)
+          )
+        )
+        .catch(() => Alert.alert('', t('error_generic')));
+    },
+    [activeHouseholdId, activeItems, addItem, deleteItem, showUndo, t]
+  );
 
   const hasAnyItems = activeItems.length > 0 || sortedBoughtItems.length > 0;
   // Wait for the first remote snapshot on a cold cache — do not treat
@@ -429,6 +543,10 @@ export default function ShoppingListScreen() {
     >
       <HouseholdHeader />
 
+      <OfflineBanner />
+
+      {!readOnly && !tourActive && <InviteMembersCard />}
+
       {!showEmptyState && !readOnly && (
         <View ref={heroAnchor.ref} style={heroAnchor.highlightStyle} collapsable={false}>
           <View style={{ paddingVertical: 8 }}>
@@ -443,6 +561,7 @@ export default function ShoppingListScreen() {
       )}
 
       {!readOnly && (
+      <View ref={quickAddAnchor.ref} style={quickAddAnchor.highlightStyle} collapsable={false}>
       <QuickAddItemField
         value={quickAddName}
         onChangeText={handleQuickAddNameChange}
@@ -463,7 +582,11 @@ export default function ShoppingListScreen() {
         isListening={isQuickAddListening}
         onVoicePress={isQuickAddListening ? stopQuickAddListening : startQuickAddListening}
         voiceLabel={t('voice_input_action')}
+        onPastePress={() => void handlePasteList()}
+        pasteLabel={t('quick_add_paste_list')}
+        pasteAnchor={pasteAnchor}
       />
+      </View>
       )}
 
       {showEmptyState ? (
@@ -714,6 +837,28 @@ export default function ShoppingListScreen() {
             </>
           )}
         </Dialog>
+        <Snackbar
+          key={undoState?.key}
+          visible={undoState != null}
+          onDismiss={clearUndo}
+          duration={5000}
+          // Sit above the FAB row so it never covers "add" / "supermarket".
+          wrapperStyle={{ bottom: 84 }}
+          action={
+            undoState?.undo
+              ? {
+                  label: t('supermarket_mode_undo'),
+                  onPress: () => {
+                    const undo = undoState.undo;
+                    clearUndo();
+                    Promise.resolve(undo?.()).catch(() => Alert.alert('', t('error_generic')));
+                  },
+                }
+              : undefined
+          }
+        >
+          {undoState?.message ?? ''}
+        </Snackbar>
       </Portal>
     </SalinoGradientBackground>
   );
@@ -743,6 +888,9 @@ function QuickAddItemField({
   isListening,
   onVoicePress,
   voiceLabel,
+  onPastePress,
+  pasteLabel,
+  pasteAnchor,
 }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -760,6 +908,10 @@ function QuickAddItemField({
   isListening: boolean;
   onVoicePress: () => void;
   voiceLabel: string;
+  onPastePress: () => void;
+  pasteLabel: string;
+  /** Tour anchor ("what's new": paste with AI). */
+  pasteAnchor: TourAnchor;
 }) {
   const colors = useThemeColors();
 
@@ -835,6 +987,22 @@ function QuickAddItemField({
           {error === 'empty_name' ? emptyErrorText : genericErrorText}
         </Text>
       )}
+      <View
+        ref={pasteAnchor.ref}
+        style={[styles.pasteListAnchor, pasteAnchor.highlightStyle]}
+        collapsable={false}
+      >
+        <Pressable
+          onPress={onPastePress}
+          accessibilityRole="button"
+          accessibilityLabel={pasteLabel}
+          hitSlop={8}
+          style={({ pressed }) => [styles.pasteListRow, pressed && { opacity: 0.6 }]}
+        >
+          <MaterialCommunityIcons name="content-paste" size={16} color={colors.primary} />
+          <Text style={[Typography.labelMedium, { color: colors.primary } as any]}>{pasteLabel}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -1152,6 +1320,19 @@ const styles = StyleSheet.create({
   quickAddSection: {
     paddingVertical: 8,
     width: '100%',
+  },
+  pasteListAnchor: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    marginHorizontal: 10,
+    borderRadius: 14,
+  },
+  pasteListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
   },
   quickAddFieldWrap: {
     position: 'relative',

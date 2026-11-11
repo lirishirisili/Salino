@@ -12,6 +12,7 @@ import {
   firestoreRemoveUserHousehold,
   firestoreUpdateHouseholdName,
   firestoreFindByInviteCode,
+  firestorePublishInviteCode,
   subscribeToHousehold,
   subscribeToMembers,
 } from '../remote/firestoreService';
@@ -69,6 +70,22 @@ async function dropFromCachedList(uid: string, householdId: string): Promise<voi
   }
 }
 
+const publishedInviteCodes = new Set<string>();
+
+/**
+ * Backfills the invite-code index for homes created before it existed, once per
+ * app run. Only members get here (the home listener requires membership).
+ */
+function publishInviteCodeOnce(h: Household): void {
+  if (!h.inviteCode) return;
+  const key = `${h.id}:${h.inviteCode}`;
+  if (publishedInviteCodes.has(key)) return;
+  publishedInviteCodes.add(key);
+  void firestorePublishInviteCode(h.id, h.inviteCode).catch(() => {
+    publishedInviteCodes.delete(key);
+  });
+}
+
 export const householdRepository = {
   createHousehold: async (name: string, opts?: { expiresAt?: Timestamp }): Promise<Household> => {
     const uid = auth.currentUser!.uid;
@@ -122,6 +139,7 @@ export const householdRepository = {
       displayName,
       role: MemberRole.MEMBER,
       joinedAt: Timestamp.now(),
+      joinCode: found.inviteCode,
     };
 
     // Re-joining (e.g. an invite link to your own home) must not demote an OWNER doc.
@@ -192,6 +210,7 @@ export const householdRepository = {
   ) => {
     return subscribeToHousehold(householdId, (h) => {
       localSetHousehold(h);
+      publishInviteCodeOnce(h);
       onData(h);
     }, onError, onMissing);
   },

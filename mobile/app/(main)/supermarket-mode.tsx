@@ -11,13 +11,16 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
+import { useKeepAwake } from 'expo-keep-awake';
+import * as Haptics from 'expo-haptics';
 import { useShoppingStore, useHouseholdStore } from '../../src/hooks';
 import { useLeaveIfReadOnly } from '../../src/hooks/useHouseholdExpiry';
 import { ShoppingItem, ItemCategory } from '../../src/models';
-import { EmptyState, SalinoGradientBackground } from '../../src/components';
+import { BackArrowIcon, EmptyState, SalinoGradientBackground } from '../../src/components';
 import { Typography, useThemeColors } from '../../src/theme';
 import { auth } from '../../src/remote/firebase';
 import { MrecAd } from '../../src/components/ads';
+import { OfflineBanner } from '../../src/components/OfflineBanner';
 import { LEVELPLAY_PLACEMENTS } from '../../src/config/levelPlay';
 import { subscribeLevelPlayReady } from '../../src/services/initLevelPlay';
 import {
@@ -34,12 +37,16 @@ export default function SupermarketModeScreen() {
   const insets = useSafeAreaInsets();
   const activeHouseholdId = useHouseholdStore((s) => s.activeHouseholdId);
   useLeaveIfReadOnly();
+  // The phone is in a hand or a cart while shopping: never let the screen sleep.
+  useKeepAwake();
   const { activeItems, markAsBought, markAsActive, isLoading } = useShoppingStore();
 
   const [filter, setFilter] = useState<Filter>('ALL');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [notFoundIds, setNotFoundIds] = useState<Record<string, true>>({});
   const [snackMsg, setSnackMsg] = useState('');
+  // Undo for the latest check-off / "not found" shown in the snackbar.
+  const [snackUndo, setSnackUndo] = useState<(() => void) | null>(null);
   const [boughtExpanded, setBoughtExpanded] = useState(true);
 
   // Session state — matches Android SupermarketModeViewModel.sessionBoughtItems.
@@ -71,16 +78,20 @@ export default function SupermarketModeScreen() {
 
   const currentUserId = auth.currentUser?.uid;
   const sessionStartCount = sessionStartCountRef.current ?? activeItems.length;
-  // Match Android: boughtInSession = (sessionStartItemCount - allActiveItems.size).coerceAtLeast(0)
-  const boughtInSession = Math.max(0, sessionStartCount - activeItems.length);
-  const total = sessionStartCount;
-  const progress = total > 0 ? boughtInSession / total : 0;
-  const notFoundCount = Object.keys(notFoundIds).length;
 
   const sessionBoughtIds = useMemo(
     () => new Set(sessionBought.map((b) => b.id)),
     [sessionBought]
   );
+
+  // Progress counts what *I* checked off on this trip against what is left.
+  // (The old "start count − active count" moved whenever a partner added or
+  // bought something at home.)
+  const boughtInSession = sessionBought.length;
+  const stillActive = activeItems.filter((i) => !sessionBoughtIds.has(i.id)).length;
+  const total = boughtInSession + stillActive;
+  const progress = total > 0 ? boughtInSession / total : 0;
+  const notFoundCount = Object.keys(notFoundIds).length;
 
   // Hide items already moved to session-bought to avoid the brief window where
   // Firestore propagation lags behind our optimistic local update.
@@ -119,25 +130,48 @@ export default function SupermarketModeScreen() {
     return Array.from(map.entries());
   }, [filteredActive]);
 
+  const showSnack = (message: string, undo: (() => void) | null) => {
+    setSnackMsg(message);
+    // Function state must be wrapped, or React would call it as an updater.
+    setSnackUndo(() => undo);
+  };
+
   const handleBought = async (item: ShoppingItem) => {
     if (!activeHouseholdId) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     // Track locally first so UI doesn't depend on Firestore round-trip.
     setSessionBought((prev) =>
       prev.some((x) => x.id === item.id) ? prev : [...prev, item]
     );
-    await markAsBought(activeHouseholdId, item.id);
-    setSnackMsg(`${item.name} ${t('supermarket_mode_item_bought')}`);
+    try {
+      await markAsBought(activeHouseholdId, item.id);
+      showSnack(`${item.name} ${t('supermarket_mode_item_bought')}`, () => {
+        void handleUndoBought(item);
+      });
+    } catch {
+      setSessionBought((prev) => prev.filter((x) => x.id !== item.id));
+      Alert.alert('', t('error_generic'));
+    }
   };
 
   const handleUndoBought = async (item: ShoppingItem) => {
     if (!activeHouseholdId) return;
     setSessionBought((prev) => prev.filter((x) => x.id !== item.id));
-    await markAsActive(activeHouseholdId, item.id);
+    try {
+      await markAsActive(activeHouseholdId, item.id);
+    } catch {
+      setSessionBought((prev) =>
+        prev.some((x) => x.id === item.id) ? prev : [...prev, item]
+      );
+      Alert.alert('', t('error_generic'));
+    }
   };
 
   const handleNotFound = (item: ShoppingItem) => {
     setNotFoundIds((prev) => ({ ...prev, [item.id]: true }));
-    setSnackMsg(`${item.name} ${t('supermarket_mode_item_not_found')}`);
+    showSnack(`${item.name} ${t('supermarket_mode_item_not_found')}`, () =>
+      handleUndoNotFound(item)
+    );
   };
 
   const handleUndoNotFound = (item: ShoppingItem) => {
@@ -183,6 +217,14 @@ export default function SupermarketModeScreen() {
   const allDone =
     sessionStartedRef.current && activeNonNotFound.length === 0 && sessionStartCount > 0;
 
+  useEffect(() => {
+    if (allDone) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => undefined
+      );
+    }
+  }, [allDone]);
+
   return (
     <SalinoGradientBackground plain style={styles.container}>
       <Header
@@ -191,6 +233,10 @@ export default function SupermarketModeScreen() {
         total={total}
         onBack={() => router.back()}
       />
+
+      <View style={{ paddingHorizontal: 12 }}>
+        <OfflineBanner />
+      </View>
 
       <FilterRow filter={filter} onFilter={setFilter} notFoundCount={notFoundCount} />
 
@@ -279,9 +325,25 @@ export default function SupermarketModeScreen() {
 
       <Snackbar
         visible={!!snackMsg}
-        onDismiss={() => setSnackMsg('')}
-        duration={2000}
+        onDismiss={() => {
+          setSnackMsg('');
+          setSnackUndo(null);
+        }}
+        duration={4000}
         style={{ marginBottom: insets.bottom + 80 }}
+        action={
+          snackUndo
+            ? {
+                label: t('supermarket_mode_undo'),
+                onPress: () => {
+                  const undo = snackUndo;
+                  setSnackMsg('');
+                  setSnackUndo(null);
+                  undo();
+                },
+              }
+            : undefined
+        }
       >
         {snackMsg}
       </Snackbar>
@@ -323,8 +385,14 @@ function Header({
           paddingBottom: 4,
         }}
       >
-        <Pressable onPress={onBack} hitSlop={6} style={{ padding: 10 }}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.onSurface} />
+        <Pressable
+          onPress={onBack}
+          hitSlop={6}
+          style={{ padding: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={t('back')}
+        >
+          <BackArrowIcon color={colors.onSurface} />
         </Pressable>
         <MaterialCommunityIcons name="storefront" size={22} color={colors.primary} />
         <View style={{ width: 6 }} />
@@ -546,7 +614,12 @@ function ItemRow({
         >
           {item.name}
         </Text>
-        <Pressable onPress={onUndoNotFound} hitSlop={6}>
+        <Pressable
+          onPress={onUndoNotFound}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('supermarket_mode_undo')}: ${item.name}`}
+        >
           <Text
             style={[
               Typography.labelSmall,
@@ -562,6 +635,17 @@ function ItemRow({
   return (
     <Pressable
       onPress={onBought}
+      accessibilityRole="button"
+      accessibilityLabel={[
+        `${t('shopping_list_mark_bought')}: ${item.name}`,
+        item.isUrgent ? t('urgent_toggle_title') : null,
+        item.quantity !== 1 || item.unit
+          ? `${item.quantity}${item.unit ? ` ${t(`unit_${item.unit.toLowerCase()}`)}` : ''}`
+          : null,
+        item.note || null,
+      ]
+        .filter(Boolean)
+        .join(', ')}
       style={({ pressed }) => [
         styles.itemRow,
         {
@@ -577,6 +661,9 @@ function ItemRow({
       <Pressable
         onPress={onBought}
         hitSlop={6}
+        // The whole row is already the "bought" button for screen readers.
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
         style={[
           styles.circleCheck,
           { backgroundColor: colors.primaryContainer + '80' },
@@ -626,7 +713,13 @@ function ItemRow({
           </View>
         )}
       </View>
-      <Pressable onPress={onNotFound} hitSlop={6} style={{ padding: 6 }}>
+      <Pressable
+        onPress={onNotFound}
+        hitSlop={6}
+        style={{ padding: 6 }}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('supermarket_mode_filter_not_found')}: ${item.name}`}
+      >
         <MaterialCommunityIcons name="magnify-close" size={20} color={colors.outline} />
       </Pressable>
     </Pressable>
@@ -653,7 +746,12 @@ function BoughtRow({ item, onRestore }: { item: ShoppingItem; onRestore: () => v
       >
         {item.name}
       </Text>
-      <Pressable onPress={onRestore} hitSlop={6}>
+      <Pressable
+        onPress={onRestore}
+        hitSlop={6}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('shopping_list_undo_bought')}: ${item.name}`}
+      >
         <Text style={[Typography.labelMedium, { color: colors.primary } as any]}>
           {t('shopping_list_undo_bought')}
         </Text>

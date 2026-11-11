@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "haserli-ai",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    // ID tokens must be issued for Haserli's Firebase project.
+    "FIREBASE_PROJECT_ID": "salino-aaf86"
+  },
+  "secrets": {
+    // GROQ_API_KEY and OPENROUTER_API_KEY are optional — their providers are skipped when unset.
+    "required": ["GEMINI_API_KEY"]
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "ratelimits": [
+    {
+      // Tohav's recipe-ai uses namespace 4207; keep these distinct.
+      "name": "USER_RATE_LIMITER",
+      "namespace_id": "4208",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ]
+}

@@ -1,11 +1,146 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Restored 2026-09-23. This is the ruleset that was live from 2026-03-31
-    // until a 2026-09-19 deploy replaced it with another app's rules and
-    // blocked every household read/write.
+    // PHASE 1 — transitional rules, compatible with EVERY app version in the stores.
+    //
+    // History: from 2026-03-31 the live ruleset was a catch-all
+    // `allow read, write: if request.auth != null`, so any signed-in user could
+    // silently read or delete any household. These rules close that, except for
+    // paths that released RN app builds still need (the web client and the
+    // native Android app are retired and not supported):
+    //   1. Invite lookup by query: `households where inviteCode == X` (list).
+    //   2. Joining without the `joinCode` field on the member doc.
+    // So a stranger can still enumerate homes and JOIN one — but only by adding a
+    // member doc, which shows in the member list and sends "member joined".
+    // Lists, items, activity and other users' profiles are no longer readable or
+    // writable without membership.
+    //
+    // PHASE 2 — firestore.rules.strict closes both paths. Deploy it only after a
+    // force-update gate retires the old builds.
+    // Tests: firestore-tests/rules.transitional.test.mjs (this file) and
+    //        firestore-tests/rules.test.mjs (strict).
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function householdPath(hid) {
+      return /databases/$(database)/documents/households/$(hid);
+    }
+
+    function memberPath(hid, userId) {
+      return /databases/$(database)/documents/households/$(hid)/members/$(userId);
+    }
+
+    function isMember(hid) {
+      return signedIn() && exists(memberPath(hid, uid()));
+    }
+
+    function isMemberAfter(hid) {
+      return signedIn() && existsAfter(memberPath(hid, uid()));
+    }
+
+    // The home's creator. Old builds delete a solo home's member docs BEFORE its
+    // activity / recurring items / home doc (account deletion), so the creator
+    // may still list + delete those two subcollections (never read single docs
+    // or write) — just enough for that cleanup.
+    function isCreator(hid) {
+      return signedIn()
+        && exists(householdPath(hid))
+        && get(householdPath(hid)).data.createdBy == uid();
+    }
+
+    function validInviteCodeWrite(code) {
+      return request.resource.data.keys().hasOnly(['householdId'])
+        && request.resource.data.householdId is string
+        && isMemberAfter(request.resource.data.householdId)
+        && getAfter(householdPath(request.resource.data.householdId)).data.inviteCode == code;
+    }
+
+    // ---- User profiles: only the owner reads or writes their own doc ----
+    match /users/{userId} {
+      allow read, write: if signedIn() && uid() == userId;
+    }
+
+    // ---- Invite-code index (new builds): code -> householdId ----
+    match /inviteCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if validInviteCodeWrite(code);
+      allow update: if validInviteCodeWrite(code)
+        && (resource.data.householdId == request.resource.data.householdId
+            || !exists(householdPath(resource.data.householdId))
+            || get(householdPath(resource.data.householdId)).data.inviteCode != code);
+      allow delete: if signedIn()
+        && (!exists(householdPath(resource.data.householdId))
+            || isMember(resource.data.householdId));
+    }
+
+    match /households/{hid} {
+      allow get: if signedIn();
+      // TRANSITIONAL: old builds find a home by `where inviteCode == X`.
+      allow list: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == uid()
+        && isMemberAfter(hid);
+
+      // Members may rename / extend; nobody may rewrite the owner or invite code.
+      allow update: if isMember(hid)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.inviteCode == resource.data.inviteCode;
+
+      // The creator, or any member once the creator has left.
+      allow delete: if signedIn()
+        && (resource.data.createdBy == uid()
+            || (isMember(hid) && !exists(memberPath(hid, resource.data.createdBy))));
+
+      match /members/{userId} {
+        allow get: if signedIn() && (uid() == userId || isMember(hid));
+        allow list: if isMember(hid);
+
+        allow create: if signedIn() && uid() == userId && (
+          // Owner doc written in the same batch as a new home.
+          (request.resource.data.role == 'OWNER'
+            && !exists(householdPath(hid))
+            && getAfter(householdPath(hid)).data.createdBy == uid())
+          ||
+          // TRANSITIONAL: join an existing home. New builds send `joinCode`
+          // (must match); old builds send none.
+          (request.resource.data.role == 'MEMBER'
+            && exists(householdPath(hid))
+            && (!('joinCode' in request.resource.data)
+                || request.resource.data.joinCode == get(householdPath(hid)).data.inviteCode))
+        );
+
+        allow update: if signedIn() && uid() == userId
+          && request.resource.data.role == resource.data.role;
+
+        // Leaving (self), or the home's creator removing someone.
+        allow delete: if signedIn() && (uid() == userId || isCreator(hid));
+      }
+
+      match /items/{itemId} {
+        allow read, write: if isMember(hid);
+      }
+
+      match /activity/{logId} {
+        allow read, write: if isMember(hid);
+        allow list, delete: if isCreator(hid);
+      }
+
+      match /recurringItems/{itemId} {
+        allow read, write: if isMember(hid);
+        allow list, delete: if isCreator(hid);
+      }    }
+
+    // Everything else (AI category cache, rate limits, push batches) is server-only.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

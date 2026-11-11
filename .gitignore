@@ -30,3 +30,5 @@ functions/.env.local
 
 # Server deploy credentials (local only)
 .deploy/
+
+firestore-tests/node_modules/

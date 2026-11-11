@@ -49,7 +49,13 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-import { localGetItems, localUpsertItem } from '../storage';
+import {
+  localGetItems,
+  localGetPendingOps,
+  localUpsertItem,
+  localUpsertItemAndEnqueue,
+  mergeRemoteItems,
+} from '../storage';
 
 function makeItem(id: string): ShoppingItem {
   return {
@@ -83,5 +89,46 @@ describe('storage write serialization', () => {
     const stored = await localGetItems(householdId);
     const storedIds = stored.map((i) => i.id).sort();
     expect(storedIds).toEqual([...ids].sort());
+  });
+
+  // Regression: pasting 4 items added only 3. A remote snapshot (from the
+  // previous add) merged between "write locally" and "enqueue", saw a local
+  // item that was neither on the server nor pending, and deleted it as stale.
+  it('a remote merge during an add never drops the new item', async () => {
+    const householdId = 'h-merge-race';
+    const remoteOnly = makeItem('already-synced');
+    const pendingOp = (id: string) => ({
+      id: `op-${id}`,
+      householdId,
+      targetType: 'ITEM' as const,
+      operationType: 'UPSERT' as const,
+      targetId: id,
+      createdAtMillis: Date.now(),
+    });
+
+    // The add and a snapshot that does not contain the new item, at the same time.
+    await Promise.all([
+      localUpsertItemAndEnqueue(householdId, makeItem('new-item'), pendingOp('new-item')),
+      mergeRemoteItems(householdId, [remoteOnly]),
+    ]);
+
+    const stored = (await localGetItems(householdId)).map((i) => i.id).sort();
+    expect(stored).toEqual(['already-synced', 'new-item']);
+    const ops = await localGetPendingOps(householdId);
+    expect(ops.map((o) => o.targetId)).toEqual(['new-item']);
+  });
+
+  it('a merge that runs right after the add keeps the pending item', async () => {
+    const householdId = 'h-merge-after';
+    await localUpsertItemAndEnqueue(householdId, makeItem('fresh'), {
+      id: 'op-fresh',
+      householdId,
+      targetType: 'ITEM',
+      operationType: 'UPSERT',
+      targetId: 'fresh',
+      createdAtMillis: Date.now(),
+    });
+    await mergeRemoteItems(householdId, []);
+    expect((await localGetItems(householdId)).map((i) => i.id)).toEqual(['fresh']);
   });
 });

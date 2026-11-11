@@ -34,6 +34,8 @@ export const activityCol = (householdId: string) =>
   collection(db, 'households', householdId, 'activity');
 export const recurringCol = (householdId: string) =>
   collection(db, 'households', householdId, 'recurringItems');
+/** Invite-code index (`inviteCodes/{code}` → `{ householdId }`). Rules allow `get` only, never listing. */
+export const inviteCodeDoc = (code: string) => doc(db, 'inviteCodes', code);
 
 // Shopping items listener
 export const subscribeToItems = (
@@ -189,7 +191,18 @@ export const firestoreCreateHousehold = async (household: Household, member: Hou
   batch.set(hRef, household);
   const mRef = doc(db, 'households', household.id, 'members', member.userId);
   batch.set(mRef, member);
+  if (household.inviteCode) {
+    batch.set(inviteCodeDoc(household.inviteCode), { householdId: household.id });
+  }
   await batch.commit();
+};
+
+/**
+ * Publishes a home's invite code to the index so others can join with it.
+ * Homes created before the index existed are backfilled this way by any member.
+ */
+export const firestorePublishInviteCode = async (householdId: string, inviteCode: string) => {
+  await setDoc(inviteCodeDoc(inviteCode), { householdId });
 };
 
 export const firestoreGetHousehold = async (householdId: string): Promise<Household | null> => {
@@ -322,6 +335,19 @@ export const firestoreUpdateNotificationPrefs = async (
   await updateDoc(ref, payload);
 };
 
+export const firestoreSetHouseholdMuted = async (
+  userId: string,
+  householdId: string,
+  muted: boolean
+) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(
+    ref,
+    { mutedHouseholdIds: muted ? arrayUnion(householdId) : arrayRemove(householdId) },
+    { merge: true }
+  );
+};
+
 export const firestoreSetUserLanguage = async (userId: string, language: string) => {
   const ref = doc(db, 'users', userId);
   await setDoc(ref, { language }, { merge: true });
@@ -343,21 +369,46 @@ async function deleteCollection(ref: CollectionReference): Promise<void> {
   }
 }
 
-/** Removes household document and all subcollections (items, members, activity, recurring). */
+/**
+ * Removes household document and all subcollections (items, members, activity, recurring).
+ * Order matters under the membership rules: everything that needs membership goes
+ * first, the user's own member doc goes last.
+ */
 export const firestoreDeleteHousehold = async (householdId: string): Promise<void> => {
+  const hRef = doc(db, 'households', householdId);
+  const snap = await getDoc(hRef);
+  const inviteCode = snap.exists() ? (snap.data()?.inviteCode as string | undefined) : undefined;
   await deleteCollection(itemsCol(householdId));
-  await deleteCollection(membersCol(householdId));
   await deleteCollection(activityCol(householdId));
   await deleteCollection(recurringCol(householdId));
-  await deleteDoc(doc(db, 'households', householdId));
+  await deleteDoc(hRef);
+  if (inviteCode) {
+    await deleteDoc(inviteCodeDoc(inviteCode)).catch(() => undefined);
+  }
+  await deleteCollection(membersCol(householdId));
 };
 
 // Find household by invite code
 export const firestoreFindByInviteCode = async (inviteCode: string): Promise<Household | null> => {
-  const { getDocs } = await import('firebase/firestore');
-  const q = query(householdsCol(), where('inviteCode', '==', inviteCode));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  return { id: d.id, ...d.data() } as Household;
+  const indexSnap = await getDoc(inviteCodeDoc(inviteCode));
+  const householdId = indexSnap.exists()
+    ? (indexSnap.data()?.householdId as string | undefined)
+    : undefined;
+  if (householdId) {
+    const household = await firestoreGetHousehold(householdId);
+    // A stale index entry (code rotated / home deleted) is not a match.
+    if (household && household.inviteCode === inviteCode) return household;
+    return null;
+  }
+  // Legacy lookup for homes whose code was never published to the index. The
+  // membership rules deny this query, so it only helps until they are deployed.
+  try {
+    const q = query(householdsCol(), where('inviteCode', '==', inviteCode), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() } as Household;
+  } catch {
+    return null;
+  }
 };

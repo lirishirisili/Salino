@@ -13,6 +13,7 @@ export { CategoryChip } from './CategoryChip';
 export { ShoppingItemsGroupCard } from './ShoppingItemsGroupCard';
 export { HeroSuggestionsCard } from './SuggestionsCard';
 export { EmptyState } from './EmptyState';
+export { BackArrowIcon } from './BackArrowIcon';
 export { LoadingIndicator, LoadingScreen } from './LoadingScreen';
 export { CategoryFilterRow } from './FilterChipRow';
 export { ItemNameAutocompleteField } from './ItemNameAutocompleteField';

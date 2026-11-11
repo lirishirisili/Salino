@@ -36,6 +36,11 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
       (logs) => {
         if (cancelled) return;
         set({ logs, isLoading: false });
+      },
+      // Without this a listener error (offline, permissions) left the feed spinning forever.
+      () => {
+        if (cancelled) return;
+        set({ isLoading: false });
       }
     );
     return () => {

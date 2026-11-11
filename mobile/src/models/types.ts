@@ -38,6 +38,8 @@ export interface HouseholdMember {
   displayName: string;
   role: string;
   joinedAt: Timestamp | null;
+  /** Invite code used to join; Firestore rules check it against the home's current code. */
+  joinCode?: string;
 }
 
 export interface NotificationPreferences {
@@ -45,6 +47,8 @@ export interface NotificationPreferences {
   urgentItem: boolean;
   shoppingComplete: boolean;
   memberJoined: boolean;
+  /** Daily reminder when a recurring item comes due and is not on the list. */
+  recurringDue: boolean;
 }
 
 export interface UserProfile {
@@ -56,14 +60,22 @@ export interface UserProfile {
   householdIds?: string[];
   fcmTokens?: string[];
   notificationPreferences?: NotificationPreferences;
+  /** Homes the user muted (no pushes except trip-home notices). */
+  mutedHouseholdIds?: string[];
   language?: string;
 }
 
+/**
+ * Applied to every key the user never toggled. All notifications are opt-in
+ * (off until switched on in Settings) — product decision. Must match DEFAULT_ON
+ * in functions/src/notificationLogic.ts.
+ */
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   itemAdded: false,
   urgentItem: false,
   shoppingComplete: false,
   memberJoined: false,
+  recurringDue: false,
 };
 
 export interface ActivityLog {

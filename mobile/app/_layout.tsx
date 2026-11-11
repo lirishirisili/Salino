@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LightTheme, DarkTheme } from '../src/theme';
 import { initI18n, isRTL, resolveBootLanguage } from '../src/i18n';
 import { useAuthStore, useInviteDeepLinkListener } from '../src/hooks';
+import { useIncomingShare } from '../src/hooks/useIncomingShare';
 import { SessionRouteGuard } from '../src/session/SessionRouteGuard';
 import { getSessionSnapshotSync } from '../src/session/sessionRestore';
 import { TourOverlay } from '../src/components/tour/TourOverlay';
@@ -36,6 +37,7 @@ export default function RootLayout() {
   const hasBootstrapped = useAuthStore((s) => s.hasBootstrapped);
 
   useInviteDeepLinkListener();
+  useIncomingShare();
 
   useEffect(() => {
     const sub = subscribeHideNativeSplashOnActive();

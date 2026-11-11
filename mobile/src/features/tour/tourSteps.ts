@@ -1,4 +1,9 @@
+import { Platform } from 'react-native';
 import type { TourMode, TourStep } from './types';
+
+/** Sharing a WhatsApp message into the app works on Android only (no iOS share extension yet). */
+const PASTE_BODY_KEY =
+  Platform.OS === 'android' ? 'tour.whatsNew.paste.bodyAndroid' : 'tour.whatsNew.paste.body';
 
 /** Full guided tour — shopping list, settings, activity, and history. */
 export const TOUR_STEPS: TourStep[] = [
@@ -8,6 +13,13 @@ export const TOUR_STEPS: TourStep[] = [
     route: 'shopping-list',
     titleKey: 'tour.steps.hero.title',
     bodyKey: 'tour.steps.hero.body',
+  },
+  {
+    id: 'quickAdd',
+    anchorId: 'list.quickAdd',
+    route: 'shopping-list',
+    titleKey: 'tour.steps.quickAdd.title',
+    bodyKey: 'tour.steps.quickAdd.body',
   },
   {
     id: 'filters',
@@ -80,11 +92,40 @@ export const TOUR_STEPS: TourStep[] = [
  */
 export const WHATS_NEW_STEPS: TourStep[] = [
   {
-    id: 'whatsNew.homes',
-    anchorId: 'list.homes',
+    id: 'whatsNew.paste',
+    anchorId: 'list.paste',
     route: 'shopping-list',
-    titleKey: 'tour.whatsNew.homes.title',
-    bodyKey: 'tour.whatsNew.homes.body',
+    titleKey: 'tour.whatsNew.paste.title',
+    bodyKey: PASTE_BODY_KEY,
+  },
+  {
+    id: 'whatsNew.quickAdd',
+    anchorId: 'list.quickAdd',
+    route: 'shopping-list',
+    titleKey: 'tour.whatsNew.quickAdd.title',
+    bodyKey: 'tour.whatsNew.quickAdd.body',
+  },
+  {
+    id: 'whatsNew.undo',
+    route: 'shopping-list',
+    titleKey: 'tour.whatsNew.undo.title',
+    bodyKey: 'tour.whatsNew.undo.body',
+  },
+  {
+    id: 'whatsNew.recurring',
+    anchorId: 'settings.recurring',
+    route: 'settings',
+    scrollIntoView: true,
+    titleKey: 'tour.whatsNew.recurring.title',
+    bodyKey: 'tour.whatsNew.recurring.body',
+  },
+  // Last step back on the list, so the announcement ends where the user started.
+  {
+    id: 'whatsNew.supermarket',
+    anchorId: 'list.supermarketFab',
+    route: 'shopping-list',
+    titleKey: 'tour.whatsNew.supermarket.title',
+    bodyKey: 'tour.whatsNew.supermarket.body',
   },
 ];
 

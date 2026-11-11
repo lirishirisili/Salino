@@ -3,8 +3,12 @@ export const TOUR_ENABLED = true;
 
 export const TOUR_STORAGE_KEY_PREFIX = '@salino/tour_completed_v3';
 
-/** Current "what's new" announcement; users who saw it are stored under this id. */
-export const WHATS_NEW_ID = 'trip_homes';
+/**
+ * Current "what's new" announcement; users who saw it are stored under this id.
+ * History: 'trip_homes' (1.3.54) → 'ai_paste_v1' (AI paste, quick add, undo,
+ * supermarket mode, recurring items).
+ */
+export const WHATS_NEW_ID = 'ai_paste_v1';
 export const WHATS_NEW_STORAGE_KEY_PREFIX = '@salino/whats_new';
 
 /** Wait after switching screens before showing a step. */

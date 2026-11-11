@@ -25,6 +25,7 @@ import type { NotificationPreferences } from '../../src/models/types';
 import { clearTourCompleted, useTourAnchor, useTourScroller, useTourStore } from '../../src/features/tour';
 import { changeLanguage, SUPPORTED_LANGUAGES, isRTL } from '../../src/i18n';
 import {
+  BackArrowIcon,
   BrandLogo,
   SalinoGradientBackground,
   SalinoSurfaceCard,
@@ -62,6 +63,9 @@ export default function SettingsScreen() {
   const setNotificationPref = useNotificationStore((s) => s.setPreference);
   const setPermissionGranted = useNotificationStore((s) => s.setPermissionGranted);
   const notificationsPermitted = useNotificationStore((s) => s.permissionGranted);
+  const mutedHouseholdIds = useNotificationStore((s) => s.mutedHouseholdIds);
+  const setHouseholdMuted = useNotificationStore((s) => s.setHouseholdMuted);
+  const isCurrentHomeMuted = !!household && mutedHouseholdIds.includes(household.id);
 
   const refreshNotificationPermission = useCallback(async () => {
     const granted = await getNotificationPermissionGranted();
@@ -101,6 +105,7 @@ export default function SettingsScreen() {
   const scrollContentRef = useRef<View>(null);
   useTourScroller('settings', scrollRef, scrollContentRef);
   const inviteAnchor = useTourAnchor('settings.invite');
+  const recurringAnchor = useTourAnchor('settings.recurring');
   const requestTourReplay = useTourStore((s) => s.requestReplay);
 
   const openPrivacyPolicy = () => {
@@ -199,11 +204,11 @@ export default function SettingsScreen() {
         <Pressable
           onPress={() => router.back()}
           hitSlop={8}
-          accessibilityLabel={t('settings_title')}
+          accessibilityLabel={t('back')}
           accessibilityRole="button"
           style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={colors.onBackground} />
+          <BackArrowIcon color={colors.onBackground} />
         </Pressable>
         <View style={{ marginHorizontal: 10 }}>
           <BrandLogo iconSize={38} showWordmark={false} />
@@ -315,6 +320,29 @@ export default function SettingsScreen() {
                     </View>
                   }
                 />
+              </View>
+              <Divider />
+
+              <View ref={recurringAnchor.ref} style={recurringAnchor.highlightStyle} collapsable={false}>
+              <Pressable
+                onPress={() => router.push('/(main)/recurring-items')}
+                accessibilityRole="button"
+                style={({ pressed }) => pressed && { opacity: 0.6 }}
+              >
+                <Row
+                  icon="calendar-refresh-outline"
+                  title={t('recurring_manage_title')}
+                  subtitle={t('recurring_manage_subtitle')}
+                  trailing={
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={22}
+                      color={colors.onSurfaceVariant}
+                      style={{ transform: [{ scaleX: I18nManager.isRTL ? 1 : -1 }] }}
+                    />
+                  }
+                />
+              </Pressable>
               </View>
               <Divider />
 
@@ -488,6 +516,19 @@ export default function SettingsScreen() {
               </>
             )}
             <View style={{ height: 8 }} />
+            {household && (
+              <>
+                <ToggleRow
+                  icon="bell-off-outline"
+                  title={t('settings_notifications_mute_home', { name: household.name })}
+                  subtitle={t('settings_notifications_mute_home_desc')}
+                  value={isCurrentHomeMuted}
+                  disabled={!notificationsPermitted}
+                  onValueChange={(v) => void setHouseholdMuted(household.id, v)}
+                />
+                <Divider />
+              </>
+            )}
             {NOTIFICATION_TOGGLES.map((toggle, index) => (
               <View key={toggle.key}>
                 {index > 0 && <Divider />}
@@ -496,7 +537,7 @@ export default function SettingsScreen() {
                   title={t(toggle.titleKey)}
                   subtitle={t(toggle.subtitleKey)}
                   value={notificationPrefs[toggle.key]}
-                  disabled={!notificationsPermitted}
+                  disabled={!notificationsPermitted || isCurrentHomeMuted}
                   onValueChange={(v) => setNotificationPref(toggle.key, v)}
                 />
               </View>
@@ -787,6 +828,12 @@ const NOTIFICATION_TOGGLES: {
     icon: 'account-plus-outline',
     titleKey: 'settings_notifications_member_joined',
     subtitleKey: 'settings_notifications_member_joined_desc',
+  },
+  {
+    key: 'recurringDue',
+    icon: 'calendar-refresh-outline',
+    titleKey: 'settings_notifications_recurring_due',
+    subtitleKey: 'settings_notifications_recurring_due_desc',
   },
 ];
 

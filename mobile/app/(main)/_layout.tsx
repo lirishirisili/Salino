@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { Stack, usePathname } from 'expo-router';
+import { Stack, router, usePathname } from 'expo-router';
+import { usePastePreviewStore } from '../../src/hooks/usePastePreviewStore';
 import { MainAdBannerHost } from '../../src/components/ads';
 import { initLevelPlay, isLevelPlayReady } from '../../src/services/initLevelPlay';
 import { logScreenView } from '../../src/services/initMobileAnalytics';
@@ -56,6 +57,20 @@ export default function MainLayout() {
     });
     return () => sub.remove();
   }, []);
+
+  // A list shared into the app (WhatsApp → Share → Haserli) opens the preview
+  // once the user is in a home — even if the share arrived before sign-in.
+  const pendingShare = usePastePreviewStore((s) => s.pendingShare);
+  useEffect(() => {
+    if (!pendingShare || !activeHouseholdId) return;
+    // Let the stack finish mounting on a cold start before pushing over it.
+    const timer = setTimeout(() => {
+      if (usePastePreviewStore.getState().consumePendingShare()) {
+        router.push('/(main)/paste-preview');
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [pendingShare, activeHouseholdId]);
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -144,6 +159,8 @@ export default function MainLayout() {
         <Stack.Screen name="supermarket-mode" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="create-temporary-home" />
+        <Stack.Screen name="recurring-items" />
+        <Stack.Screen name="paste-preview" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
     </MainAdBannerHost>
   );

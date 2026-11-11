@@ -5,8 +5,10 @@ import {
   localGetItems,
   localGetActivity,
   localGetRecurring,
+  localUpsertItemAndEnqueue,
   type PendingSyncOperation,
 } from '../local/storage';
+import type { ShoppingItem } from '../models';
 import {
   firestoreAddItem,
   firestoreUpdateItem,
@@ -38,6 +40,21 @@ export async function enqueueUpsert(
     targetType,
     operationType: 'UPSERT',
     targetId,
+    createdAtMillis: Date.now(),
+  });
+}
+
+/**
+ * Saves an item locally and queues its upload as one atomic step (see
+ * `localUpsertItemAndEnqueue`). Use this instead of localUpsertItem + enqueueUpsert.
+ */
+export async function upsertItemAndEnqueue(householdId: string, item: ShoppingItem): Promise<void> {
+  await localUpsertItemAndEnqueue(householdId, item, {
+    id: generateId(),
+    householdId,
+    targetType: 'ITEM',
+    operationType: 'UPSERT',
+    targetId: item.id,
     createdAtMillis: Date.now(),
   });
 }

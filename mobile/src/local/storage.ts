@@ -82,16 +82,39 @@ export const localSetItems = async (householdId: string, items: ShoppingItem[]):
   await runExclusive(KEYS.ITEMS(householdId), () => writeItemsRaw(householdId, items));
 };
 
+async function upsertItemRaw(householdId: string, item: ShoppingItem): Promise<void> {
+  const items = await readItemsRaw(householdId);
+  const idx = items.findIndex((i) => i.id === item.id);
+  if (idx >= 0) {
+    items[idx] = item;
+  } else {
+    items.unshift(item);
+  }
+  await writeItemsRaw(householdId, items);
+}
+
 export const localUpsertItem = async (householdId: string, item: ShoppingItem): Promise<void> => {
+  await runExclusive(KEYS.ITEMS(householdId), () => upsertItemRaw(householdId, item));
+};
+
+/**
+ * Local write + its sync-queue op as ONE step under the items lock.
+ *
+ * Done as two separate steps, a remote snapshot could run `mergeRemoteItems`
+ * in between: the item was not on the server and not yet "pending", so the
+ * merge deleted it as stale; the flush then found no local item and dropped the
+ * op — the item never reached Firestore (pasting 4 items added only 3), and a
+ * quick edit could be reverted the same way. The op is added after the write,
+ * so a concurrent flush never sees an op without its item.
+ */
+export const localUpsertItemAndEnqueue = async (
+  householdId: string,
+  item: ShoppingItem,
+  op: PendingSyncOperation,
+): Promise<void> => {
   await runExclusive(KEYS.ITEMS(householdId), async () => {
-    const items = await readItemsRaw(householdId);
-    const idx = items.findIndex((i) => i.id === item.id);
-    if (idx >= 0) {
-      items[idx] = item;
-    } else {
-      items.unshift(item);
-    }
-    await writeItemsRaw(householdId, items);
+    await upsertItemRaw(householdId, item);
+    await localAddPendingOp(op);
   });
 };
 

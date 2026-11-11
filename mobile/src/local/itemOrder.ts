@@ -1,11 +1,16 @@
 import { ShoppingItem } from '../models';
 
+/**
+ * Order key: when the item was ADDED. Using `updatedAt` made the list jump —
+ * every edit, quantity merge, undo or a partner's change moved the item to the
+ * top. The bought section sorts itself by `updatedAt` (most recently bought).
+ */
 function itemSortMillis(item: ShoppingItem): number {
-  return item.updatedAt?.toMillis() ?? item.createdAt?.toMillis() ?? 0;
+  return item.createdAt?.toMillis() ?? item.updatedAt?.toMillis() ?? 0;
 }
 
 /**
- * Newest first — same as Firestore `orderBy('updatedAt', 'desc')`.
+ * Newest-added first, stable across edits.
  * Cache / Map iteration can be oldest-first; callers must sort before render.
  */
 export function sortShoppingItems(items: ShoppingItem[]): ShoppingItem[] {

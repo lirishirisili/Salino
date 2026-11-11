@@ -36,6 +36,9 @@ import { UserProfile } from '../models';
 import type { ProfileLoadResult } from '../session/sessionRouting';
 
 /** Sync Firebase Auth language with the app's current i18n language. */
+/** Firebase requires a sign-in within ~5 minutes to delete a user; keep a margin. */
+const RECENT_LOGIN_WINDOW_MS = 4 * 60 * 1000;
+
 function syncAuthLanguage(): void {
   auth.languageCode = i18n.language || 'en';
 }
@@ -214,6 +217,17 @@ export const authRepository = {
     const user = auth.currentUser;
     if (!user) {
       throw Object.assign(new Error('Not signed in'), { code: 'auth/not-signed-in' });
+    }
+
+    // Firebase only deletes an auth user who signed in recently (~5 min). Check
+    // that BEFORE deleting any data, or the homes/profile are wiped and then
+    // `deleteUser` fails, leaving a live account with no data.
+    const { authTime } = await user.getIdTokenResult();
+    const signedInAgoMs = Date.now() - Date.parse(authTime);
+    if (!Number.isFinite(signedInAgoMs) || signedInAgoMs > RECENT_LOGIN_WINDOW_MS) {
+      throw Object.assign(new Error('Requires recent login'), {
+        code: 'auth/requires-recent-login',
+      });
     }
 
     const profile = await firestoreGetUser(user.uid);

@@ -3,14 +3,13 @@ import { ShoppingItem, RecurringItem, ItemStatus, ActivityType, ActivityLog } fr
 import { subscribeToItems } from '../remote/firestoreService';
 import {
   localGetItems,
-  localUpsertItem,
   localDeleteItem,
   localUpsertActivity,
   mergeRemoteItems,
 } from '../local/storage';
 import { auth } from '../remote/firebase';
 import { normalizeItemName } from '../utils/textUtils';
-import { enqueueUpsert, enqueueDelete, flush } from '../services/syncQueueProcessor';
+import { enqueueUpsert, enqueueDelete, flush, upsertItemAndEnqueue } from '../services/syncQueueProcessor';
 import { sortShoppingItems } from '../local/itemOrder';
 
 function generateId(): string {
@@ -81,8 +80,7 @@ export const shoppingRepository = {
     };
 
     // Local-first: write local → enqueue → flush in background.
-    await localUpsertItem(householdId, newItem);
-    await enqueueUpsert(householdId, 'ITEM', newItem.id);
+    await upsertItemAndEnqueue(householdId, newItem);
     runBackground(flush(householdId));
 
     // Activity logging — local-first too.
@@ -99,8 +97,7 @@ export const shoppingRepository = {
       normalizedName: normalizeItemName(item.name),
       updatedAt: Timestamp.now(),
     };
-    await localUpsertItem(householdId, updated);
-    await enqueueUpsert(householdId, 'ITEM', item.id);
+    await upsertItemAndEnqueue(householdId, updated);
     runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_UPDATED, item.id, item.name)
@@ -127,8 +124,7 @@ export const shoppingRepository = {
       updatedAt: Timestamp.now(),
     };
 
-    await localUpsertItem(householdId, boughtItem);
-    await enqueueUpsert(householdId, 'ITEM', itemId);
+    await upsertItemAndEnqueue(householdId, boughtItem);
     runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_BOUGHT, itemId, item.name)
@@ -162,8 +158,7 @@ export const shoppingRepository = {
       updatedAt: Timestamp.now(),
     };
 
-    await localUpsertItem(householdId, activeItem);
-    await enqueueUpsert(householdId, 'ITEM', itemId);
+    await upsertItemAndEnqueue(householdId, activeItem);
     runBackground(flush(householdId));
     runBackground(
       shoppingRepository.logActivity(householdId, ActivityType.ITEM_RESTORED, itemId, item.name)
@@ -181,8 +176,7 @@ export const shoppingRepository = {
 
   toggleFavorite: async (householdId: string, item: ShoppingItem): Promise<void> => {
     const updated = { ...item, isFavorite: !item.isFavorite, updatedAt: Timestamp.now() };
-    await localUpsertItem(householdId, updated);
-    await enqueueUpsert(householdId, 'ITEM', item.id);
+    await upsertItemAndEnqueue(householdId, updated);
     runBackground(flush(householdId));
   },
 

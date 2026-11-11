@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   FlatList,
   Pressable,
@@ -30,6 +30,10 @@ interface Props {
   cornerRadius?: number;
   outlineColor?: string;
   activeOutlineColor?: string;
+  /** Focus the field on mount (opens the keyboard). */
+  autoFocus?: boolean;
+  /** Changing this number re-focuses the field (e.g. after "add another"). */
+  focusKey?: number;
 }
 
 export function ItemNameAutocompleteField({
@@ -48,10 +52,17 @@ export function ItemNameAutocompleteField({
   cornerRadius = Layout.inputCorner,
   outlineColor,
   activeOutlineColor,
+  autoFocus = false,
+  focusKey,
 }: Props) {
   const colors = useThemeColors();
   const { t } = useTranslation();
   const inputRef = useRef<RNTextInput>(null);
+
+  useEffect(() => {
+    if (focusKey === undefined || focusKey === 0) return;
+    inputRef.current?.focus();
+  }, [focusKey]);
   const isFocusedRef = useRef(false);
   const selectingSuggestionRef = useRef(false);
   const expanded = isAutocompleteVisible && suggestions.length > 0;
@@ -216,6 +227,7 @@ export function ItemNameAutocompleteField({
         ref={inputRef}
         value={value}
         onChangeText={onChangeText}
+        autoFocus={autoFocus}
         label={label}
         placeholder={placeholder}
         mode="outlined"

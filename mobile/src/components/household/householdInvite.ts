@@ -19,5 +19,7 @@ export async function shareHouseholdInvite(household: Household, t: TFunction, l
           url,
         })
       : t('settings_share_invite_message', { code: household.inviteCode, url });
-  await Share.share({ message, url });
+  // The link is already inside `message`. Passing `url` too made iOS share it
+  // twice (WhatsApp showed the link two times); Android ignores `url` anyway.
+  await Share.share({ message });
 }

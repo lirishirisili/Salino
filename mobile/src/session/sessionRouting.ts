@@ -42,6 +42,20 @@ export function shouldResetHouseholdFromProfile(result: ProfileLoadResult): bool
   return result.source === 'server' && !result.profile.activeHouseholdId;
 }
 
+/**
+ * A signed-in auth event is a harmless re-fire (token refresh / remount) only
+ * when this same uid was already the live session before the event. The very
+ * first sign-in after booting into /auth also has hasBootstrapped=true, but it
+ * must run the full profile path so a brand-new user resolves to household-setup.
+ */
+export function isSameSessionRefire(input: {
+  hasBootstrapped: boolean;
+  previousUid: string | null;
+  uid: string;
+}): boolean {
+  return input.hasBootstrapped && input.previousUid === input.uid;
+}
+
 export function householdIdFromProfileResult(result: ProfileLoadResult): string | null {
   return result.profile?.activeHouseholdId ?? null;
 }

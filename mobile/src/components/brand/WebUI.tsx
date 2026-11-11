@@ -3,7 +3,9 @@ import { Platform, Pressable, StyleSheet, View, ViewStyle, StyleProp } from 'rea
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useIsDark, useThemeColors, Typography, Layout, BorderRadius } from '../../theme';
+import { BackArrowIcon } from './BackArrowIcon';
 
 /** ── Centered content column with web max-width ─────────────────── */
 export function SalinoWebColumn({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -86,6 +88,7 @@ export function SalinoWebInnerTopBar({
 }) {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   return (
     <View
       style={[
@@ -97,12 +100,14 @@ export function SalinoWebInnerTopBar({
       <Pressable
         onPress={onBack}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('back')}
         style={({ pressed }) => [
           styles.topBarBtn,
           { opacity: pressed ? 0.6 : 1, backgroundColor: 'transparent' },
         ]}
       >
-        <MaterialCommunityIcons name="arrow-left" size={24} color={colors.onBackground} />
+        <BackArrowIcon color={colors.onBackground} />
       </Pressable>
       <View style={{ flex: 1, paddingHorizontal: 4 }}>
         <SalinoWebAppBarTitle text={title} />

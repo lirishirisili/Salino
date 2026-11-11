@@ -102,8 +102,10 @@ const ShoppingItemRow = React.memo(function ShoppingItemRow({
         onPress={handleToggle}
         hitSlop={8}
         style={styles.checkboxHit}
-        accessibilityLabel={isBought ? t('shopping_list_undo_bought') : t('shopping_list_mark_bought')}
-        accessibilityRole="button"
+        // Screen readers need the item: "Mark as bought: Milk", not just "Mark as bought".
+        accessibilityLabel={`${isBought ? t('shopping_list_undo_bought') : t('shopping_list_mark_bought')}: ${item.name}`}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: isBought }}
       >
         <View
           style={[
@@ -125,20 +127,47 @@ const ShoppingItemRow = React.memo(function ShoppingItemRow({
       </Pressable>
 
       {/* Middle content */}
-      <Pressable onPress={handlePress} style={styles.middle}>
-        <Text
-          style={[
-            Typography.titleMedium,
-            {
-              fontWeight: isBought ? '400' : '600',
-              textDecorationLine: isBought ? 'line-through' : 'none',
-              color: isBought ? `${colors.onSurface}73` : colors.onSurface,
-            } as any,
-          ]}
-          numberOfLines={2}
-        >
-          {item.name}
-        </Text>
+      <Pressable
+        onPress={handlePress}
+        style={styles.middle}
+        accessibilityRole="button"
+        accessibilityLabel={[
+          item.isUrgent && !isBought ? t('urgent_toggle_title') : null,
+          item.name,
+          qtyText ? (unitLabel ? `${qtyText} ${unitLabel}` : qtyText) : null,
+          item.note?.trim() || null,
+        ]
+          .filter(Boolean)
+          .join(', ')}
+        accessibilityHint={t('edit_item_title')}
+      >
+        <View style={styles.nameRow}>
+          {item.isUrgent && !isBought && (
+            <MaterialCommunityIcons name="alert-circle" size={16} color={colors.error} />
+          )}
+          <Text
+            style={[
+              Typography.titleMedium,
+              {
+                flexShrink: 1,
+                fontWeight: isBought ? '400' : '600',
+                textDecorationLine: isBought ? 'line-through' : 'none',
+                color: isBought ? `${colors.onSurface}73` : colors.onSurface,
+              } as any,
+            ]}
+            numberOfLines={2}
+          >
+            {item.name}
+          </Text>
+        </View>
+        {!isBought && !!item.note?.trim() && (
+          <Text
+            style={[Typography.bodySmall, { color: colors.onSurfaceVariant, marginTop: 2 } as any]}
+            numberOfLines={1}
+          >
+            {item.note.trim()}
+          </Text>
+        )}
         <View style={styles.metaRow}>
           {qtyText !== '' && (
             <Text style={[Typography.bodySmall, { color: colors.onSurfaceVariant }]}>
@@ -161,7 +190,7 @@ const ShoppingItemRow = React.memo(function ShoppingItemRow({
           onPress={handleDelete}
           hitSlop={8}
           style={styles.deleteHit}
-          accessibilityLabel={t('shopping_list_delete')}
+          accessibilityLabel={`${t('shopping_list_delete')}: ${item.name}`}
           accessibilityRole="button"
         >
           <Text style={{ fontSize: 19, color: `${colors.onSurfaceVariant}e6` }}>{'🗑️'}</Text>
@@ -231,6 +260,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flexWrap: 'wrap',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   deleteHit: {
     width: 36,

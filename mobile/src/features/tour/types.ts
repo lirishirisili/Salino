@@ -6,7 +6,10 @@ export type TourAnchorId =
   | 'list.settings'
   | 'list.activity'
   | 'list.homes'
+  | 'list.quickAdd'
+  | 'list.paste'
   | 'settings.invite'
+  | 'settings.recurring'
   | 'history.title';
 
 export type TourRoute = 'shopping-list' | 'settings' | 'history' | 'activity';

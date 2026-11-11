@@ -52,4 +52,17 @@ describe('itemOrder', () => {
     ]);
     expect(sorted.map((i) => i.id)).toEqual(['milka', 'avocado', 'pancake']);
   });
+
+  it('an edit (newer updatedAt) does not move the item to the top', () => {
+    const edited = {
+      ...makeItem('pancake', 1_700_000_000_000),
+      updatedAt: Timestamp.fromMillis(1_700_000_900_000),
+    };
+    const sorted = sortShoppingItems([
+      edited,
+      makeItem('avocado', 1_700_000_100_000),
+      makeItem('milka', 1_700_000_200_000),
+    ]);
+    expect(sorted.map((i) => i.id)).toEqual(['milka', 'avocado', 'pancake']);
+  });
 });

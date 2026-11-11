@@ -9,6 +9,7 @@ export {
 export { useTourStore } from './tourStore';
 export type { TourBootstrapStatus } from './tourStore';
 export { useTourAnchor } from './useTourAnchor';
+export type { TourAnchor } from './useTourAnchor';
 export { useTourScroller } from './useTourScroller';
 export { stepsForUser } from './tourSteps';
 export { buildTourPreviewItems, buildTourPreviewSuggestions } from './tourPreview';

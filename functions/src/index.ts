@@ -9,6 +9,14 @@ import {
   onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import {
+  ITEM_ADDED_BATCH_WINDOW_MS,
+  isHouseholdMuted,
+  isPreferenceEnabled,
+  joinItemNames,
+  recurringItemsToRemind,
+  type PreferenceKey,
+} from "./notificationLogic";
 
 initializeApp();
 
@@ -232,6 +240,7 @@ type NotificationType =
   | "urgentItem"
   | "shoppingComplete"
   | "memberJoined"
+  | "recurringDue"
   | "householdExpiringSoon"
   | "householdExpired";
 
@@ -292,6 +301,15 @@ const NOTIFICATION_BODIES: Record<NotificationType, Record<string, string>> = {
     ru: "{{name}} присоединился(ась) к семье",
     am: "{{name}} ወደ ቤተሰቡ ተቀላቀለ",
   },
+  recurringDue: {
+    en: "Time to buy again: {{item}}",
+    he: "הגיע הזמן לקנות שוב: {{item}}",
+    ar: "حان وقت الشراء مجددًا: {{item}}",
+    fr: "C'est le moment de racheter : {{item}}",
+    es: "Toca volver a comprar: {{item}}",
+    ru: "Пора снова купить: {{item}}",
+    am: "እንደገና የሚገዛበት ጊዜ ደርሷል፦ {{item}}",
+  },
   // {{name}} is the home's name for the two trip-home notices.
   householdExpiringSoon: {
     en: "\"{{name}}\" ends within 24 hours. The creator can extend it in the app.",
@@ -313,17 +331,37 @@ const NOTIFICATION_BODIES: Record<NotificationType, Record<string, string>> = {
   },
 };
 
+/** Several items added in one batch window. {{count}} and {{items}} are replaced. */
+const ITEMS_ADDED_BODIES: Record<string, string> = {
+  en: "{{name}} added {{count}} items: {{items}}",
+  he: "{{name}} הוסיף/ה {{count}} פריטים: {{items}}",
+  ar: "{{name}} أضاف {{count}} عناصر: {{items}}",
+  fr: "{{name}} a ajouté {{count}} articles : {{items}}",
+  es: "{{name}} añadió {{count}} artículos: {{items}}",
+  ru: "{{name}} добавил(а) {{count}} товаров: {{items}}",
+  am: "{{name}} {{count}} ንጥሎችን ጨመረ፦ {{items}}",
+};
+
 function normalizeLang(lang: unknown): string {
   if (typeof lang !== "string") return "en";
   const short = lang.trim().toLowerCase().split(/[-_]/)[0];
   return (SUPPORTED_LANGS as readonly string[]).includes(short) ? short : "en";
 }
 
-function buildBody(
-  type: NotificationType,
-  lang: string,
-  params: { name: string; item?: string }
-): string {
+type PushParams = { name: string; item?: string; items?: string[] };
+
+function buildBody(type: NotificationType, lang: string, params: PushParams): string {
+  const items = params.items ?? [];
+  if (type === "itemAdded" && items.length > 1) {
+    const template = ITEMS_ADDED_BODIES[lang] ?? ITEMS_ADDED_BODIES.en;
+    return template
+      .replace("{{name}}", params.name)
+      .replace("{{count}}", String(new Set(items.map((i) => i.trim())).size))
+      .replace("{{items}}", joinItemNames(items, lang));
+  }
+  if (items.length > 0) {
+    params = { ...params, item: joinItemNames(items, lang) };
+  }
   const table = NOTIFICATION_BODIES[type];
   const template = table[lang] ?? table.en;
   return template
@@ -340,7 +378,7 @@ async function sendToHouseholdMembers(
   householdId: string,
   excludeUid: string,
   type: NotificationType,
-  params: { name: string; item?: string }
+  params: PushParams
 ): Promise<void> {
   const db = getFirestore();
 
@@ -389,9 +427,13 @@ async function sendToHouseholdMembers(
         return;
       }
 
-      const prefs = (data.notificationPreferences ?? {}) as Record<string, unknown>;
-      // Preferences default to disabled when unset (opt-in via Settings).
-      if (!isSystemNotice && prefs[type] !== true) {
+      // Unset preferences use the defaults (notificationLogic.DEFAULT_ON); trip-home
+      // notices are always sent. A muted home sends nothing but those notices.
+      if (
+        !isSystemNotice &&
+        (!isPreferenceEnabled(data.notificationPreferences, type as PreferenceKey) ||
+          isHouseholdMuted(data.mutedHouseholdIds, householdId))
+      ) {
         skippedPrefsOff += 1;
         return;
       }
@@ -412,19 +454,28 @@ async function sendToHouseholdMembers(
           data: { type, householdId },
           android: {
             priority: type === "urgentItem" ? "high" : "normal",
+            // Same tag replaces the previous "items added" notice for this home
+            // instead of stacking one per batch.
+            ...(type === "itemAdded" ? { collapseKey: `${householdId}:itemAdded` } : {}),
             notification: {
               channelId: NOTIFICATION_CHANNEL_ID,
               priority: type === "urgentItem" ? "high" : "default",
+              ...(type === "itemAdded" ? { tag: `${householdId}:itemAdded` } : {}),
             },
           },
           apns: {
             headers: {
               "apns-priority": "10",
+              ...(type === "itemAdded"
+                ? { "apns-collapse-id": `${householdId}:itemAdded`.slice(0, 64) }
+                : {}),
             },
             payload: {
               aps: {
                 alert: { title, body },
                 sound: "default",
+                // Groups a home's notices together in Notification Center.
+                "thread-id": householdId,
               },
             },
           },
@@ -499,11 +550,67 @@ async function resolveMemberName(
   return "Someone";
 }
 
+/** A batch older than this was abandoned (its flusher crashed); start a new one. */
+const STALE_BATCH_MS = ITEM_ADDED_BATCH_WINDOW_MS * 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Collects "item added" pushes from one person to one home into a single push.
+ * The first add of a window creates `pushBatches/{home}_{user}` and becomes the
+ * flusher: it waits out the window, then sends one notice with every name the
+ * later adds appended. Server-only collection (rules deny clients).
+ */
+async function batchItemAdded(
+  householdId: string,
+  addedBy: string,
+  name: string,
+  itemName: string
+): Promise<void> {
+  const db = getFirestore();
+  const batchRef = db.collection("pushBatches").doc(`${householdId}_${addedBy || "unknown"}`);
+
+  const isFlusher = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(batchRef);
+    const data = snap.data();
+    const startedAt = (data?.startedAt as Timestamp | undefined)?.toMillis() ?? 0;
+    if (snap.exists && Date.now() - startedAt < STALE_BATCH_MS) {
+      const items = Array.isArray(data?.items) ? (data?.items as string[]) : [];
+      tx.update(batchRef, { items: [...items, itemName] });
+      return false;
+    }
+    tx.set(batchRef, { householdId, addedBy, items: [itemName], startedAt: Timestamp.now() });
+    return true;
+  });
+  if (!isFlusher) return;
+
+  await sleep(ITEM_ADDED_BATCH_WINDOW_MS);
+
+  const items = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(batchRef);
+    if (!snap.exists) return [] as string[];
+    tx.delete(batchRef);
+    const list = snap.data()?.items;
+    return Array.isArray(list) ? (list as string[]) : [];
+  });
+  if (items.length === 0) return;
+
+  await sendToHouseholdMembers(householdId, addedBy, "itemAdded", {
+    name,
+    item: items[0],
+    items,
+  });
+}
+
 export const onItemAdded = onDocumentCreated(
   {
     document: "households/{householdId}/items/{itemId}",
     region: NOTIFICATION_REGION,
     maxInstances: 10,
+    // The batch flusher waits ITEM_ADDED_BATCH_WINDOW_MS before sending.
+    timeoutSeconds: 120,
   },
   async (event) => {
     const snap = event.data;
@@ -520,14 +627,13 @@ export const onItemAdded = onDocumentCreated(
       item.addedByName as string | undefined
     );
     const itemName = (item.name as string | undefined) ?? "";
-    const isUrgent = item.isUrgent === true;
 
-    await sendToHouseholdMembers(
-      householdId,
-      addedBy,
-      isUrgent ? "urgentItem" : "itemAdded",
-      { name, item: itemName }
-    );
+    // Urgent items go out at once; regular adds are batched.
+    if (item.isUrgent === true) {
+      await sendToHouseholdMembers(householdId, addedBy, "urgentItem", { name, item: itemName });
+      return;
+    }
+    await batchItemAdded(householdId, addedBy, name, itemName);
   }
 );
 
@@ -594,6 +700,74 @@ export const onMemberJoined = onDocumentCreated(
     // When a household is created the owner is the only member, so there are no
     // other recipients and nothing is sent.
     await sendToHouseholdMembers(householdId, userId, "memberJoined", { name });
+  }
+);
+
+/**
+ * Daily: one push per home listing its recurring items that came due and are not
+ * already on the list. Each item is reminded once per due date (`remindedForDueAt`).
+ * Needs the collection-group index on `nextDueAt` (firestore.indexes.json).
+ */
+export const remindRecurringItemsDue = onSchedule(
+  {
+    schedule: "0 9 * * *",
+    timeZone: "Asia/Jerusalem",
+    region: NOTIFICATION_REGION,
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const db = getFirestore();
+    const dueSnap = await db
+      .collectionGroup("recurringItems")
+      .where("nextDueAt", "<=", Timestamp.now())
+      .get();
+
+    const byHousehold = new Map<string, FirebaseFirestore.QueryDocumentSnapshot[]>();
+    for (const doc of dueSnap.docs) {
+      const data = doc.data();
+      if (data.enabled !== true) continue;
+      const dueMs = (data.nextDueAt as Timestamp | undefined)?.toMillis();
+      const remindedMs = (data.remindedForDueAt as Timestamp | undefined)?.toMillis();
+      if (!dueMs || remindedMs === dueMs) continue;
+      const householdId = doc.ref.parent.parent?.id;
+      if (!householdId) continue;
+      const list = byHousehold.get(householdId) ?? [];
+      list.push(doc);
+      byHousehold.set(householdId, list);
+    }
+
+    for (const [householdId, docs] of byHousehold) {
+      try {
+        const activeSnap = await db
+          .collection("households")
+          .doc(householdId)
+          .collection("items")
+          .where("status", "==", "ACTIVE")
+          .get();
+        const activeNames = activeSnap.docs.map((d) => String(d.data().name ?? ""));
+        const names = recurringItemsToRemind(
+          docs.map((d) => ({
+            name: String(d.data().name ?? ""),
+            normalizedName: d.data().normalizedName as string | undefined,
+          })),
+          activeNames
+        );
+        if (names.length > 0) {
+          await sendToHouseholdMembers(householdId, "", "recurringDue", {
+            name: "",
+            item: names[0],
+            items: names,
+          });
+        }
+        const batch = db.batch();
+        for (const d of docs) {
+          batch.update(d.ref, { remindedForDueAt: d.data().nextDueAt });
+        }
+        await batch.commit();
+      } catch (e) {
+        console.warn(`[recurringDue] household=${householdId} failed`, e);
+      }
+    }
   }
 );
 

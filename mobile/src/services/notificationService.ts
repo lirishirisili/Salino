@@ -20,14 +20,49 @@ let openedAppUnsub: (() => void) | null = null;
 let responseSub: Notifications.Subscription | null = null;
 let infrastructureReady = false;
 
-// Show notifications while the app is in the foreground.
+/** Trip-home lifecycle notices always show, even for the home on screen. */
+const ALWAYS_SHOWN_TYPES = new Set(['householdExpiringSoon', 'householdExpired']);
+
+/**
+ * True when a push is about the home the user is looking at right now: the
+ * live list already shows the change, so a banner + sound is just noise.
+ */
+export function isAboutVisibleHome(
+  data: Record<string, unknown> | undefined,
+  activeHouseholdId: string | null
+): boolean {
+  const householdId = data?.householdId;
+  const type = data?.type;
+  if (typeof householdId !== 'string' || !householdId) return false;
+  if (typeof type === 'string' && ALWAYS_SHOWN_TYPES.has(type)) return false;
+  return householdId === activeHouseholdId;
+}
+
+function currentActiveHouseholdId(): string | null {
+  try {
+    // Lazy import keeps the store graph out of this service's module init.
+    const { useHouseholdStore } = require('../hooks/useHouseholdStore') as typeof import('../hooks/useHouseholdStore');
+    return useHouseholdStore.getState().activeHouseholdId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Foreground presentation. The handler only runs while the app is in the
+// foreground, so "about the visible home" means the user is in the app on it.
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async (notification) => {
+    const quiet = isAboutVisibleHome(
+      notification.request.content.data as Record<string, unknown> | undefined,
+      currentActiveHouseholdId()
+    );
+    return {
+      shouldShowBanner: !quiet,
+      shouldShowList: true,
+      shouldPlaySound: !quiet,
+      shouldSetBadge: false,
+    };
+  },
 });
 
 const isSupportedPlatform = (): boolean => Platform.OS === 'android' || Platform.OS === 'ios';
@@ -142,6 +177,15 @@ function attachListeners(): void {
     foregroundUnsub = messaging().onMessage(async (remoteMessage) => {
       const notif = remoteMessage.notification;
       if (!notif) return;
+      // The open list already shows this change live; don't re-post it.
+      if (
+        isAboutVisibleHome(
+          remoteMessage.data as Record<string, unknown> | undefined,
+          currentActiveHouseholdId()
+        )
+      ) {
+        return;
+      }
       await Notifications.scheduleNotificationAsync({
         content: {
           title: notif.title ?? '',

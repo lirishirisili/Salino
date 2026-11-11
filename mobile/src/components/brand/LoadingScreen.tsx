@@ -1,8 +1,9 @@
-import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors, Typography } from '../../theme';
+import { useAuthStore } from '../../hooks/useAuthStore';
 import { BrandLogo } from './BrandLogo';
 
 /**
@@ -35,6 +36,23 @@ export function LoadingIndicator({ caption }: { caption?: string } = {}) {
 export function LoadingScreen() {
   const colors = useThemeColors();
   const { t } = useTranslation(undefined, { useSuspense: false });
+  const canRetry = useAuthStore(
+    (s) => s.isSignedIn && !s.isSubmitting && s.householdResolution === 'pending'
+  );
+  const [showRetry, setShowRetry] = useState(false);
+  const [retryRound, setRetryRound] = useState(0);
+
+  // A signed-in user whose household is still unresolved after a while gets a
+  // retry instead of a spinner that only an app restart would clear.
+  useEffect(() => {
+    if (!canRetry) {
+      setShowRetry(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowRetry(true), RETRY_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [canRetry, retryRound]);
+
   return (
     <View style={styles.container}>
       <BrandLogo iconSize={96} showGlow center shadowElevation={12} />
@@ -46,9 +64,24 @@ export function LoadingScreen() {
       >
         {t('shopping_list_live_badge')}
       </Text>
+      {showRetry && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            setShowRetry(false);
+            setRetryRound((n) => n + 1);
+            useAuthStore.getState().retryProfile();
+          }}
+          style={{ marginTop: 20, paddingVertical: 10, paddingHorizontal: 20 }}
+        >
+          <Text style={[Typography.labelLarge, { color: colors.primary } as any]}>{t('retry')}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
+
+const RETRY_AFTER_MS = 10000;
 
 const styles = StyleSheet.create({
   container: {

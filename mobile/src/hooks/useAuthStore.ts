@@ -19,6 +19,7 @@ import {
 import {
   decideNullAuthAction,
   householdIdFromProfileResult,
+  isSameSessionRefire,
   shouldResetHouseholdFromProfile,
   type HouseholdResolution,
 } from '../session/sessionRouting';
@@ -64,6 +65,8 @@ interface AuthState {
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   markHouseholdResolution: (resolution: HouseholdResolution) => void;
+  /** Re-reads the profile when the household is still unresolved (loader "retry"). */
+  retryProfile: () => void;
   clearError: () => void;
 }
 
@@ -206,6 +209,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } finally {
       endExplicitSignOut();
     }
+  },
+
+  retryProfile: () => {
+    const state = get();
+    if (!state.isSignedIn || !state.user) return;
+    if (state.householdResolution !== 'pending') return;
+    void refreshProfileSafely(state.user, authEventSeq, set, get);
   },
 
   markHouseholdResolution: (resolution) => {
@@ -363,6 +373,11 @@ async function handleSignedInUser(args: {
 }): Promise<void> {
   const { seq, set, get, user } = args;
   const uidChanged = previousAuthUid !== null && previousAuthUid !== user.uid;
+  const sameSessionRefire = isSameSessionRefire({
+    hasBootstrapped: get().hasBootstrapped,
+    previousUid: previousAuthUid,
+    uid: user.uid,
+  });
 
   if (uidChanged) {
     await resetSessionState();
@@ -382,7 +397,9 @@ async function handleSignedInUser(args: {
 
   // Same account re-fired (token refresh / remount). Never re-run a profile
   // path that can clear the household — just refresh the user object.
-  if (get().hasBootstrapped && !uidChanged) {
+  // A first sign-in after booting into /auth is NOT a re-fire (previous uid was
+  // null): it must resolve the household, or a new user hangs on the loader.
+  if (sameSessionRefire) {
     void refreshProfileSafely(user, seq, set, get);
     return;
   }
@@ -452,6 +469,11 @@ async function handleSignedInUser(args: {
       householdResolution: fallbackHouse ? 'has_household' : 'pending',
       lastHouseholdId: fallbackHouse,
     });
+    // Slow first profile write (new user): keep trying in the background so a
+    // pending resolution does not leave the loader up until the app restarts.
+    if (!fallbackHouse) {
+      void refreshProfileSafely(user, seq, set, get);
+    }
     return;
   }
 
@@ -527,6 +549,24 @@ async function refreshProfileSafely(
         profile: (result.profile as UserProfile | null) ?? get().profile,
         householdResolution: 'has_household',
         lastHouseholdId: householdId,
+      });
+      return;
+    }
+    // Only resolve "no household" while still pending and with no known house —
+    // a background refresh must never clear an existing household.
+    if (
+      shouldResetHouseholdFromProfile(result) &&
+      get().householdResolution === 'pending' &&
+      !useHouseholdStore.getState().activeHouseholdId &&
+      !get().lastHouseholdId
+    ) {
+      await rememberSessionHousehold(null);
+      if (seq !== authEventSeq) return;
+      set({
+        user,
+        profile: (result.profile as UserProfile | null) ?? get().profile,
+        householdResolution: 'no_household',
+        lastHouseholdId: null,
       });
       return;
     }

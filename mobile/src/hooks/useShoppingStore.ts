@@ -14,6 +14,9 @@ import { Unsubscribe } from 'firebase/firestore';
  */
 let cacheHydratedHouseholdId: string | null = null;
 
+/** Longest the list shows its first-load spinner before falling back to cache / empty state. */
+const FIRST_SNAPSHOT_TIMEOUT_MS = 8000;
+
 interface ShoppingListState {
   items: ShoppingItem[];
   activeItems: ShoppingItem[];
@@ -51,6 +54,21 @@ function assertWritable(householdId: string): void {
   if (household?.id === householdId && isExpired(household)) {
     throw new Error('HOUSEHOLD_READ_ONLY');
   }
+}
+
+type StoreSet = (partial: Partial<ShoppingListState>) => void;
+type StoreGet = () => ShoppingListState;
+
+/** Applies a patch to one item on the CURRENT store state. */
+export function patchItem(
+  set: StoreSet,
+  get: StoreGet,
+  itemId: string,
+  patch: Partial<ShoppingItem>
+): void {
+  const { items, recurringItems } = get();
+  const updated = items.map((i) => (i.id === itemId ? { ...i, ...patch } : i));
+  set(buildShoppingListState(updated, recurringItems));
 }
 
 async function readCachedList(householdId: string) {
@@ -174,6 +192,16 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
 
     const unsubs: Unsubscribe[] = [];
 
+    // Offline / slow network: stop the first-load spinner and show whatever is
+    // cached (or the empty state) instead of spinning until a snapshot arrives.
+    const snapshotTimeout = setTimeout(() => {
+      if (cancelled || get().subscribedHouseholdId !== householdId) return;
+      if (!get().hasReceivedRemoteSnapshot) {
+        set({ isLoading: false, hasReceivedRemoteSnapshot: true });
+      }
+    }, FIRST_SNAPSHOT_TIMEOUT_MS);
+    unsubs.push(() => clearTimeout(snapshotTimeout));
+
     unsubs.push(
       shoppingRepository.subscribeToItems(
         householdId,
@@ -220,26 +248,39 @@ export const useShoppingStore = create<ShoppingListState>((set, get) => ({
     set(buildShoppingListState(updated, recurringItems));
   },
 
+  // Check-offs update the store BEFORE persisting, and always patch the latest
+  // `get()` state. Patching a list captured before an await made rapid taps
+  // overwrite each other (A checked, then B's write re-showed A as active).
   markAsBought: async (householdId, itemId) => {
     assertWritable(householdId);
     const { items, recurringItems } = get();
-    await shoppingRepository.markAsBought(householdId, itemId, items, recurringItems);
-    // Optimistic: move item to bought in the store.
-    const updated = items.map((i) =>
-      i.id === itemId ? { ...i, status: 'BOUGHT' as ShoppingItem['status'] } : i,
-    );
-    set(buildShoppingListState(updated, recurringItems));
+    const previous = items.find((i) => i.id === itemId);
+    if (!previous) return;
+    patchItem(set, get, itemId, { status: 'BOUGHT' as ShoppingItem['status'] });
+    try {
+      await shoppingRepository.markAsBought(householdId, itemId, items, recurringItems);
+    } catch (e) {
+      patchItem(set, get, itemId, previous);
+      throw e;
+    }
   },
 
   markAsActive: async (householdId, itemId) => {
     assertWritable(householdId);
-    const { items, recurringItems } = get();
-    await shoppingRepository.markAsActive(householdId, itemId, items);
-    // Optimistic: move item back to active.
-    const updated = items.map((i) =>
-      i.id === itemId ? { ...i, status: 'ACTIVE' as ShoppingItem['status'], boughtBy: null, boughtByName: null } : i,
-    );
-    set(buildShoppingListState(updated, recurringItems));
+    const { items } = get();
+    const previous = items.find((i) => i.id === itemId);
+    if (!previous) return;
+    patchItem(set, get, itemId, {
+      status: 'ACTIVE' as ShoppingItem['status'],
+      boughtBy: null,
+      boughtByName: null,
+    });
+    try {
+      await shoppingRepository.markAsActive(householdId, itemId, items);
+    } catch (e) {
+      patchItem(set, get, itemId, previous);
+      throw e;
+    }
   },
 
   deleteItem: async (householdId, itemId, itemName) => {

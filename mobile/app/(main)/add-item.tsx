@@ -91,6 +91,28 @@ export default function AddItemScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autoDetected, setAutoDetected] = useState(false);
+  // "Add another": stay on the screen, clear the form and refocus the name.
+  const addAnotherRef = useRef(false);
+  const [nameFocusKey, setNameFocusKey] = useState(0);
+  const [lastAddedName, setLastAddedName] = useState<string | null>(null);
+
+  const finishSave = useCallback((savedName: string) => {
+    if (!addAnotherRef.current) {
+      router.back();
+      return;
+    }
+    addAnotherRef.current = false;
+    setName('');
+    setQuantity('1');
+    setUnit(null);
+    setCategory(ItemCategory.OTHER);
+    setNote('');
+    setIsUrgent(false);
+    setIsRecurring(false);
+    setAutoDetected(false);
+    setLastAddedName(savedName);
+    setNameFocusKey((k) => k + 1);
+  }, []);
 
   const [duplicateDialog, setDuplicateDialog] = useState<
     null | { duplicateMatch: DuplicateMatch; addQuantity: number; overrides?: SaveOverrides }
@@ -211,8 +233,9 @@ export default function AddItemScreen() {
             intervalDays: parseInt(intervalDays) || 7,
           });
         }
-        router.back();
+        finishSave(itemName);
       } catch {
+        addAnotherRef.current = false;
         setError('generic');
       } finally {
         setIsSaving(false);
@@ -222,6 +245,7 @@ export default function AddItemScreen() {
       activeHouseholdId,
       addItem,
       category,
+      finishSave,
       intervalDays,
       isRecurring,
       isSaving,
@@ -258,14 +282,15 @@ export default function AddItemScreen() {
             intervalDays: parseInt(intervalDays) || 7,
           });
         }
-        router.back();
+        finishSave(existing.name);
       } catch {
+        addAnotherRef.current = false;
         setError('generic');
       } finally {
         setIsSaving(false);
       }
     },
-    [activeHouseholdId, intervalDays, isRecurring, isSaving, note, updateItem],
+    [activeHouseholdId, finishSave, intervalDays, isRecurring, isSaving, note, updateItem],
   );
 
   const attemptSave = useCallback(
@@ -299,6 +324,12 @@ export default function AddItemScreen() {
   );
 
   const handleSave = () => {
+    addAnotherRef.current = false;
+    attemptSave();
+  };
+
+  const handleSaveAndAddAnother = () => {
+    addAnotherRef.current = true;
     attemptSave();
   };
 
@@ -390,6 +421,8 @@ export default function AddItemScreen() {
                   outlineColor={colors.outlineVariant}
                   activeOutlineColor={colors.outlineVariant}
                   contentStyle={{ paddingEnd: 60 }}
+                  autoFocus={!params.prefillName}
+                  focusKey={nameFocusKey}
                 />
                 <Pressable
                   onPress={isListening ? stopListening : startListening}
@@ -416,6 +449,17 @@ export default function AddItemScreen() {
                   ]}
                 >
                   {errorText}
+                </Text>
+              )}
+              {lastAddedName && !name && (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={[
+                    Typography.bodySmall,
+                    { color: colors.primary, marginTop: 6, marginHorizontal: 8 } as any,
+                  ]}
+                >
+                  {t('undo_added', { name: lastAddedName })}
                 </Text>
               )}
 
@@ -588,6 +632,15 @@ export default function AddItemScreen() {
                   <MaterialCommunityIcons name="cart-plus" size={20} color={colors.onPrimary} />
                 }
               />
+              <Button
+                mode="text"
+                icon="playlist-plus"
+                onPress={handleSaveAndAddAnother}
+                disabled={isSaving}
+                style={{ marginTop: 8 }}
+              >
+                {t('item_add_another')}
+              </Button>
               </View>
             </SalinoSurfaceCard>
           </View>
