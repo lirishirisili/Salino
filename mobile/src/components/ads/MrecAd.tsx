@@ -13,6 +13,8 @@ import {
 } from 'unity-levelplay-mediation';
 import { LEVELPLAY_MREC_AD_UNIT_ID } from '../../config/levelPlay';
 import { subscribeLevelPlayReady } from '../../services/initLevelPlay';
+import { getAdsConfig } from '../../services/adsConfig';
+import { useIsPremium } from '../../services/premium';
 import { useThemeColors } from '../../theme';
 
 type MrecAdProps = {
@@ -41,8 +43,15 @@ export function MrecAd({ placement }: MrecAdProps) {
   const [sdkReady, setSdkReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  const isPremium = useIsPremium();
+  const adsConfig = getAdsConfig();
   const enabled =
-    !!LEVELPLAY_MREC_AD_UNIT_ID && Platform.OS !== 'web' && Constants.appOwnership !== 'expo';
+    !!LEVELPLAY_MREC_AD_UNIT_ID &&
+    Platform.OS !== 'web' &&
+    Constants.appOwnership !== 'expo' &&
+    !isPremium &&
+    adsConfig.adsEnabled &&
+    adsConfig.mrec[placement] !== false;
 
   useEffect(() => {
     if (!enabled) return;

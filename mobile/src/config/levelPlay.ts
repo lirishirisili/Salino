@@ -60,9 +60,41 @@ export const LEVELPLAY_INTERSTITIAL_AD_UNIT_ID =
 export const LEVELPLAY_MREC_AD_UNIT_ID =
   Platform.OS === 'ios' ? LEVELPLAY_MREC_AD_UNIT_IDS.ios : LEVELPLAY_MREC_AD_UNIT_IDS.android;
 
+/**
+ * Rewarded video Ad Unit IDs — created in LevelPlay but NOT used yet: feature gates
+ * play an interstitial with no dialog, and rewarded ads must be opted into.
+ * Kept for a future opt-in reward (e.g. "watch to unlock" with a visible button).
+ */
+export const LEVELPLAY_REWARDED_AD_UNIT_IDS = {
+  ios: 'bfegvyn6pqa4fpqm',
+  android: 'wnuwveuufefcw6ht',
+} as const;
+
+export const LEVELPLAY_REWARDED_AD_UNIT_ID =
+  Platform.OS === 'ios' ? LEVELPLAY_REWARDED_AD_UNIT_IDS.ios : LEVELPLAY_REWARDED_AD_UNIT_IDS.android;
+
+/**
+ * Native ads load by placement (`list_end`) in SDK 9.2; the "Native" ad units
+ * (Android 4dbtyhqo3gwifkl5, iOS 8dvjbmli2vb40f9j) carry the ironSource bidder.
+ * Created by scripts/setup-haserli-levelplay.mjs. Remote kill switch: appConfig/ads.nativeListEnd.
+ */
+export const LEVELPLAY_NATIVE_ENABLED = true;
+
 /** Placement names — create them in the dashboard to report / cap per location. */
 export const LEVELPLAY_PLACEMENTS = {
   tripEndInterstitial: 'trip_end',
+  pasteDoneInterstitial: 'paste_done',
+  tripHomeCreatedInterstitial: 'trip_home_created',
+  /** Fallback when no rewarded ad is ready at a feature gate (Tohav's AI-gate pattern). */
+  aiGateInterstitial: 'ai_gate',
   allDoneMrec: 'all_done',
   historyMrec: 'history',
+  activityMrec: 'activity',
+  smartResultMrec: 'smart_result',
+  insightsMrec: 'insights',
+  listEndNative: 'list_end',
+  photoListRewarded: 'photo_list',
+  smartListRewarded: 'smart_list',
+  forgottenItemsRewarded: 'forgotten_items',
+  insightsRewarded: 'insights_full',
 } as const;

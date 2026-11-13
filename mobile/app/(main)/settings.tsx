@@ -34,6 +34,13 @@ import {
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
 import { changeGdprConsent, isGdprRegion } from '../../src/services/adsConsent';
+import { useIsPremium } from '../../src/services/premium';
+import {
+  arePurchasesAvailable,
+  getNoAdsPrice,
+  purchaseNoAds,
+  restoreNoAds,
+} from '../../src/services/premiumPurchases';
 import {
   ExtendHouseholdDialog,
   HouseholdSwitcherSheet,
@@ -92,6 +99,31 @@ export default function SettingsScreen() {
 
   const [showLeave, setShowLeave] = useState(false);
   const [showSignOut, setShowSignOut] = useState(false);
+  const isPremium = useIsPremium();
+  const purchasesAvailable = arePurchasesAvailable();
+  const [noAdsPrice, setNoAdsPrice] = useState<string | null>(null);
+  const [premiumBusy, setPremiumBusy] = useState(false);
+  useEffect(() => {
+    if (purchasesAvailable && !isPremium) void getNoAdsPrice().then(setNoAdsPrice);
+  }, [purchasesAvailable, isPremium]);
+  const buyNoAds = async () => {
+    setPremiumBusy(true);
+    try {
+      const outcome = await purchaseNoAds('settings');
+      if (outcome === 'purchased') Alert.alert('', t('premium_thanks'));
+      else if (outcome === 'error' || outcome === 'unavailable') Alert.alert('', t('premium_error'));
+    } finally {
+      setPremiumBusy(false);
+    }
+  };
+  const restorePurchases = async () => {
+    setPremiumBusy(true);
+    try {
+      Alert.alert('', t((await restoreNoAds()) ? 'premium_restored' : 'premium_nothing_to_restore'));
+    } finally {
+      setPremiumBusy(false);
+    }
+  };
   const [showEditName, setShowEditName] = useState(false);
   const [showExtend, setShowExtend] = useState(false);
   const [showHomes, setShowHomes] = useState(false);
@@ -439,6 +471,43 @@ export default function SettingsScreen() {
                     {t('settings_ad_privacy')}
                   </Text>
                 </Pressable>
+              </>
+            )}
+            {(isPremium || noAdsPrice) && (
+              <>
+                <Divider />
+                <Pressable
+                  onPress={isPremium ? undefined : () => void buyNoAds()}
+                  disabled={isPremium || premiumBusy}
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 10 }}
+                >
+                  <MaterialCommunityIcons
+                    name={isPremium ? 'check-decagram' : 'cancel'}
+                    size={20}
+                    color={isPremium ? colors.primary : colors.onSurfaceVariant}
+                  />
+                  <Text style={[Typography.bodyLarge, { flex: 1, color: colors.primary } as any]}>
+                    {isPremium ? t('premium_active') : t('premium_remove_ads')}
+                  </Text>
+                  {!isPremium && noAdsPrice && (
+                    <Text style={[Typography.labelLarge, { color: colors.onSurfaceVariant } as any]}>{noAdsPrice}</Text>
+                  )}
+                </Pressable>
+                {!isPremium && (
+                  <>
+                    <Divider />
+                    <Pressable
+                      onPress={() => void restorePurchases()}
+                      disabled={premiumBusy}
+                      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 10 }}
+                    >
+                      <MaterialCommunityIcons name="restore" size={20} color={colors.onSurfaceVariant} />
+                      <Text style={[Typography.bodyLarge, { flex: 1, color: colors.primary } as any]}>
+                        {t('premium_restore')}
+                      </Text>
+                    </Pressable>
+                  </>
+                )}
               </>
             )}
             <Divider />

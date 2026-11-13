@@ -54,3 +54,28 @@ export function logScreenView(screenName: string): void {
     .logScreenView({ screen_name: screenName, screen_class: screenName })
     .catch(() => undefined);
 }
+
+/** Funnel / diagnostics events for ad placements and premium (GA4 custom events). */
+export type AdFunnelEvent =
+  | 'ad_interstitial_skip'
+  | 'ad_interstitial_show'
+  | 'rewarded_offer_shown'
+  | 'rewarded_started'
+  | 'rewarded_completed'
+  | 'rewarded_failed'
+  | 'rewarded_free_use'
+  | 'native_impression'
+  | 'premium_paywall_shown'
+  | 'premium_purchase'
+  | 'premium_restore'
+  | 'feature_used';
+
+export function logAdEvent(
+  name: AdFunnelEvent,
+  params: Record<string, string | number | boolean> = {},
+): void {
+  if (Platform.OS === 'web') return;
+  analytics()
+    .logEvent(name, params)
+    .catch(() => undefined);
+}

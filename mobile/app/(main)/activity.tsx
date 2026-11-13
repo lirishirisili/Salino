@@ -15,6 +15,11 @@ import {
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { formatRelativeTime } from '../../src/utils';
 import { ActivityLog } from '../../src/models';
+import { MrecAd } from '../../src/components/ads';
+import { LEVELPLAY_PLACEMENTS } from '../../src/config/levelPlay';
+
+/** One inline MREC after this many entries (or at the end of a shorter feed). */
+const MREC_AFTER_ENTRIES = 5;
 
 export default function ActivityScreen() {
   const { t } = useTranslation();
@@ -60,11 +65,17 @@ export default function ActivityScreen() {
           ]}
         >
           <View style={styles.inner}>
-            {logs.map((entry) => (
-              <View key={entry.id} style={{ marginBottom: 10 }}>
-                <ActivityCard entry={entry} />
-              </View>
+            {logs.map((entry, index) => (
+              <React.Fragment key={entry.id}>
+                {index === MREC_AFTER_ENTRIES && <MrecAd placement={LEVELPLAY_PLACEMENTS.activityMrec} />}
+                <View style={{ marginBottom: 10 }}>
+                  <ActivityCard entry={entry} />
+                </View>
+              </React.Fragment>
             ))}
+            {logs.length > 0 && logs.length <= MREC_AFTER_ENTRIES && (
+              <MrecAd placement={LEVELPLAY_PLACEMENTS.activityMrec} />
+            )}
           </View>
         </ScrollView>
       )}

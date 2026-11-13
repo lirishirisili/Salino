@@ -74,14 +74,19 @@ function buildCandidates<I, O>(task: AiTask<I, O>, input: I, env: Env): RaceCand
   const openRouterKey = optionalSecret(env, 'OPENROUTER_API_KEY');
   const [geminiFastest, geminiLite, geminiFlash] = GEMINI_MODELS;
 
+  const image = task.image?.(input);
   const gemini = (model: GeminiModelSpec): RaceCandidate<TaskResult<O>> => ({
     label: `gemini/${model.id}`,
     timeoutMs: SLOW_TIMEOUT_MS,
     run: async (signal) => ({
-      output: task.parse(await generateWithGemini(env.GEMINI_API_KEY, model, schemaPrompt, task.schema, signal)),
+      output: task.parse(
+        await generateWithGemini(env.GEMINI_API_KEY, model, schemaPrompt, task.schema, signal, image),
+      ),
       model: model.id,
     }),
   });
+  // Vision tasks: only Gemini reads images in this chain.
+  if (image) return GEMINI_MODELS.map(gemini);
 
   const groq = (
     model: string,

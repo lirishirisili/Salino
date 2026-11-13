@@ -6,6 +6,17 @@ import { MainAdBannerHost } from '../../src/components/ads';
 import { initLevelPlay, isLevelPlayReady } from '../../src/services/initLevelPlay';
 import { logScreenView } from '../../src/services/initMobileAnalytics';
 import { registerInterstitialUser } from '../../src/services/interstitialAd';
+import { getAdsConfig, loadAdsConfig } from '../../src/services/adsConfig';
+import { hydratePremium, isPremiumNow } from '../../src/services/premium';
+import { initPremiumPurchases } from '../../src/services/premiumPurchases';
+import { requestFeatureUse } from '../../src/services/featureUnlock';
+
+/** Ads start only for non-premium users and while the remote kill switch is on. */
+async function startAds(): Promise<void> {
+  await Promise.all([loadAdsConfig(), hydratePremium()]);
+  if (isPremiumNow() || !getAdsConfig().adsEnabled) return;
+  await initLevelPlay();
+}
 import { TourController } from '../../src/components/tour/TourProvider';
 import { useTourStore } from '../../src/features/tour';
 import {
@@ -65,9 +76,12 @@ export default function MainLayout() {
     if (!pendingShare || !activeHouseholdId) return;
     // Let the stack finish mounting on a cold start before pushing over it.
     const timer = setTimeout(() => {
-      if (usePastePreviewStore.getState().consumePendingShare()) {
-        router.push('/(main)/paste-preview');
-      }
+      if (!usePastePreviewStore.getState().consumePendingShare()) return;
+      // A shared photo counts as a "photo to list" use (free first, then an ad).
+      const gate = usePastePreviewStore.getState().image
+        ? requestFeatureUse('photo_list')
+        : Promise.resolve(true);
+      void gate.then(() => router.push('/(main)/paste-preview'));
     }, 300);
     return () => clearTimeout(timer);
   }, [pendingShare, activeHouseholdId]);
@@ -117,7 +131,7 @@ export default function MainLayout() {
       // Ads consent (UMP → ATT) only after the notification prompt so system
       // dialogs never stack on top of each other.
       adsInitAllowedRef.current = true;
-      void initLevelPlay();
+      void startAds();
     })();
     return () => {
       cancelled = true;
@@ -127,12 +141,15 @@ export default function MainLayout() {
   // Retry a failed / consent-blocked ads init when the app returns to foreground.
   useEffect(() => {
     if (foregroundKey === 0 || !adsInitAllowedRef.current || isLevelPlayReady()) return;
-    void initLevelPlay();
+    void startAds();
   }, [foregroundKey]);
 
   // Starts the interstitial grace-period clock on first reach of the main stack.
   useEffect(() => {
     void registerInterstitialUser();
+    void loadAdsConfig();
+    void hydratePremium();
+    void initPremiumPurchases();
   }, []);
 
   const pathname = usePathname();
@@ -161,6 +178,8 @@ export default function MainLayout() {
         <Stack.Screen name="create-temporary-home" />
         <Stack.Screen name="recurring-items" />
         <Stack.Screen name="paste-preview" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="smart-list" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="insights" />
       </Stack>
     </MainAdBannerHost>
   );

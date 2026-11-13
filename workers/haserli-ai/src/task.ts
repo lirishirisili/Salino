@@ -1,4 +1,4 @@
-import type { SchemaNode } from './aiHttp.ts';
+import type { InlineImage, SchemaNode } from './aiHttp.ts';
 
 /**
  * One AI job the worker can run (e.g. "parse a pasted list"). Adding a feature =
@@ -15,6 +15,8 @@ export interface AiTask<Input, Output> {
   parse(raw: string): Output;
   /** Upper bound for the model's answer. */
   maxOutputTokens: number;
+  /** Image input: only vision-capable providers (Gemini) race for this task. */
+  image?(input: Input): InlineImage;
 }
 
 /**

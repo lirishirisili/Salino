@@ -23,7 +23,7 @@ import {
   LEVELPLAY_BANNER_RESERVED_HEIGHT,
 } from '../../config/levelPlay';
 import { subscribeLevelPlayReady } from '../../services/initLevelPlay';
-import { subscribeFullscreenAd } from '../../services/interstitialAd';
+import { subscribeFullscreenAd } from '../../services/fullscreenAdState';
 
 type BottomBannerAdProps = {
   visible?: boolean;

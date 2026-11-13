@@ -77,29 +77,43 @@ export function sanitizeAiItems(raw: unknown): ListDraftItem[] {
   return out;
 }
 
-type AiOutcome =
+export type AiOutcome =
   | { kind: 'items'; items: ListDraftItem[] }
   | { kind: 'not_a_list' }
+  | { kind: 'quota' }
   | { kind: 'failed' };
 
 async function callWorker(text: string, locale: string, signal?: AbortSignal): Promise<AiOutcome> {
+  return postToWorker('/v1/parse-list', { text: text.slice(0, MAX_PASTE_CHARS), locale }, signal);
+}
+
+async function postToWorker(
+  path: string,
+  payload: Record<string, unknown>,
+  signal?: AbortSignal,
+  timeoutMs: number = REQUEST_TIMEOUT_MS,
+): Promise<AiOutcome> {
   const baseUrl = getAiProxyUrl();
   const user = auth.currentUser;
   if (!baseUrl || !user) return { kind: 'failed' };
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const onAbort = () => controller.abort();
   signal?.addEventListener('abort', onAbort);
   try {
     const token = await user.getIdToken();
-    const response = await fetch(`${baseUrl}/v1/parse-list`, {
+    const response = await fetch(`${baseUrl}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ text: text.slice(0, MAX_PASTE_CHARS), locale }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     if (response.status === 422) return { kind: 'not_a_list' };
+    if (response.status === 429) {
+      const data = (await response.json().catch(() => ({}))) as { error?: unknown };
+      if (data.error === 'daily_quota') return { kind: 'quota' };
+    }
     if (!response.ok) return { kind: 'failed' };
     const data = (await response.json()) as { items?: unknown };
     const items = sanitizeAiItems(data.items);
@@ -127,4 +141,38 @@ export async function parseListWithAi(
     source: 'local',
     ...(outcome.kind === 'not_a_list' ? { notAList: true } : {}),
   };
+}
+
+/** Vision calls take longer (upload + reading handwriting). */
+const IMAGE_TIMEOUT_MS = 30_000;
+export const MAX_SMART_REQUEST_CHARS = 300;
+
+/** Photo / screenshot → items (AI only; there is no on-device fallback for images). */
+export function parseImageWithAi(
+  imageBase64: string,
+  mimeType: string,
+  options: { locale: string; signal?: AbortSignal },
+): Promise<AiOutcome> {
+  return postToWorker(
+    '/v1/parse-image',
+    { image: imageBase64, mimeType, locale: options.locale },
+    options.signal,
+    IMAGE_TIMEOUT_MS,
+  );
+}
+
+/** "Friday dinner for 8" → items. */
+export function generateListWithAi(
+  request: string,
+  options: { locale: string; people?: number; signal?: AbortSignal },
+): Promise<AiOutcome> {
+  return postToWorker(
+    '/v1/generate-list',
+    {
+      request: request.trim().slice(0, MAX_SMART_REQUEST_CHARS),
+      locale: options.locale,
+      ...(options.people ? { people: options.people } : {}),
+    },
+    options.signal,
+  );
 }

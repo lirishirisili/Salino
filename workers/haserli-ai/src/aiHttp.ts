@@ -56,6 +56,12 @@ interface GeminiResponse {
   promptFeedback?: { blockReason?: string };
 }
 
+/** An image sent with the prompt (base64, no data: prefix). */
+export interface InlineImage {
+  mimeType: string;
+  data: string;
+}
+
 /** Gemini generateContent with `schema` as structured output; returns the answer text without thought parts. */
 export async function generateWithGemini(
   apiKey: string,
@@ -63,12 +69,16 @@ export async function generateWithGemini(
   prompt: string,
   schema: SchemaNode,
   signal: AbortSignal,
+  image?: InlineImage,
 ): Promise<string> {
+  const parts: Record<string, unknown>[] = image
+    ? [{ inline_data: { mime_type: image.mimeType, data: image.data } }, { text: prompt }]
+    : [{ text: prompt }];
   const response = await fetch(`${GEMINI_API_BASE}/${model.id}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: 'user', parts }],
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: schema,

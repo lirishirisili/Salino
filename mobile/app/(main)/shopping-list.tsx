@@ -63,6 +63,11 @@ import { OfflineBanner } from '../../src/components/OfflineBanner';
 import { useUndoBarStore } from '../../src/hooks/useUndoBarStore';
 import { useAddParsedItems } from '../../src/hooks/useAddParsedItems';
 import { usePastePreviewStore } from '../../src/hooks/usePastePreviewStore';
+import { usePhotoList } from '../../src/hooks/usePhotoList';
+import { findForgottenItems } from '../../src/utils/forgottenItems';
+import { requestFeatureUse } from '../../src/services/featureUnlock';
+import { ForgottenItemsDialog } from '../../src/components/ForgottenItemsDialog';
+import { NativeListAd } from '../../src/components/ads';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
@@ -395,6 +400,18 @@ export default function ShoppingListScreen() {
    * "Paste list": the clipboard (a WhatsApp list, a sentence…) opens the preview,
    * where the free AI sorts it into items the user can fix before adding.
    */
+  const startPhotoList = usePhotoList();
+
+  // "What did I forget?": regular items that are due and not on the list.
+  const forgottenItems = useMemo(
+    () => findForgottenItems(boughtItems, activeItems),
+    [boughtItems, activeItems],
+  );
+  const [forgottenVisible, setForgottenVisible] = useState(false);
+  const openForgotten = useCallback(async () => {
+    if (await requestFeatureUse('forgotten_items')) setForgottenVisible(true);
+  }, []);
+
   const handlePasteList = useCallback(async () => {
     const text = ((await Clipboard.getStringAsync().catch(() => '')) ?? '').trim();
     if (!text) {
@@ -585,6 +602,27 @@ export default function ShoppingListScreen() {
         onPastePress={() => void handlePasteList()}
         pasteLabel={t('quick_add_paste_list')}
         pasteAnchor={pasteAnchor}
+        pasteShortLabel={t('quick_add_paste_short')}
+        extraActions={[
+          { key: 'photo', icon: 'camera-outline', label: t('quick_add_photo_list'), onPress: startPhotoList },
+          {
+            key: 'smart',
+            icon: 'creation',
+            label: t('quick_add_smart_list'),
+            onPress: () => router.push('/(main)/smart-list'),
+          },
+          ...(forgottenItems.length > 0
+            ? [
+                {
+                  key: 'forgotten',
+                  icon: 'lightbulb-on-outline' as const,
+                  label: t('quick_add_forgotten'),
+                  badge: forgottenItems.length,
+                  onPress: () => void openForgotten(),
+                },
+              ]
+            : []),
+        ]}
       />
       </View>
       )}
@@ -622,6 +660,8 @@ export default function ShoppingListScreen() {
               onDelete={showTourPreview || readOnly ? undefined : handleDelete}
             />
           </View>
+
+          {!showTourPreview && <NativeListAd itemCount={listActiveItems.length} />}
 
           {sortedBoughtItems.length > 0 && (
             <>
@@ -738,6 +778,12 @@ export default function ShoppingListScreen() {
           </View>
         </View>
       )}
+
+      <ForgottenItemsDialog
+        items={forgottenItems}
+        visible={forgottenVisible}
+        onDismiss={() => setForgottenVisible(false)}
+      />
 
       <Portal>
         <Dialog
@@ -871,6 +917,52 @@ function formatQuantityForDisplay(quantity: number): string {
   return isInt ? String(rounded) : String(quantity);
 }
 
+type QuickAction = {
+  key: string;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  label: string;
+  /** Small count on the icon (e.g. how many items you may have forgotten). */
+  badge?: number;
+  onPress: () => void;
+};
+
+/** One tile of the AI quick-actions bar: icon over a one-line label, tonal background. */
+function QuickActionTile({ action, accessibilityLabel }: { action: QuickAction; accessibilityLabel?: string }) {
+  const colors = useThemeColors();
+  const badge = action.badge && action.badge > 0 ? (action.badge > 9 ? '9+' : String(action.badge)) : null;
+  return (
+    <Pressable
+      onPress={action.onPress}
+      accessibilityRole="button"
+      accessibilityLabel={
+        badge ? `${accessibilityLabel ?? action.label} (${action.badge})` : (accessibilityLabel ?? action.label)
+      }
+      style={({ pressed }) => [
+        styles.aiActionTile,
+        { backgroundColor: `${colors.primary}1A` },
+        pressed && { opacity: 0.6 },
+      ]}
+    >
+      <View>
+        <MaterialCommunityIcons name={action.icon} size={20} color={colors.primary} />
+        {badge && (
+          <View style={[styles.aiActionBadge, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.aiActionBadgeText, { color: colors.onPrimary }]}>{badge}</Text>
+          </View>
+        )}
+      </View>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[Typography.labelMedium, { color: colors.primary, textAlign: 'center' } as any]}
+      >
+        {action.label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function QuickAddItemField({
   value,
   onChangeText,
@@ -891,6 +983,8 @@ function QuickAddItemField({
   onPastePress,
   pasteLabel,
   pasteAnchor,
+  pasteShortLabel,
+  extraActions,
 }: {
   value: string;
   onChangeText: (text: string) => void;
@@ -912,6 +1006,10 @@ function QuickAddItemField({
   pasteLabel: string;
   /** Tour anchor ("what's new": paste with AI). */
   pasteAnchor: TourAnchor;
+  /** Short tile label for "paste list" (the full text stays the accessibility label). */
+  pasteShortLabel: string;
+  /** More AI shortcuts next to "paste list" (photo → list, smart list, what did I forget). */
+  extraActions: QuickAction[];
 }) {
   const colors = useThemeColors();
 
@@ -987,21 +1085,23 @@ function QuickAddItemField({
           {error === 'empty_name' ? emptyErrorText : genericErrorText}
         </Text>
       )}
-      <View
-        ref={pasteAnchor.ref}
-        style={[styles.pasteListAnchor, pasteAnchor.highlightStyle]}
-        collapsable={false}
-      >
-        <Pressable
-          onPress={onPastePress}
-          accessibilityRole="button"
-          accessibilityLabel={pasteLabel}
-          hitSlop={8}
-          style={({ pressed }) => [styles.pasteListRow, pressed && { opacity: 0.6 }]}
+      {/* One row of equal tiles (icon over a short label) — never wraps to a second line. */}
+      <View style={styles.aiActionsRow}>
+        <View
+          ref={pasteAnchor.ref}
+          style={[styles.aiActionCell, styles.aiActionAnchor, pasteAnchor.highlightStyle]}
+          collapsable={false}
         >
-          <MaterialCommunityIcons name="content-paste" size={16} color={colors.primary} />
-          <Text style={[Typography.labelMedium, { color: colors.primary } as any]}>{pasteLabel}</Text>
-        </Pressable>
+          <QuickActionTile
+            action={{ key: 'paste', icon: 'content-paste', label: pasteShortLabel, onPress: onPastePress }}
+            accessibilityLabel={pasteLabel}
+          />
+        </View>
+        {extraActions.map((action) => (
+          <View key={action.key} style={styles.aiActionCell}>
+            <QuickActionTile action={action} />
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -1321,18 +1421,44 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     width: '100%',
   },
-  pasteListAnchor: {
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    marginHorizontal: 10,
-    borderRadius: 14,
-  },
-  pasteListRow: {
+  aiActionsRow: {
     flexDirection: 'row',
+    alignItems: 'stretch',
+    marginTop: 10,
+    marginHorizontal: 4,
+    gap: 8,
+  },
+  aiActionCell: {
+    flex: 1,
+    minWidth: 0,
+  },
+  aiActionAnchor: {
+    borderRadius: 16,
+  },
+  aiActionTile: {
+    flex: 1,
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 16,
+  },
+  aiActionBadge: {
+    position: 'absolute',
+    top: -6,
+    end: -10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiActionBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
   },
   quickAddFieldWrap: {
     position: 'relative',

@@ -66,6 +66,12 @@ service cloud.firestore {
       allow read, write: if signedIn() && uid() == userId;
     }
 
+    // ---- Remote app config (ad tuning etc.): read-only, edited in the console ----
+    match /appConfig/{docId} {
+      allow get: if signedIn();
+      allow list, write: if false;
+    }
+
     // ---- Invite-code index (new builds): code -> householdId ----
     match /inviteCodes/{code} {
       allow get: if signedIn();

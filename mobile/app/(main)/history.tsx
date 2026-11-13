@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { I18nManager, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -86,6 +86,30 @@ export default function HistoryScreen() {
           ]}
         >
           <View style={styles.inner}>
+            <Pressable
+              onPress={() => router.push('/(main)/insights')}
+              accessibilityRole="button"
+              style={({ pressed }) => [{ marginBottom: 12 }, pressed && { opacity: 0.7 }]}
+            >
+              <SalinoSurfaceCard>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <MaterialCommunityIcons name="chart-box-outline" size={28} color={colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[Typography.titleMedium, { color: colors.onSurface } as any]}>
+                      {t('insights_title')}
+                    </Text>
+                    <Text style={[Typography.bodySmall, { color: colors.onSurfaceVariant } as any]}>
+                      {t('insights_entry_subtitle')}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons
+                    name={I18nManager.isRTL ? 'chevron-left' : 'chevron-right'}
+                    size={22}
+                    color={colors.onSurfaceVariant}
+                  />
+                </View>
+              </SalinoSurfaceCard>
+            </Pressable>
             {days.map(([dateLabel, items], dayIndex) => {
               const isExpanded = !!expanded[dateLabel];
               return (

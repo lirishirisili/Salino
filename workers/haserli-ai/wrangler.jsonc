@@ -19,6 +19,13 @@
   "ai": {
     "binding": "AI"
   },
+  "kv_namespaces": [
+    {
+      // Daily per-user caps on /v1/parse-image and /v1/generate-list (src/quota.ts).
+      "binding": "QUOTA",
+      "id": "91fb3f8656724fa5914003992681552a"
+    }
+  ],
   "ratelimits": [
     {
       // Tohav's recipe-ai uses namespace 4207; keep these distinct.

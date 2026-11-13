@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SalinoGradientBackground } from '../brand';
 import { BottomBannerAd } from './BottomBannerAd';
+import { useIsPremium } from '../../services/premium';
+import { getAdsConfig } from '../../services/adsConfig';
 
 type MainAdBannerHostProps = {
   children: React.ReactNode;
@@ -17,10 +19,12 @@ type MainAdBannerHostProps = {
  * add/edit item) shows the same bottom ad without remount churn.
  */
 export function MainAdBannerHost({ children }: MainAdBannerHostProps) {
+  const isPremium = useIsPremium();
+  const showBanner = !isPremium && getAdsConfig().adsEnabled;
   return (
     <SalinoGradientBackground style={styles.root}>
       <View style={styles.content}>{children}</View>
-      <BottomBannerAd visible />
+      {showBanner && <BottomBannerAd visible />}
     </SalinoGradientBackground>
   );
 }

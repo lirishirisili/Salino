@@ -8,13 +8,20 @@ import {
   LEVELPLAY_INTERSTITIAL_AD_UNIT_ID,
   LEVELPLAY_PLACEMENTS,
 } from '../config/levelPlay';
+import { getAdsConfig, type AdsConfig } from './adsConfig';
+import { isFullscreenAdShowing, setFullscreenAdShowing, subscribeFullscreenAd } from './fullscreenAdState';
 import { isLevelPlayReady } from './initLevelPlay';
+import { logAdEvent } from './initMobileAnalytics';
+import { isPremiumNow } from './premium';
 
 /**
- * Single trip-end interstitial: the only full-screen ad in the app, shown when
- * a supermarket trip ends. Client-side caps below protect UX; mirror them as
- * capping / pacing on the `trip_end` placement in the LevelPlay dashboard.
+ * Interstitials at natural completion moments (trip end, a pasted / photo /
+ * smart list added, a trip home created). One shared set of user caps covers
+ * every placement; the numbers come from `appConfig/ads` (adsConfig.ts).
+ * Mirror them as capping / pacing per placement in the LevelPlay dashboard.
  */
+
+export { subscribeFullscreenAd };
 
 const LOG = '[INTERSTITIAL]';
 
@@ -26,50 +33,31 @@ const log = (...args: unknown[]) => {
 const STORAGE_KEY = '@ads_interstitial_v1';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** No interstitials during the first days after the user first reached the list. */
-const GRACE_PERIOD_MS = 3 * DAY_MS;
-/** Trips completed before the first interstitial may appear. */
-const MIN_COMPLETED_TRIPS = 2;
-/** At most one interstitial per this window. */
-const MIN_INTERVAL_MS = DAY_MS;
 /** Only after a real trip: something bought and the screen open at least this long. */
 const MIN_TRIP_DURATION_MS = 60_000;
 /** If the ad never reports display, continue the flow anyway. */
 const DISPLAY_TIMEOUT_MS = 4_000;
 
-type InterstitialStats = {
+export type InterstitialPlacement =
+  | typeof LEVELPLAY_PLACEMENTS.tripEndInterstitial
+  | typeof LEVELPLAY_PLACEMENTS.pasteDoneInterstitial
+  | typeof LEVELPLAY_PLACEMENTS.tripHomeCreatedInterstitial
+  | typeof LEVELPLAY_PLACEMENTS.aiGateInterstitial;
+
+export type InterstitialStats = {
   firstSeenAt: number;
   tripsCompleted: number;
   lastShownAt: number;
+  /** Show times within the last 24h (for maxPerDay). */
+  recentShows?: number[];
 };
 
 let stats: InterstitialStats | null = null;
 let ad: LevelPlayInterstitialAd | null = null;
 let loading = false;
 let loaded = false;
-let showing = false;
 let displayed = false;
 let pendingDone: (() => void) | null = null;
-const fullscreenSubscribers = new Set<(showing: boolean) => void>();
-
-/** Notified while a full-screen ad covers the app (the banner pauses refresh). */
-export function subscribeFullscreenAd(cb: (showing: boolean) => void): () => void {
-  fullscreenSubscribers.add(cb);
-  return () => {
-    fullscreenSubscribers.delete(cb);
-  };
-}
-
-function setShowing(next: boolean) {
-  showing = next;
-  fullscreenSubscribers.forEach((cb) => {
-    try {
-      cb(next);
-    } catch {
-      // Ignore subscriber errors.
-    }
-  });
-}
 
 async function getStats(): Promise<InterstitialStats> {
   if (stats) return stats;
@@ -82,7 +70,7 @@ async function getStats(): Promise<InterstitialStats> {
   } catch {
     // Fall through to fresh stats.
   }
-  stats = { firstSeenAt: Date.now(), tripsCompleted: 0, lastShownAt: 0 };
+  stats = { firstSeenAt: Date.now(), tripsCompleted: 0, lastShownAt: 0, recentShows: [] };
   await saveStats();
   return stats;
 }
@@ -102,20 +90,35 @@ async function saveStats(): Promise<void> {
  */
 const IGNORE_USER_CAPS = process.env.EXPO_PUBLIC_ADS_IGNORE_CAPS === '1';
 
-/** User-level caps (grace period, trip count, 24h interval). */
-function passesUserCaps(s: InterstitialStats, now: number): boolean {
-  if (IGNORE_USER_CAPS) return true;
-  return (
-    now - s.firstSeenAt >= GRACE_PERIOD_MS &&
-    s.tripsCompleted >= MIN_COMPLETED_TRIPS &&
-    now - s.lastShownAt >= MIN_INTERVAL_MS
-  );
+export type CapBlock = 'grace' | 'trips' | 'interval' | 'daily' | null;
+
+/** Pure cap check (exported for tests). Returns the first cap that blocks, or null. */
+export function userCapBlock(
+  s: InterstitialStats,
+  now: number,
+  cfg: AdsConfig['interstitial'],
+): CapBlock {
+  if (now - s.firstSeenAt < cfg.gracePeriodMs) return 'grace';
+  if (s.tripsCompleted < cfg.minCompletedTrips) return 'trips';
+  if (now - s.lastShownAt < cfg.minIntervalMs) return 'interval';
+  const today = (s.recentShows ?? []).filter((t) => now - t < DAY_MS).length;
+  if (today >= cfg.maxPerDay) return 'daily';
+  return null;
+}
+
+function blockedFor(placement: InterstitialPlacement, s: InterstitialStats, now: number): string | null {
+  const cfg = getAdsConfig();
+  if (isPremiumNow()) return 'premium';
+  if (!cfg.adsEnabled) return 'disabled';
+  if (cfg.interstitial.placements[placement] === false) return 'placement_off';
+  if (IGNORE_USER_CAPS) return null;
+  return userCapBlock(s, now, cfg.interstitial);
 }
 
 function finish() {
   const done = pendingDone;
   pendingDone = null;
-  setShowing(false);
+  setFullscreenAdShowing(false);
   done?.();
 }
 
@@ -157,16 +160,18 @@ export async function registerInterstitialUser(): Promise<void> {
 }
 
 /**
- * Preload while the user shops, only when an ad could actually be shown at the
- * end of this trip (avoids wasted requests that hurt show rate).
+ * Preload ahead of a likely completion moment, only when an ad could actually be
+ * shown there (avoids wasted requests that hurt show rate).
  */
-export async function preloadTripEndInterstitial(): Promise<void> {
+export async function preloadInterstitial(
+  placement: InterstitialPlacement = LEVELPLAY_PLACEMENTS.tripEndInterstitial,
+): Promise<void> {
   if (!LEVELPLAY_INTERSTITIAL_AD_UNIT_ID || !isLevelPlayReady()) return;
   if (loading || loaded) return;
   const s = await getStats();
-  if (!passesUserCaps(s, Date.now())) return;
+  if (blockedFor(placement, s, Date.now())) return;
   loading = true;
-  log(`${LOG} load requested`);
+  log(`${LOG} load requested (${placement})`);
   getAd()
     .loadAd()
     .catch((err) => {
@@ -175,22 +180,19 @@ export async function preloadTripEndInterstitial(): Promise<void> {
     });
 }
 
-type TripEndContext = {
-  boughtCount: number;
-  tripStartedAt: number;
-};
+/** Back-compat name used by supermarket mode. */
+export const preloadTripEndInterstitial = () => preloadInterstitial(LEVELPLAY_PLACEMENTS.tripEndInterstitial);
 
 /**
- * Called when a supermarket trip ends. Counts the trip, and shows the
- * interstitial only if every cap passes and an ad is already loaded — never
- * waits for a load. `onDone` always runs exactly once (after close, or now).
+ * Shows an interstitial at `placement` only if every cap passes and an ad is
+ * already loaded — never waits for a load. `onDone` always runs exactly once
+ * (after close, or immediately).
  */
-export async function maybeShowTripEndInterstitial(
-  { boughtCount, tripStartedAt }: TripEndContext,
+export async function maybeShowInterstitial(
+  placement: InterstitialPlacement,
   onDone: () => void,
 ): Promise<void> {
   const now = Date.now();
-  const realTrip = boughtCount > 0 && now - tripStartedAt >= MIN_TRIP_DURATION_MS;
   let s: InterstitialStats;
   try {
     s = await getStats();
@@ -199,41 +201,42 @@ export async function maybeShowTripEndInterstitial(
     return;
   }
 
-  const eligible =
-    realTrip &&
-    !showing &&
-    !!LEVELPLAY_INTERSTITIAL_AD_UNIT_ID &&
-    isLevelPlayReady() &&
-    loaded &&
-    passesUserCaps(s, now);
-
-  if (realTrip) {
-    s.tripsCompleted += 1;
-  }
-
-  let ready = false;
-  if (eligible) {
+  let reason: string | null = blockedFor(placement, s, now);
+  if (!reason && isFullscreenAdShowing()) reason = 'busy';
+  if (!reason && (!LEVELPLAY_INTERSTITIAL_AD_UNIT_ID || !isLevelPlayReady())) reason = 'sdk';
+  if (!reason && !loaded) reason = 'not_loaded';
+  if (!reason) {
     try {
-      const placementCapped = await LevelPlayInterstitialAd.isPlacementCapped(
-        LEVELPLAY_PLACEMENTS.tripEndInterstitial,
-      );
-      ready = !placementCapped && (await getAd().isAdReady());
+      const placementCapped = await LevelPlayInterstitialAd.isPlacementCapped(placement);
+      if (placementCapped) reason = 'dashboard_cap';
+      else if (!(await getAd().isAdReady())) reason = 'not_ready';
     } catch {
-      ready = false;
+      reason = 'error';
     }
   }
 
-  if (!ready) {
+  if (reason) {
     await saveStats();
+    // Grace / premium skips are expected and frequent; only log the actionable ones.
+    if (reason !== 'premium' && reason !== 'grace') {
+      logAdEvent('ad_interstitial_skip', { placement, reason });
+    }
     onDone();
     return;
   }
 
   s.lastShownAt = now;
+  s.recentShows = [...(s.recentShows ?? []).filter((t) => now - t < DAY_MS), now];
   await saveStats();
+  present(placement, onDone);
+}
+
+/** Shows the loaded interstitial; `onDone` runs once after close / failure / timeout. */
+function present(placement: InterstitialPlacement, onDone: () => void): void {
   pendingDone = onDone;
-  setShowing(true);
-  log(`${LOG} show placement=${LEVELPLAY_PLACEMENTS.tripEndInterstitial}`);
+  setFullscreenAdShowing(true);
+  log(`${LOG} show placement=${placement}`);
+  logAdEvent('ad_interstitial_show', { placement });
   displayed = false;
   setTimeout(() => {
     // Safety net: if the SDK neither displayed nor failed, don't strand the user.
@@ -243,9 +246,81 @@ export async function maybeShowTripEndInterstitial(
     }
   }, DISPLAY_TIMEOUT_MS);
   getAd()
-    .showAd(LEVELPLAY_PLACEMENTS.tripEndInterstitial)
+    .showAd(placement)
     .catch((err) => {
       log(`${LOG} showAd threw`, err);
       finish();
     });
+}
+
+export function isInterstitialLoaded(): boolean {
+  return loaded && !!LEVELPLAY_INTERSTITIAL_AD_UNIT_ID && isLevelPlayReady();
+}
+
+function gateBlocked(): boolean {
+  const cfg = getAdsConfig();
+  return isPremiumNow() || !cfg.adsEnabled || cfg.interstitial.placements[LEVELPLAY_PLACEMENTS.aiGateInterstitial] === false;
+}
+
+/** Loads an interstitial for a feature gate — not held back by the user caps. */
+export function preloadGateInterstitial(): void {
+  if (gateBlocked() || !LEVELPLAY_INTERSTITIAL_AD_UNIT_ID || !isLevelPlayReady()) return;
+  if (loading || loaded) return;
+  loading = true;
+  log(`${LOG} load requested (gate)`);
+  getAd()
+    .loadAd()
+    .catch((err) => {
+      loading = false;
+      log(`${LOG} loadAd threw`, err);
+    });
+}
+
+/**
+ * Plays an interstitial at a feature gate once the free uses are gone (same as
+ * Tohav's AI gate). Ignores the grace period and the daily cap of "done moment"
+ * ads; resolves false when nothing was shown (none loaded, ads off, premium).
+ */
+export async function showGateInterstitial(): Promise<boolean> {
+  const placement = LEVELPLAY_PLACEMENTS.aiGateInterstitial;
+  if (gateBlocked() || isFullscreenAdShowing() || !isInterstitialLoaded()) return false;
+  try {
+    if (!(await getAd().isAdReady())) return false;
+  } catch {
+    return false;
+  }
+  // Keeps a "done moment" interstitial from following right after this one.
+  try {
+    const s = await getStats();
+    s.lastShownAt = Date.now();
+    await saveStats();
+  } catch {
+    // Best-effort.
+  }
+  await new Promise<void>((resolve) => present(placement, resolve));
+  return true;
+}
+
+type TripEndContext = {
+  boughtCount: number;
+  tripStartedAt: number;
+};
+
+/** Called when a supermarket trip ends: counts a real trip, then maybe shows `trip_end`. */
+export async function maybeShowTripEndInterstitial(
+  { boughtCount, tripStartedAt }: TripEndContext,
+  onDone: () => void,
+): Promise<void> {
+  const realTrip = boughtCount > 0 && Date.now() - tripStartedAt >= MIN_TRIP_DURATION_MS;
+  if (!realTrip) {
+    onDone();
+    return;
+  }
+  try {
+    const s = await getStats();
+    s.tripsCompleted += 1;
+  } catch {
+    // Counting is best-effort.
+  }
+  await maybeShowInterstitial(LEVELPLAY_PLACEMENTS.tripEndInterstitial, onDone);
 }

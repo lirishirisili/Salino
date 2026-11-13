@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,6 +15,8 @@ import {
 import { TemporaryDurationPicker, shareHouseholdInvite } from '../../src/components/household';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
 import { GRACE_DAYS, endOfDayInDays, toExpiresAt } from '../../src/utils/householdExpiry';
+import { maybeShowInterstitial, preloadInterstitial } from '../../src/services/interstitialAd';
+import { LEVELPLAY_PLACEMENTS } from '../../src/config/levelPlay';
 
 const DEFAULT_DAYS = 7;
 
@@ -31,6 +33,10 @@ export default function CreateTemporaryHomeScreen() {
   const [name, setName] = useState('');
   const [endDate, setEndDate] = useState(() => endOfDayInDays(DEFAULT_DAYS));
 
+  useEffect(() => {
+    void preloadInterstitial(LEVELPLAY_PLACEMENTS.tripHomeCreatedInterstitial);
+  }, []);
+
   const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/(main)/shopping-list');
@@ -42,8 +48,10 @@ export default function CreateTemporaryHomeScreen() {
     const { household, error: storeError } = useHouseholdStore.getState();
     if (storeError || !household) return;
     goBack();
-    // Friends join through the link, so offer it right away.
-    void shareHouseholdInvite(household, t, i18n.language).catch(() => undefined);
+    // Friends join through the link, so offer it right after the (capped) interstitial.
+    void maybeShowInterstitial(LEVELPLAY_PLACEMENTS.tripHomeCreatedInterstitial, () => {
+      void shareHouseholdInvite(household, t, i18n.language).catch(() => undefined);
+    });
   };
 
   return (

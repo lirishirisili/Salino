@@ -21,11 +21,17 @@ import { usePastePreviewStore } from '../../src/hooks/usePastePreviewStore';
 import { useAddParsedItems } from '../../src/hooks/useAddParsedItems';
 import { useUndoBarStore } from '../../src/hooks/useUndoBarStore';
 import {
+  generateListWithAi,
+  parseImageWithAi,
   parseListLocally,
   parseListWithAi,
+  type AiOutcome,
   type ListDraftItem,
   type ListParseSource,
 } from '../../src/services/aiListParser';
+import { maybeShowInterstitial, preloadInterstitial } from '../../src/services/interstitialAd';
+import { LEVELPLAY_PLACEMENTS } from '../../src/config/levelPlay';
+import { MrecAd } from '../../src/components/ads';
 import { findDuplicate } from '../../src/services';
 import { DuplicateReason, ItemCategory, ItemUnit } from '../../src/models';
 import {
@@ -64,7 +70,10 @@ export default function PastePreviewScreen() {
   useLeaveIfReadOnly();
 
   const text = usePastePreviewStore((s) => s.text);
+  const image = usePastePreviewStore((s) => s.image);
+  const smart = usePastePreviewStore((s) => s.smart);
   const source = usePastePreviewStore((s) => s.source);
+  const aiOnly = !text && (!!image || !!smart);
   const version = usePastePreviewStore((s) => s.version);
   const clearPaste = usePastePreviewStore((s) => s.clear);
   const activeItems = useShoppingStore((s) => s.activeItems);
@@ -72,15 +81,55 @@ export default function PastePreviewScreen() {
   const showUndo = useUndoBarStore((s) => s.show);
 
   const [rows, setRows] = useState<Row[]>(() => toRows(text ? parseListLocally(text) : []));
-  const [parsing, setParsing] = useState(!!text);
+  const [parsing, setParsing] = useState(!!text || aiOnly);
   const [parseSource, setParseSource] = useState<ListParseSource>('local');
   const [notAList, setNotAList] = useState(false);
+  /** AI-only inputs (photo / smart list) that failed: 'quota' or 'failed'. */
+  const [aiError, setAiError] = useState<'quota' | 'failed' | null>(null);
   const [adding, setAdding] = useState(false);
   const editedRef = useRef(false);
 
   useEffect(() => {
+    void preloadInterstitial(LEVELPLAY_PLACEMENTS.pasteDoneInterstitial);
+  }, []);
+
+  useEffect(() => {
+    if (text || !(image || smart)) return;
+    const controller = new AbortController();
+    editedRef.current = false;
+    setRows([]);
+    setParsing(true);
+    setNotAList(false);
+    setAiError(null);
+    const request: Promise<AiOutcome> = image
+      ? parseImageWithAi(image.base64, image.mimeType, { locale: i18n.language, signal: controller.signal })
+      : generateListWithAi(smart!.request, {
+          locale: i18n.language,
+          people: smart!.people,
+          signal: controller.signal,
+        });
+    request
+      .then((outcome) => {
+        if (controller.signal.aborted) return;
+        if (outcome.kind === 'items') {
+          setParseSource('ai');
+          setRows(toRows(outcome.items));
+        } else if (outcome.kind === 'not_a_list') {
+          setNotAList(true);
+        } else {
+          setAiError(outcome.kind === 'quota' ? 'quota' : 'failed');
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setParsing(false);
+      });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
+
+  useEffect(() => {
     if (!text) {
-      router.back();
+      if (!image && !smart) router.back();
       return;
     }
     const controller = new AbortController();
@@ -123,7 +172,8 @@ export default function PastePreviewScreen() {
     try {
       const result = await addParsed(included);
       showUndo(t('quick_add_bulk_added', { count: included.length }), result.undo);
-      close();
+      // A list just landed: a natural pause for an interstitial (caps permitting).
+      void maybeShowInterstitial(LEVELPLAY_PLACEMENTS.pasteDoneInterstitial, close);
     } catch {
       Alert.alert('', t('error_generic'));
     } finally {
@@ -131,7 +181,26 @@ export default function PastePreviewScreen() {
     }
   };
 
-  const title = source === 'share' ? t('paste_preview_shared_title') : t('paste_preview_title');
+  const title =
+    source === 'share'
+      ? t('paste_preview_shared_title')
+      : source === 'photo'
+        ? t('photo_list_title')
+        : source === 'smart'
+          ? t('smart_list_result_title')
+          : t('paste_preview_title');
+
+  const statusText = notAList
+    ? aiOnly
+      ? t(image ? 'photo_list_not_a_list' : 'smart_list_not_a_list')
+      : t('paste_preview_not_a_list')
+    : aiError === 'quota'
+      ? t('ai_daily_quota')
+      : aiError === 'failed'
+        ? t('ai_failed_offline')
+        : parseSource === 'ai'
+          ? t('paste_preview_source_ai')
+          : t('paste_preview_source_local');
 
   return (
     <SalinoGradientBackground plain>
@@ -150,7 +219,7 @@ export default function PastePreviewScreen() {
                 <>
                   <ActivityIndicator size="small" color={colors.primary} />
                   <Text style={[Typography.bodySmall, { color: colors.onSurfaceVariant } as any]}>
-                    {t('paste_preview_parsing')}
+                    {t(image ? 'photo_list_reading' : smart ? 'smart_list_generating' : 'paste_preview_parsing')}
                   </Text>
                 </>
               ) : (
@@ -161,11 +230,7 @@ export default function PastePreviewScreen() {
                     color={colors.onSurfaceVariant}
                   />
                   <Text style={[Typography.bodySmall, { color: colors.onSurfaceVariant, flex: 1 } as any]}>
-                    {notAList
-                      ? t('paste_preview_not_a_list')
-                      : parseSource === 'ai'
-                        ? t('paste_preview_source_ai')
-                        : t('paste_preview_source_local')}
+                    {statusText}
                   </Text>
                 </>
               )}
@@ -192,6 +257,7 @@ export default function PastePreviewScreen() {
                 ))}
               </SalinoSurfaceCard>
             )}
+            {aiOnly && !parsing && <MrecAd placement={LEVELPLAY_PLACEMENTS.smartResultMrec} />}
           </View>
         </ScrollView>
 
