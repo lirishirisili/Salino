@@ -55,9 +55,51 @@ export type InterstitialStats = {
 let stats: InterstitialStats | null = null;
 let ad: LevelPlayInterstitialAd | null = null;
 let loading = false;
+let loadStartedAt = 0;
 let loaded = false;
 let displayed = false;
 let pendingDone: (() => void) | null = null;
+/**
+ * Once a feature gate needs ads, keep one interstitial loaded for the session:
+ * reload after every show and retry failed loads (Tohav's FullscreenSlot).
+ */
+let keepWarm = false;
+let retry = 0;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Back-off between failed loads (no fill), reset on a successful load. */
+const RETRY_DELAYS_MS = [30_000, 60_000, 120_000, 300_000];
+/** A load the SDK never answered stops blocking new loads after this long. */
+const LOAD_STALE_MS = 45_000;
+
+function isLoading(): boolean {
+  return loading && Date.now() - loadStartedAt < LOAD_STALE_MS;
+}
+
+function startLoad(reason: string): void {
+  if (!LEVELPLAY_INTERSTITIAL_AD_UNIT_ID || !isLevelPlayReady()) return;
+  if (isLoading() || loaded || pendingDone) return;
+  loading = true;
+  loadStartedAt = Date.now();
+  log(`${LOG} load requested (${reason})`);
+  getAd()
+    .loadAd()
+    .catch((err) => {
+      loading = false;
+      log(`${LOG} loadAd threw`, err);
+      scheduleRetry();
+    });
+}
+
+function scheduleRetry(): void {
+  if (!keepWarm || retryTimer) return;
+  const delay = RETRY_DELAYS_MS[Math.min(retry, RETRY_DELAYS_MS.length - 1)];
+  retry += 1;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    startLoad('retry');
+  }, delay);
+}
 
 async function getStats(): Promise<InterstitialStats> {
   if (stats) return stats;
@@ -118,8 +160,11 @@ function blockedFor(placement: InterstitialPlacement, s: InterstitialStats, now:
 function finish() {
   const done = pendingDone;
   pendingDone = null;
+  loaded = false;
   setFullscreenAdShowing(false);
   done?.();
+  // Have the next one ready for the next gated use.
+  if (keepWarm) setTimeout(() => startLoad('after_show'), 1_000);
 }
 
 function getAd(): LevelPlayInterstitialAd {
@@ -129,12 +174,14 @@ function getAd(): LevelPlayInterstitialAd {
     onAdLoaded: (adInfo: LevelPlayAdInfo) => {
       loading = false;
       loaded = true;
+      retry = 0;
       log(`${LOG} onAdLoaded network=${adInfo.adNetwork}`);
     },
     onAdLoadFailed: (error: LevelPlayAdError) => {
       loading = false;
       loaded = false;
       log(`${LOG} onAdLoadFailed code=${error.errorCode} message=${error.errorMessage}`);
+      scheduleRetry();
     },
     onAdDisplayed: (adInfo: LevelPlayAdInfo) => {
       displayed = true;
@@ -167,17 +214,10 @@ export async function preloadInterstitial(
   placement: InterstitialPlacement = LEVELPLAY_PLACEMENTS.tripEndInterstitial,
 ): Promise<void> {
   if (!LEVELPLAY_INTERSTITIAL_AD_UNIT_ID || !isLevelPlayReady()) return;
-  if (loading || loaded) return;
+  if (isLoading() || loaded) return;
   const s = await getStats();
   if (blockedFor(placement, s, Date.now())) return;
-  loading = true;
-  log(`${LOG} load requested (${placement})`);
-  getAd()
-    .loadAd()
-    .catch((err) => {
-      loading = false;
-      log(`${LOG} loadAd threw`, err);
-    });
+  startLoad(placement);
 }
 
 /** Back-compat name used by supermarket mode. */
@@ -264,16 +304,9 @@ function gateBlocked(): boolean {
 
 /** Loads an interstitial for a feature gate — not held back by the user caps. */
 export function preloadGateInterstitial(): void {
-  if (gateBlocked() || !LEVELPLAY_INTERSTITIAL_AD_UNIT_ID || !isLevelPlayReady()) return;
-  if (loading || loaded) return;
-  loading = true;
-  log(`${LOG} load requested (gate)`);
-  getAd()
-    .loadAd()
-    .catch((err) => {
-      loading = false;
-      log(`${LOG} loadAd threw`, err);
-    });
+  if (gateBlocked()) return;
+  keepWarm = true;
+  startLoad('gate');
 }
 
 /**
@@ -283,11 +316,25 @@ export function preloadGateInterstitial(): void {
  */
 export async function showGateInterstitial(): Promise<boolean> {
   const placement = LEVELPLAY_PLACEMENTS.aiGateInterstitial;
-  if (gateBlocked() || isFullscreenAdShowing() || !isInterstitialLoaded()) return false;
-  try {
-    if (!(await getAd().isAdReady())) return false;
-  } catch {
+  const skip = (reason: string) => {
+    log(`${LOG} gate skip reason=${reason} loaded=${loaded} loading=${loading}`);
+    logAdEvent('ad_interstitial_skip', { placement, reason });
     return false;
+  };
+  if (gateBlocked()) return skip('blocked');
+  if (isFullscreenAdShowing()) return skip('fullscreen_busy');
+  if (!isInterstitialLoaded()) return skip('not_loaded');
+  try {
+    if (!(await getAd().isAdReady())) {
+      // The SDK no longer has a usable ad (expired / consumed): reload for next time.
+      loaded = false;
+      startLoad('not_ready');
+      return skip('sdk_not_ready');
+    }
+  } catch (e) {
+    loaded = false;
+    startLoad('ready_check_error');
+    return skip(`ready_check_error:${String(e).slice(0, 60)}`);
   }
   // Keeps a "done moment" interstitial from following right after this one.
   try {

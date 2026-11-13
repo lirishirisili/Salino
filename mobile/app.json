@@ -185,7 +185,7 @@
         {
           "photosPermission": "Choose a photo or screenshot of a shopping list or recipe to turn it into list items.",
           "cameraPermission": "Take a photo of a handwritten shopping list or a recipe to turn it into list items.",
-          "microphonePermission": false
+          "microphonePermission": "Microphone access is needed for voice input to add items to your shopping list."
         }
       ],
       [

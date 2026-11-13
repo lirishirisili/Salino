@@ -48,6 +48,11 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <data android:mimeType="image/*"/>
       </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.SEND"/>
+        <data android:mimeType="text/*"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
       <intent-filter android:autoVerify="true" data-generated="true">
         <action android:name="android.intent.action.VIEW"/>
         <data android:scheme="https" android:host="hsr.lirshir.com" android:pathPrefix="/join"/>
@@ -57,6 +62,7 @@
       <intent-filter>
         <action android:name="android.intent.action.SEND"/>
         <data android:mimeType="text/*"/>
+        <data android:mimeType="image/*"/>
         <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
     </activity>

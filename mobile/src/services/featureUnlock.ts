@@ -63,6 +63,7 @@ export async function requestFeatureUse(feature: RewardedFeature): Promise<boole
   logAdEvent('feature_used', { feature });
   if (isPremiumNow()) return true;
   const left = await freeUsesLeft(feature);
+  console.warn(`[GATE] ${feature} freeLeft=${left} adLoaded=${isInterstitialLoaded()}`);
   if (left > 0) {
     await recordUse(feature);
     logAdEvent('rewarded_free_use', { feature });
