@@ -20,6 +20,18 @@ import {
 
 initializeApp();
 
+export {
+  geocodePriceStores,
+  ingestPricesCarrefour,
+  ingestPricesHazihinam,
+  ingestPricesRamilevy,
+  ingestPricesRegional,
+  ingestPricesShufersal,
+  prices,
+  pricesOps,
+  pricesOpsHttp,
+} from "./prices/functions";
+
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 const GEMINI_MODEL = "gemini-2.0-flash";
 

@@ -23,4 +23,7 @@ export const db = initializeFirestore(app, {
 /** Cloud Functions instance (europe-west1) — mirrors Android AppModule wiring. */
 export const functions = getFunctions(app, 'europe-west1');
 
+/** Price comparison runs in Tel Aviv (me-west1), next to the chains' price portals. */
+export const pricesFunctions = getFunctions(app, 'me-west1');
+
 export default app;

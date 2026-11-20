@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuthStore, useHouseholdStore, useInviteDeepLinkStore } from '../src/hooks';
 import { useSessionRoute } from '../src/hooks/useSessionRoute';
-import { PRIVACY_POLICY_URL } from '../src/constants/legal';
+import { privacyPolicyUrl } from '../src/constants/legal';
 import {
   BrandLogo,
   LoadingScreen,
@@ -254,7 +254,7 @@ export default function HouseholdSetupScreen() {
             <View style={{ height: 24 }} />
             <Pressable
               onPress={() => {
-                Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                Linking.openURL(privacyPolicyUrl()).catch(() => {
                   Alert.alert('', t('settings_privacy_open_error'));
                 });
               }}

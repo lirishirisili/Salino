@@ -180,6 +180,7 @@ export default function MainLayout() {
         <Stack.Screen name="paste-preview" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="smart-list" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="insights" />
+        <Stack.Screen name="price-compare" />
       </Stack>
     </MainAdBannerHost>
   );

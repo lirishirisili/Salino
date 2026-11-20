@@ -13,7 +13,13 @@ const CACHE_KEY = '@ads_config_v1';
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-export type RewardedFeature = 'photo_list' | 'smart_list' | 'forgotten_items' | 'insights';
+export type RewardedFeature =
+  | 'photo_list'
+  | 'smart_list'
+  | 'forgotten_items'
+  | 'insights'
+  | 'price_split'
+  | 'price_compare';
 
 export interface AdsConfig {
   /** Master switch for every ad format (premium users skip ads regardless). */
@@ -48,11 +54,25 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
   },
   rewarded: {
     enabled: true,
-    freePerDay: { photo_list: 1, smart_list: 1, forgotten_items: 1, insights: 1 },
+    freePerDay: {
+      photo_list: 1,
+      smart_list: 1,
+      forgotten_items: 1,
+      insights: 1,
+      price_split: 1,
+      price_compare: 1,
+    },
   },
   nativeListEnd: true,
   nativeListMinItems: 3,
-  mrec: { all_done: true, history: true, activity: true, smart_result: true, insights: true },
+  mrec: {
+    all_done: true,
+    history: true,
+    activity: true,
+    smart_result: true,
+    insights: true,
+    price_compare: true,
+  },
 };
 
 let current: AdsConfig = DEFAULT_ADS_CONFIG;

@@ -92,6 +92,7 @@ export const LEVELPLAY_PLACEMENTS = {
   activityMrec: 'activity',
   smartResultMrec: 'smart_result',
   insightsMrec: 'insights',
+  priceCompareMrec: 'price_compare',
   listEndNative: 'list_end',
   photoListRewarded: 'photo_list',
   smartListRewarded: 'smart_list',

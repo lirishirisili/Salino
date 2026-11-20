@@ -14,7 +14,14 @@ import { subscribeLevelPlayReady } from './initLevelPlay';
  */
 
 const STORAGE_KEY = '@feature_uses_v1';
-const FEATURES: RewardedFeature[] = ['photo_list', 'smart_list', 'forgotten_items', 'insights'];
+const FEATURES: RewardedFeature[] = [
+  'photo_list',
+  'smart_list',
+  'forgotten_items',
+  'insights',
+  'price_split',
+  'price_compare',
+];
 
 type UsesByDay = { day: string; uses: Partial<Record<RewardedFeature, number>> };
 

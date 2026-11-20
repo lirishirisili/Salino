@@ -68,6 +68,8 @@ import { findForgottenItems } from '../../src/utils/forgottenItems';
 import { requestFeatureUse } from '../../src/services/featureUnlock';
 import { ForgottenItemsDialog } from '../../src/components/ForgottenItemsDialog';
 import { NativeListAd } from '../../src/components/ads';
+import { PriceCompareEntryCard } from '../../src/components/prices/PriceCompareEntryCard';
+import { isPriceCompareAvailable } from '../../src/services/prices/availability';
 
 const BOUGHT_ITEMS_PAGE_SIZE = 10;
 
@@ -544,6 +546,8 @@ export default function ShoppingListScreen() {
       : previewItems
     : filteredActive;
   const showEmptyState = isEmpty && suggestions.length === 0 && !tourActive;
+  const showPriceCard =
+    !showTourPreview && activeItems.length > 0 && isPriceCompareAvailable(i18n.language);
 
   // Inline element (not an inner component) so FlatList re-renders do not remount
   // the TextInput and dismiss the keyboard. The empty state lives in the same tree
@@ -637,6 +641,8 @@ export default function ShoppingListScreen() {
         />
       ) : (
         <>
+          {showPriceCard && <PriceCompareEntryCard items={activeItems} />}
+
           <View ref={filtersAnchor.ref} style={filtersAnchor.highlightStyle} collapsable={false}>
             <CategoryFilterRow
               selectedCategory={selectedCategory as ItemCategory | null}

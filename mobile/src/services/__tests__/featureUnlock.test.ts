@@ -9,7 +9,18 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 });
 jest.mock('../adsConfig', () => ({
   loadAdsConfig: jest.fn(async () => undefined),
-  getAdsConfig: () => ({ rewarded: { freePerDay: { photo_list: 1, smart_list: 1, forgotten_items: 1, insights: 1 } } }),
+  getAdsConfig: () => ({
+    rewarded: {
+      freePerDay: {
+        photo_list: 1,
+        smart_list: 1,
+        forgotten_items: 1,
+        insights: 1,
+        price_split: 1,
+        price_compare: 1,
+      },
+    },
+  }),
 }));
 jest.mock('../initMobileAnalytics', () => ({ logAdEvent: jest.fn() }));
 jest.mock('../premium', () => ({ isPremiumNow: jest.fn(() => false) }));

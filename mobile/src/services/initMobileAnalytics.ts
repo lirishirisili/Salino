@@ -70,6 +70,22 @@ export type AdFunnelEvent =
   | 'premium_restore'
   | 'feature_used';
 
+/** Product events outside the ad funnel (price comparison). */
+export type AppEvent =
+  | 'price_compare'
+  | 'price_compare_error'
+  | 'price_location'
+  | 'price_product_locked'
+  | 'price_navigate'
+  | 'price_split_view';
+
+export function logAppEvent(name: AppEvent, params: Record<string, string | number | boolean> = {}): void {
+  if (Platform.OS === 'web') return;
+  analytics()
+    .logEvent(name, params)
+    .catch(() => undefined);
+}
+
 export function logAdEvent(
   name: AdFunnelEvent,
   params: Record<string, string | number | boolean> = {},

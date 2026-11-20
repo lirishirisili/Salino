@@ -32,7 +32,7 @@ import {
   SalinoWebAppBarTitle,
 } from '../../src/components';
 import { Layout, Typography, useThemeColors } from '../../src/theme';
-import { PRIVACY_POLICY_URL } from '../../src/constants/legal';
+import { privacyPolicyUrl } from '../../src/constants/legal';
 import { changeGdprConsent, isGdprRegion } from '../../src/services/adsConsent';
 import { useIsPremium } from '../../src/services/premium';
 import {
@@ -141,7 +141,7 @@ export default function SettingsScreen() {
   const requestTourReplay = useTourStore((s) => s.requestReplay);
 
   const openPrivacyPolicy = () => {
-    Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+    Linking.openURL(privacyPolicyUrl()).catch(() => {
       Alert.alert('', t('settings_privacy_open_error'));
     });
   };
@@ -455,6 +455,27 @@ export default function SettingsScreen() {
               </Text>
               <MaterialCommunityIcons name="open-in-new" size={18} color={colors.onSurfaceVariant} />
             </Pressable>
+            <Divider />
+            <View style={{ paddingVertical: 12, gap: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <MaterialCommunityIcons
+                  name="tag-multiple-outline"
+                  size={20}
+                  color={colors.onSurfaceVariant}
+                />
+                <Text style={[Typography.bodyLarge, { flex: 1, color: colors.onSurface } as any]}>
+                  {t('settings_prices_disclaimer_title')}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  Typography.bodySmall,
+                  { color: colors.onSurfaceVariant, marginStart: 30 } as any,
+                ]}
+              >
+                {t('settings_prices_disclaimer_body')}
+              </Text>
+            </View>
             {adPrivacyOptionsRequired && (
               <>
                 <Divider />

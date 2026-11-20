@@ -18,6 +18,11 @@ export interface ShoppingItem {
   isUrgent: boolean;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
+  /** Barcode chosen in price comparison; only applies while the name still equals `priceCodeFor`. */
+  priceCode?: string | null;
+  priceCodeFor?: string | null;
+  /** Product name of the locked barcode, for display. */
+  priceLabel?: string | null;
 }
 
 export interface Household {

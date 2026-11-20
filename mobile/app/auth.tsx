@@ -31,7 +31,7 @@ import {
   SalinoPrimaryButton,
 } from '../src/components';
 import { BorderRadius, Layout, Typography, useIsDark, useThemeColors } from '../src/theme';
-import { PRIVACY_POLICY_URL } from '../src/constants/legal';
+import { privacyPolicyUrl } from '../src/constants/legal';
 import { validatePassword } from '../src/utils/passwordValidation';
 
 function generateRawNonce(length = 32): string {
@@ -449,7 +449,7 @@ export default function AuthScreen() {
 
                   <Pressable
                     onPress={() => {
-                      Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                      Linking.openURL(privacyPolicyUrl()).catch(() => {
                         Alert.alert('', t('settings_privacy_open_error'));
                       });
                     }}
